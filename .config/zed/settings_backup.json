@@ -9,16 +9,16 @@
 {
 	"context_servers": {
 		"bun-docs-mcp": {
-   "enabled": true,
+			"enabled": true,
 			"settings": {}
 		},
 		"airis-mcp-gateway": {
-   "enabled": true,
+			"enabled": true,
 			"command": "bunx",
 			"args": ["-y", "mcp-remote", "http://localhost:9400/sse"]
 		},
 		"mcp-server-buildkite": {
-   "enabled": true,
+			"enabled": true,
 			"settings": {
 				"buildkite_api_token": "***REDACTED_BUILDKITE_TOKEN***"
 			}
@@ -44,7 +44,7 @@
 	"theme": {
 		"mode": "dark",
 		"light": "One Light",
-		"dark": "Sandy Dark"
+		"dark": "Tokyo Night"
 	},
 	"file_types": {
 		"Shell Script": ["conf", ".dev.vars"],
