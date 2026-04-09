@@ -1,0 +1,20 @@
+[tools]
+bun = "latest"
+go = "latest"
+jj = "latest"
+golangci-lint = "latest"
+node = "latest"
+doppler = "latest"
+stripe = "latest"
+helm = "latest"
+task = "latest"
+uv = "latest"
+yq = "latest"
+hyperfine = "latest"
+pipx = "latest"
+biome = "latest"
+hurl = "latest"
+usage = "latest"
+
+[settings]
+idiomatic_version_file_enable_tools = ["node"]
