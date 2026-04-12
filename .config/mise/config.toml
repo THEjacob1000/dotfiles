@@ -15,6 +15,13 @@ pipx = "latest"
 biome = "latest"
 hurl = "latest"
 usage = "latest"
+mysql = "latest"
+postgres = "latest"
+air = "latest"
+railway = { version = "latest", exe = "railway" }
+jjui = "latest"
+"github:rabbitmq/rabbitmqadmin-ng" = "latest"
+flutter = "3.38.5-stable"
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"]

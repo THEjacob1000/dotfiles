@@ -29,10 +29,22 @@ if test -d $HOME/.pub-cache/bin
     fish_add_path $HOME/.pub-cache/bin
 end
 
-# mise: vendor conf.d auto-activates mise (mise-activate.fish).
-# Only add shims path here.
-if test -d $HOME/.local/share/mise/shims
-    fish_add_path $HOME/.local/share/mise/shims
+function __remove_mise_paths --description 'Remove all mise-managed paths from PATH'
+    set -l cleaned_path
+    for p in $PATH
+        if not string match -qr '^'"$HOME"'/.local/share/mise/(shims|installs)(/|$)' -- $p
+            set cleaned_path $cleaned_path $p
+        end
+    end
+    set -gx PATH $cleaned_path
+end
+
+if set -q IN_NIX_SHELL
+    __remove_mise_paths
+else
+    if test -d $HOME/.local/share/mise/shims
+        fish_add_path $HOME/.local/share/mise/shims
+    end
 end
 
 # gh and jj completions are cached as static files in ~/.config/fish/completions/
@@ -54,6 +66,14 @@ alias bazel bazelisk
 #   git config --global gpg.format ssh
 #   git config --global commit.gpgsign true
 #   git config --global user.signingkey ~/.ssh/id_ed25519.pub
+
+
+# -----------------------------
+# Global Vars
+# -----------------------------
+
+set -gx OMX_TEAM_WORKER_LAUNCH_ARGS "--approval-policy auto"
+
 
 # -----------------------------
 # Quality-of-life
