@@ -7,96 +7,114 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
-	"context_servers": {
-		"bun-docs-mcp": {
-   "enabled": true,
-			"settings": {}
-		},
-		"airis-mcp-gateway": {
-   "enabled": true,
-			"command": "bunx",
-			"args": ["-y", "mcp-remote", "http://localhost:9400/sse"]
-		},
-		"mcp-server-buildkite": {
-   "enabled": true,
-			"settings": {
-				"buildkite_api_token": "***REDACTED_BUILDKITE_TOKEN***"
-			}
-		}
-	},
-	"agent": {
-		"tool_permissions": {
-			"default": "allow"
-		},
-		"default_model": {
-			"provider": "openai",
-			"model": "gpt-5"
-		}
-	},
-	"vim_mode": false,
-	"icon_theme": {
-		"mode": "dark",
-		"light": "VSCode Icons",
-		"dark": "VSCode Icons"
-	},
-	"ui_font_size": 16,
-	"buffer_font_size": 15,
-	"theme": {
-		"mode": "dark",
-		"light": "One Light",
-		"dark": "Sandy Dark"
-	},
-	"file_types": {
-		"Shell Script": ["conf", ".dev.vars"],
-		"bazelrc": [".bazelrc.*"]
-	},
-	"languages": {
-		"TypeScript": {
-			"format_on_save": "on"
-		},
-		"TSX": {
-			"format_on_save": "on"
-		},
-		"JSON": {
-			"format_on_save": "on"
-		},
-		"JSONC": {
-			"format_on_save": "on"
-		}
-	},
-	"lsp": {
-		"vtsls": {
-			"settings": {
-				"typescript": {
-					"updateImportsOnFileMove": {
-						"enabled": "always"
-					}
-				},
-				"javascript": {
-					"updateImportsOnFileMove": {
-						"enabled": "always"
-					}
-				}
-			},
-			"enable_lsp_tasks": true
-		},
-		"dart": {
-			"binary": {
-				"path": "/Users/jacob/.local/share/mise/installs/flutter/3.38.5-stable/bin/dart",
-				"arguments": ["language-server", "--protocol=lsp"]
-			}
-		}
-	},
-	"terminal": {
-		"detect_venv": {
-			"on": {
-				// Default directories to search for virtual environments, relative
-				// to the current working directory. We recommend overriding this
-				// in your project's settings, rather than globally.
-				"directories": [".env", "env", ".venv", "venv"],
-				// Can also be `csh`, `fish`, and `nushell`
-				"activate_script": "default"
-			}
-		}
-	}
+  "cli_default_open_behavior": "new_window",
+  "project_panel": {
+    "dock": "left"
+  },
+  "outline_panel": {
+    "dock": "left"
+  },
+  "collaboration_panel": {
+    "dock": "left"
+  },
+  "git_panel": {
+    "dock": "left"
+  },
+  "diff_view_style": "split",
+  "context_servers": {
+    "bun-docs-mcp": {
+      "enabled": true,
+      "settings": {},
+    },
+    "airis-mcp-gateway": {
+      "enabled": true,
+      "command": "bunx",
+      "args": ["-y", "mcp-remote", "http://localhost:9400/sse"],
+    },
+    "mcp-server-buildkite": {
+      "enabled": true,
+      "settings": {
+        "buildkite_api_token": "***REDACTED_BUILDKITE_TOKEN***",
+      },
+    },
+  },
+  "agent": {
+    "dock": "right",
+    "tool_permissions": {
+      "default": "allow",
+    },
+    "default_model": {
+      "provider": "openai",
+      "model": "gpt-5",
+    },
+  },
+  "vim_mode": false,
+  "icon_theme": {
+    "mode": "dark",
+    "light": "VSCode Icons",
+    "dark": "VSCode Icons",
+  },
+  "ui_font_size": 16,
+  "buffer_font_size": 15,
+  "theme": {
+    "mode": "dark",
+    "light": "One Light",
+    "dark": "Sandy Dark",
+  },
+  "file_types": {
+    "Shell Script": ["conf", ".dev.vars", ".envrc", ".envrc.*"],
+    "bazelrc": [".bazelrc.*"],
+  },
+  "languages": {
+    "TypeScript": {
+      "format_on_save": "on",
+    },
+    "TSX": {
+      "format_on_save": "on",
+    },
+    "JSON": {
+      "format_on_save": "on",
+    },
+    "JSONC": {
+      "format_on_save": "on",
+    },
+  },
+  "lsp": {
+    "vtsls": {
+      "settings": {
+        "typescript": {
+          "updateImportsOnFileMove": {
+            "enabled": "always",
+          },
+        },
+        "javascript": {
+          "updateImportsOnFileMove": {
+            "enabled": "always",
+          },
+        },
+      },
+      "enable_lsp_tasks": true,
+    },
+    "dart": {
+      "binary": {
+        "path": "/Users/jacob/.local/share/mise/installs/flutter/3.38.5-stable/bin/dart",
+        "arguments": ["language-server", "--protocol=lsp"],
+      },
+    },
+  },
+  "terminal": {
+    "shell": {
+      "program": "/usr/bin/fish",
+    },
+    "detect_venv": {
+      "on": {
+        // Default directories to search for virtual environments, relative
+        // to the current working directory. We recommend overriding this
+        // in your project's settings, rather than globally.
+        "directories": [".env", "env", ".venv", "venv"],
+        // Can also be `csh`, `fish`, and `nushell`
+        "activate_script": "default",
+      },
+    },
+  },
 }
