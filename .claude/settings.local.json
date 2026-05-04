@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lsb_release:*)",
+      "Bash(dpkg:*)",
+      "Bash(dkms status:*)",
+      "Bash(lspci:*)",
+      "Bash(lsmod:*)",
+      "Bash(sudo mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(jj git:*)",
+      "Bash(stow .)",
+      "Bash(jj log:*)",
+      "Bash(jj status:*)",
+      "Bash(jj describe:*)",
+      "Bash(jj bookmark:*)"
+    ]
+  }
+}
