@@ -9,16 +9,16 @@
 {
   "cli_default_open_behavior": "new_window",
   "project_panel": {
-    "dock": "left"
+    "dock": "left",
   },
   "outline_panel": {
-    "dock": "left"
+    "dock": "left",
   },
   "collaboration_panel": {
-    "dock": "left"
+    "dock": "left",
   },
   "git_panel": {
-    "dock": "left"
+    "dock": "left",
   },
   "diff_view_style": "split",
   "context_servers": {
@@ -97,7 +97,7 @@
     },
     "dart": {
       "binary": {
-        "path": "/Users/jacob/.local/share/mise/installs/flutter/3.38.5-stable/bin/dart",
+        "path": "/home/jacob/.local/share/mise/installs/flutter/3.38.5-stable/bin/dart",
         "arguments": ["language-server", "--protocol=lsp"],
       },
     },

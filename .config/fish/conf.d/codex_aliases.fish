@@ -1,1 +1,1 @@
-alias cc="omx --madmax --high"
+alias cc="claude --dangerously-skip-permissions"
