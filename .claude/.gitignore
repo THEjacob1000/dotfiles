@@ -1,0 +1,25 @@
+# Runtime state — not tracked
+agents/
+backups/
+cache/
+debug/
+file-history/
+history.jsonl
+mcp-needs-auth-cache.json
+paste-cache/
+plugins/
+policy-limits.json
+projects/
+remote-settings.json
+session-env/
+sessions/
+shell-snapshots/
+skills/jj-github-pr-workflow/
+stats-cache.json
+statsig/
+tasks/
+teams/
+telemetry/
+todos/
+CLAUDE.md.backup.*
+hud/cache/
