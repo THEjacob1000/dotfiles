@@ -8,3 +8,5 @@
 	signingkey = /home/jacob/.ssh/id_ed25519.pub
 	email = jacob@jacobdevelops.com
 	name = Jacob Sanderson
+[coderabbit]
+	machineId = cli/f3655dbcac134317a961b20a92a970df

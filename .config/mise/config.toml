@@ -21,8 +21,10 @@ air = "latest"
 railway = { version = "latest", exe = "railway" }
 jjui = "latest"
 "github:rabbitmq/rabbitmqadmin-ng" = "latest"
-flutter = "3.38.5-stable"
 just = "latest"
+pnpm = "10.33"
+direnv = "latest"
+firebase = "latest"
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"]

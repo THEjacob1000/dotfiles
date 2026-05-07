@@ -42,7 +42,9 @@
     "context7@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
     "chrome-devtools-mcp@claude-plugins-official": true,
-    "claude-mem@thedotmack": true
+    "claude-mem@thedotmack": true,
+    "railway@railway-skills": true,
+    "agent-browser@agent-browser": true
   },
   "extraKnownMarketplaces": {
     "omc": {
@@ -73,6 +75,18 @@
       "source": {
         "source": "github",
         "repo": "ast-grep/agent-skill"
+      }
+    },
+    "railway-skills": {
+      "source": {
+        "source": "github",
+        "repo": "railwayapp/railway-skills"
+      }
+    },
+    "agent-browser": {
+      "source": {
+        "source": "github",
+        "repo": "vercel-labs/agent-browser"
       }
     }
   },

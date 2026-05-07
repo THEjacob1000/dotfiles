@@ -21,23 +21,6 @@
     "dock": "left",
   },
   "diff_view_style": "split",
-  "context_servers": {
-    "bun-docs-mcp": {
-      "enabled": true,
-      "settings": {},
-    },
-    "airis-mcp-gateway": {
-      "enabled": true,
-      "command": "bunx",
-      "args": ["-y", "mcp-remote", "http://localhost:9400/sse"],
-    },
-    "mcp-server-buildkite": {
-      "enabled": true,
-      "settings": {
-        "buildkite_api_token": "***REDACTED_BUILDKITE_TOKEN***",
-      },
-    },
-  },
   "agent": {
     "dock": "right",
     "tool_permissions": {
@@ -64,8 +47,12 @@
   "file_types": {
     "Shell Script": ["conf", ".dev.vars", ".envrc", ".envrc.*"],
     "bazelrc": [".bazelrc.*"],
+    "Dockerfile": ["Dockerfile", "Dockerfile.*"],
   },
   "languages": {
+    "Go": {
+      "language_servers": ["gopls", "golangci-lint"],
+    },
     "TypeScript": {
       "format_on_save": "on",
     },
@@ -80,6 +67,18 @@
     },
   },
   "lsp": {
+    "golangci-lint": {
+      "initialization_options": {
+        "command": [
+          "golangci-lint",
+          "run",
+          "--output.json.path",
+          "stdout",
+          "--show-stats=false",
+          "--output.text.path=",
+        ],
+      },
+    },
     "vtsls": {
       "settings": {
         "typescript": {
