@@ -3,45 +3,39 @@
   "lines": [
     [
       {
+        "id": "ccb022e8-0a81-4d51-beb3-59aa48c124db",
+        "type": "thinking-effort",
+        "color": "ansi256:103"
+      },
+      {
+        "id": "l1-sep-1",
+        "type": "separator",
+        "color": "ansi256:240"
+      },
+      {
         "id": "1",
         "type": "model",
-        "color": "ansi256:173"
+        "color": "ansi256:110"
       },
       {
         "id": "2",
-        "type": "separator"
+        "type": "separator",
+        "color": "ansi256:240"
       },
       {
         "id": "d6c8632d-4aee-4d63-9a85-3ed53e204cf7",
         "type": "session-usage",
-        "color": "brightCyan"
+        "color": "ansi256:73"
       },
       {
         "id": "b4e526b7-1bfa-4750-b069-db228fb90537",
-        "type": "separator"
+        "type": "separator",
+        "color": "ansi256:240"
       },
       {
         "id": "e876ebff-6067-4a47-af18-c93375e2b3ac",
         "type": "reset-timer",
-        "color": "brightCyan"
-      },
-      {
-        "id": "4",
-        "type": "separator"
-      },
-      {
-        "id": "8dad271d-3a41-44a9-8896-af61e4244ba9",
-        "type": "jj-bookmarks",
-        "color": "blue"
-      },
-      {
-        "id": "6",
-        "type": "separator"
-      },
-      {
-        "id": "d7ddf379-56b7-4a21-bba6-056858ab0dfa",
-        "type": "jj-changes",
-        "color": "yellow"
+        "color": "ansi256:66"
       },
       {
         "id": "93e36c9a-034d-480c-a497-f1aa8261f974",
@@ -50,42 +44,72 @@
       {
         "id": "0ab46855-0654-4f70-a209-b956ccac7afd",
         "type": "context-bar",
-        "color": "ansi256:166"
+        "color": "ansi256:173"
       }
     ],
     [
       {
-        "id": "ccb022e8-0a81-4d51-beb3-59aa48c124db",
-        "type": "thinking-effort"
-      },
-      {
-        "id": "2474bc32-5ae7-469a-9109-eb22a47ecaed",
-        "type": "separator"
-      },
-      {
         "id": "506058b9-7233-40a6-be8d-d221d1ea6f2f",
-        "type": "jj-root-dir"
+        "type": "jj-root-dir",
+        "color": "ansi256:108",
+        "metadata": {
+          "hideNoJj": "true"
+        }
       },
       {
-        "id": "e580aecf-7875-4d31-8655-75d8889a985c",
-        "type": "separator"
+        "id": "l2-sep-1",
+        "type": "separator",
+        "color": "ansi256:240"
       },
       {
         "id": "861ebc95-5ee5-4e3d-9829-6e9d0fa3808a",
-        "type": "jj-revision"
+        "type": "custom-command",
+        "commandPath": "jj root >/dev/null 2>&1 && jj --color=always log --no-graph -r @ -T 'change_id.shortest(8)' 2>/dev/null || true",
+        "preserveColors": true,
+        "timeout": 1000
       },
       {
-        "id": "2a23ae83-668e-4f2b-baf3-7e0c6ac2fc2c",
-        "type": "separator"
+        "id": "l2-sep-2",
+        "type": "separator",
+        "color": "ansi256:240"
+      },
+      {
+        "id": "8dad271d-3a41-44a9-8896-af61e4244ba9",
+        "type": "custom-command",
+        "commandPath": "jj root >/dev/null 2>&1 && b=$(jj log --no-graph -r 'heads(::@ & bookmarks())' -T bookmarks 2>/dev/null) && [ -n \"$b\" ] && printf '\\357\\204\\246 %s' \"$b\" || true",
+        "color": "ansi256:72",
+        "timeout": 1000
+      },
+      {
+        "id": "l2-sep-3",
+        "type": "separator",
+        "color": "ansi256:240"
+      },
+      {
+        "id": "d7ddf379-56b7-4a21-bba6-056858ab0dfa",
+        "type": "jj-changes",
+        "color": "ansi256:144",
+        "metadata": {
+          "hideNoJj": "true"
+        }
+      },
+      {
+        "id": "l2-sep-4",
+        "type": "separator",
+        "color": "ansi256:240"
       },
       {
         "id": "4812377a-4d3c-4ff0-aa82-7147d4a4638b",
-        "type": "jj-description"
+        "type": "jj-description",
+        "color": "ansi256:245",
+        "metadata": {
+          "hideNoJj": "true"
+        }
       }
     ],
     []
   ],
-  "flexMode": "full-minus-40",
+  "flexMode": "full",
   "compactThreshold": 60,
   "colorLevel": 2,
   "inheritSeparatorColors": false,
@@ -95,7 +119,7 @@
   "powerline": {
     "enabled": false,
     "separators": [
-      ""
+      ""
     ],
     "separatorInvertBackground": [
       false
