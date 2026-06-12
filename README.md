@@ -7,6 +7,7 @@ Managed with [GNU Stow](https://www.gnu.org/software/stow/).
 - `.gitconfig` — Git identity & settings
 - `.gitignore_global` — Global gitignore patterns
 - `.tmux.conf` — tmux configuration
+- `.config/ccstatusline/` — Claude Code statusline configuration
 - `.config/fish/` — Fish shell configuration
 - `.config/gh/` — GitHub CLI configuration
 - `.config/jj/` — Jujutsu VCS configuration

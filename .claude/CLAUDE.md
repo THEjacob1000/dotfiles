@@ -1,5 +1,5 @@
 <!-- OMC:START -->
-<!-- OMC:VERSION:4.13.7 -->
+<!-- OMC:VERSION:4.14.6 -->
 
 # oh-my-claudecode - Intelligent Multi-Agent Orchestration
 
@@ -156,3 +156,6 @@ Routing rules:
 - MCP server development, tool building → MCP Builder
 
 When a task spans multiple domains, delegate to the Agents Orchestrator and let it coordinate the appropriate sub-agents.
+# graphify
+- **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
+When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` before doing anything else.

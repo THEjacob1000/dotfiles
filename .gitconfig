@@ -10,3 +10,5 @@
 	name = Jacob Sanderson
 [coderabbit]
 	machineId = cli/f3655dbcac134317a961b20a92a970df
+[safe]
+	directory = /nix/store/qm8jb5pnbriakjvgh59qc4517ag6h26m-flutter-3.44.1

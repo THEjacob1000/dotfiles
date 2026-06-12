@@ -1,95 +1,9 @@
 {
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
-    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "60",
-    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-haiku-4-5-20251001",
-    "CLAUDE_MEM_CONTEXT_OBSERVATIONS": "30",
-    "CLAUDE_MEM_CONTEXT_FULL_COUNT": "5",
-    "GITHUB_LOCKDOWN_MODE": "1",
-    "GITHUB_READ_ONLY": "0"
-  },
-  "permissions": {
-    "deny": [
-      "Read(node_modules/**)",
-      "Read(dist/**)",
-      "Read(build/**)",
-      "Read(.git/**)",
-      "Read(coverage/**)",
-      "Read(__pycache__/**)",
-      "Read(.mypy_cache/**)",
-      "Read(.pytest_cache/**)",
-      "Read(target/debug/**)",
-      "Read(target/release/**)",
-      "Read(.bun/**)",
-      "Read(.nx/cache/**)",
-      "Read(.turbo/**)",
-      "Bash(git commit --no-verify*)",
-      "Bash(jj commit --no-verify*)"
-    ]
-  },
-  "model": "sonnet",
   "statusLine": {
     "type": "command",
-    "command": "sh ${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hud/omc-hud-cache.sh ${CLAUDE_CONFIG_DIR:-$HOME/.claude}/hud/omc-hud.mjs"
+    "command": "bunx -y ccstatusline@latest",
+    "padding": 0,
+    "refreshInterval": 10
   },
-  "enabledPlugins": {
-    "frontend-design@claude-plugins-official": true,
-    "rust-analyzer-lsp@claude-plugins-official": true,
-    "oh-my-claudecode@omc": true,
-    "gopls-lsp@claude-plugins-official": true,
-    "frontend-design@claude-code-plugins": true,
-    "datadog@claude-plugins-official": true,
-    "context7@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "chrome-devtools-mcp@claude-plugins-official": true,
-    "claude-mem@thedotmack": true,
-    "railway@railway-skills": true,
-    "agent-browser@agent-browser": true
-  },
-  "extraKnownMarketplaces": {
-    "omc": {
-      "source": {
-        "source": "git",
-        "url": "https://github.com/Yeachan-Heo/oh-my-claudecode.git"
-      }
-    },
-    "chrome-devtools-plugins": {
-      "source": {
-        "source": "github",
-        "repo": "ChromeDevTools/chrome-devtools-mcp"
-      }
-    },
-    "thedotmack": {
-      "source": {
-        "source": "github",
-        "repo": "thedotmack/claude-mem"
-      }
-    },
-    "claude-plugin-jj": {
-      "source": {
-        "source": "github",
-        "repo": "kawaz/claude-plugin-jj"
-      }
-    },
-    "ast-grep-marketplace": {
-      "source": {
-        "source": "github",
-        "repo": "ast-grep/agent-skill"
-      }
-    },
-    "railway-skills": {
-      "source": {
-        "source": "github",
-        "repo": "railwayapp/railway-skills"
-      }
-    },
-    "agent-browser": {
-      "source": {
-        "source": "github",
-        "repo": "vercel-labs/agent-browser"
-      }
-    }
-  },
-  "alwaysThinkingEnabled": true,
   "skipDangerousModePermissionPrompt": true
 }
