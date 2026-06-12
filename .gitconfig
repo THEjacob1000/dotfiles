@@ -12,3 +12,4 @@
 	machineId = cli/f3655dbcac134317a961b20a92a970df
 [safe]
 	directory = /nix/store/qm8jb5pnbriakjvgh59qc4517ag6h26m-flutter-3.44.1
+	directory = /nix/store/cyq880l2h6zyv8k5f803hxvp3pwjvz5i-flutter-3.44.1

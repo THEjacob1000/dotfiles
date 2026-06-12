@@ -25,6 +25,10 @@ just = "latest"
 pnpm = "10.33"
 direnv = "latest"
 firebase = "latest"
+sentry = "latest"
+sqlite = "latest"
+python = "latest"
+aws = { version = "latest", symlink_bins = "true" }
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
