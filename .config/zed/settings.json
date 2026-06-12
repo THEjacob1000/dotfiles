@@ -7,113 +7,219 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
-  "cli_default_open_behavior": "new_window",
-  "project_panel": {
-    "dock": "left",
-  },
-  "outline_panel": {
-    "dock": "left",
-  },
-  "collaboration_panel": {
-    "dock": "left",
-  },
-  "git_panel": {
-    "dock": "left",
-  },
-  "diff_view_style": "split",
-  "agent": {
-    "dock": "right",
-    "tool_permissions": {
-      "default": "allow",
-    },
-    "default_model": {
-      "provider": "openai",
-      "model": "gpt-5",
-    },
-  },
-  "vim_mode": false,
-  "icon_theme": {
-    "mode": "dark",
-    "light": "VSCode Icons",
-    "dark": "VSCode Icons",
-  },
-  "ui_font_size": 16,
-  "buffer_font_size": 15,
-  "theme": {
-    "mode": "dark",
-    "light": "One Light",
-    "dark": "Sandy Dark",
-  },
-  "file_types": {
-    "Shell Script": ["conf", ".dev.vars", ".envrc", ".envrc.*"],
-    "bazelrc": [".bazelrc.*"],
-    "Dockerfile": ["Dockerfile", "Dockerfile.*"],
-  },
-  "languages": {
-    "Go": {
-      "language_servers": ["gopls", "golangci-lint"],
-    },
-    "TypeScript": {
-      "format_on_save": "on",
-    },
-    "TSX": {
-      "format_on_save": "on",
-    },
-    "JSON": {
-      "format_on_save": "on",
-    },
-    "JSONC": {
-      "format_on_save": "on",
-    },
-  },
-  "lsp": {
-    "golangci-lint": {
-      "initialization_options": {
-        "command": [
-          "golangci-lint",
-          "run",
-          "--output.json.path",
-          "stdout",
-          "--show-stats=false",
-          "--output.text.path=",
-        ],
-      },
-    },
-    "vtsls": {
-      "settings": {
-        "typescript": {
-          "updateImportsOnFileMove": {
-            "enabled": "always",
-          },
-        },
-        "javascript": {
-          "updateImportsOnFileMove": {
-            "enabled": "always",
-          },
-        },
-      },
-      "enable_lsp_tasks": true,
-    },
-    "dart": {
-      "binary": {
-        "path": "/home/jacob/.local/share/mise/installs/flutter/3.38.5-stable/bin/dart",
-        "arguments": ["language-server", "--protocol=lsp"],
-      },
-    },
-  },
-  "terminal": {
-    "shell": {
-      "program": "/usr/bin/fish",
-    },
-    "detect_venv": {
-      "on": {
-        // Default directories to search for virtual environments, relative
-        // to the current working directory. We recommend overriding this
-        // in your project's settings, rather than globally.
-        "directories": [".env", "env", ".venv", "venv"],
-        // Can also be `csh`, `fish`, and `nushell`
-        "activate_script": "default",
-      },
-    },
-  },
+	"cli_default_open_behavior": "new_window",
+	"project_panel": {
+		"dock": "left"
+	},
+	"outline_panel": {
+		"dock": "left"
+	},
+	"collaboration_panel": {
+		"dock": "left"
+	},
+	"git_panel": {
+		"dock": "left"
+	},
+	"diff_view_style": "split",
+	"agent": {
+		"dock": "right",
+		"tool_permissions": {
+			"default": "allow"
+		},
+		"default_model": {
+			"provider": "openai",
+			"model": "gpt-5"
+		}
+	},
+	"vim_mode": false,
+	"icon_theme": {
+		"mode": "dark",
+		"light": "VSCode Icons",
+		"dark": "VSCode Icons"
+	},
+	"ui_font_size": 16,
+	"buffer_font_size": 15,
+	"theme": {
+		"mode": "dark",
+		"light": "One Light",
+		"dark": "Sandy Dark"
+	},
+	"file_types": {
+		"Shell Script": ["conf", ".dev.vars", ".envrc", ".envrc.*"],
+		"bazelrc": [".bazelrc.*"],
+		"Dockerfile": ["Dockerfile", "Dockerfile.*"]
+	},
+	"languages": {
+		"CSS": {
+			"code_actions_on_format": {
+				"source.fixAll.biome": true
+			},
+			"use_on_type_format": false,
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"GraphQL": {
+			"code_actions_on_format": {
+				"source.fixAll.biome": true
+			},
+			"use_on_type_format": false,
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"GritQL": {
+			"code_actions_on_format": {
+				"source.fixAll.biome": true
+			},
+			"use_on_type_format": false,
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"Go": {
+			"language_servers": ["gopls", "golangci-lint"]
+		},
+		"JavaScript": {
+			"code_actions_on_format": {
+				"source.action.useSortedKeys.biome": true,
+				"source.fixAll.biome": true,
+				"source.organizeImports.biome": true
+			},
+			"use_on_type_format": false,
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"JSON": {
+			"format_on_save": "on",
+			"code_actions_on_format": {
+				"source.action.useSortedKeys.biome": true,
+				"source.fixAll.biome": true
+			},
+			"use_on_type_format": false,
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"JSONC": {
+			"format_on_save": "on",
+			"code_actions_on_format": {
+				"source.action.useSortedKeys.biome": true,
+				"source.fixAll.biome": true
+			},
+			"use_on_type_format": false,
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"Markdown": {
+			"code_actions_on_format": {
+				"source.fixAll.biome": true
+			},
+			"use_on_type_format": false,
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"TSX": {
+			"format_on_save": "on",
+			"code_actions_on_format": {
+				"source.action.useSortedKeys.biome": true,
+				"source.fixAll.biome": true,
+				"source.organizeImports.biome": true
+			},
+			"use_on_type_format": false,
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		},
+		"TypeScript": {
+			"format_on_save": "on",
+			"code_actions_on_format": {
+				"source.action.useSortedKeys.biome": true,
+				"source.fixAll.biome": true,
+				"source.organizeImports.biome": true
+			},
+			"use_on_type_format": false,
+			"formatter": {
+				"language_server": {
+					"name": "biome"
+				}
+			}
+		}
+	},
+	"lsp": {
+		"biome": {
+			"settings": {
+				"require_config_file": true
+			}
+		},
+		"golangci-lint": {
+			"initialization_options": {
+				"command": [
+				  "go",
+          "tool",
+					"golangci-lint",
+					"run",
+					"--output.json.path",
+					"stdout",
+					"--show-stats=false",
+					"--output.text.path="
+				]
+			}
+		},
+		"vtsls": {
+			"settings": {
+				"typescript": {
+					"updateImportsOnFileMove": {
+						"enabled": "always"
+					}
+				},
+				"javascript": {
+					"updateImportsOnFileMove": {
+						"enabled": "always"
+					}
+				}
+			},
+			"enable_lsp_tasks": true
+		},
+		"dart": {
+			"binary": {
+				"path": "/home/jacob/.local/share/mise/installs/flutter/3.38.5-stable/bin/dart",
+				"arguments": ["language-server", "--protocol=lsp"]
+			}
+		}
+	},
+	"terminal": {
+		"shell": {
+			"program": "/usr/bin/fish"
+		},
+		"detect_venv": {
+			"on": {
+				// Default directories to search for virtual environments, relative
+				// to the current working directory. We recommend overriding this
+				// in your project's settings, rather than globally.
+				"directories": [".env", "env", ".venv", "venv"],
+				// Can also be `csh`, `fish`, and `nushell`
+				"activate_script": "default"
+			}
+		}
+	}
 }

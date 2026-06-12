@@ -141,6 +141,34 @@ function jlw
    watch -n $interval --color jj log --color=always
 end
 
+function jdf
+    set revset 'trunk()..@'
+
+    if test (count $argv) -gt 0
+        set revset $argv[1]
+    end
+
+    set revs (jj log --no-graph --reversed -r "$revset" -T 'change_id.shortest() ++ "\n"')
+
+    if test (count $revs) -eq 0
+        echo "No commits matched: $revset"
+        return 0
+    end
+
+    for rev in $revs
+        set full_msg (jj log --no-graph -r "$rev" -T 'description' | string collect)
+        set first_line (string split \n -- $full_msg)[1]
+
+        if test "$full_msg" = "$first_line"
+            echo "$rev: unchanged"
+            continue
+        end
+
+        echo "$rev: $first_line"
+        jj --quiet desc "$rev" --message "$first_line"
+    end
+end
+
 # ---------------------------------------------------------
 # jbc completions
 # ---------------------------------------------------------
