@@ -87,11 +87,10 @@
       },
       {
         "id": "d7ddf379-56b7-4a21-bba6-056858ab0dfa",
-        "type": "jj-changes",
-        "color": "ansi256:144",
-        "metadata": {
-          "hideNoJj": "true"
-        }
+        "type": "custom-command",
+        "commandPath": "jj root >/dev/null 2>&1 && { stat=$(jj diff --stat 2>/dev/null); line=$(printf \"%s\\n\" \"$stat\" | tail -1); ins=$(printf \"%s\" \"$line\" | grep -oE \"[0-9]+ insertion\" | grep -oE \"[0-9]+\"); del=$(printf \"%s\" \"$line\" | grep -oE \"[0-9]+ deletion\" | grep -oE \"[0-9]+\"); printf \"\\033[38;5;245m(\\033[38;5;71m+%s\\033[38;5;245m,\\033[38;5;131m-%s\\033[38;5;245m)\\033[0m\" \"${ins:-0}\" \"${del:-0}\"; } || true",
+        "preserveColors": true,
+        "timeout": 1000
       },
       {
         "id": "l2-sep-4",

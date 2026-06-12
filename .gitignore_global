@@ -1,6 +1,9 @@
 .envrc.*
 .claude/settings.local.json
+.claude/reviews
 settings.local.json
+.bk.yaml
+.output
 **/.om[cx]/sessions
 **/.om[cx]/state
 **/.om[cx]/*.json

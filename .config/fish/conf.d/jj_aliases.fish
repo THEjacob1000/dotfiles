@@ -157,7 +157,14 @@ function jdf
 
     for rev in $revs
         set full_msg (jj log --no-graph -r "$rev" -T 'description' | string collect)
-        set first_line (string split \n -- $full_msg)[1]
+        set description_lines (string split \n -- $full_msg)
+        set usable_lines (string match --invert --regex '^JJ: ' -- $description_lines)
+        set first_line $usable_lines[1]
+
+        if test -z "$first_line"
+            echo "$rev: no usable description"
+            continue
+        end
 
         if test "$full_msg" = "$first_line"
             echo "$rev: unchanged"
