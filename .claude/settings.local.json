@@ -1,5 +1,13 @@
 {
   "permissions": {
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(jj git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(git remote add:*)",
+      "Bash(git remote set-url:*)"
+    ],
     "allow": [
       "Bash(lsb_release:*)",
       "Bash(dpkg:*)",
@@ -8,7 +16,12 @@
       "Bash(lsmod:*)",
       "Bash(sudo mkdir:*)",
       "Bash(chmod:*)",
-      "Bash(jj git:*)",
+      "Bash(jj git fetch:*)",
+      "Bash(jj git import:*)",
+      "Bash(jj git export:*)",
+      "Bash(jj git remote:*)",
+      "Bash(jj git init:*)",
+      "Bash(jj git clone:*)",
       "Bash(stow .)",
       "Bash(jj log:*)",
       "Bash(jj status:*)",
