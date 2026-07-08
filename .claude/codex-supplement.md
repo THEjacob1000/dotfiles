@@ -34,6 +34,26 @@ Default model is `gpt-5.5`. Use `/agent` to inspect and steer child agents;
 profile (read-only sandbox) for exploration and reserve `yolo` for trusted,
 well-scoped local work.
 
+### Session preamble — read shared memory
+At the start of a coding session, if working inside a project directory, check for
+a Claude-side memory index and read it if present (it carries durable, non-obvious
+facts about the project — decisions, gotchas, live-box quirks):
+
+    ~/.claude/projects/<project-slug>/memory/MEMORY.md
+
+where `<project-slug>` is the project's absolute path with `/` replaced by `-`
+(e.g. `/home/jacob/Documents/Developer/numen` → `-home-jacob-Documents-Developer-numen`).
+MEMORY.md is a one-line-per-fact index; open a linked file under that `memory/`
+dir only when its hook looks relevant. This is a read-only convenience so Codex
+and Claude share the same memory without relocating either store.
+
 ### MCP
-A local `jj` MCP server is configured — prefer it for jj operations. Context7 and
-chrome-devtools MCP servers are available; use them only when a task needs them.
+Two ways in to Numen's memory/context, both engine-agnostic:
+- The **numen** MCP server (registered in `~/.codex/config.toml [mcp_servers]`)
+  exposes loom's read surfaces (memory search/facts/episodes/brief/node) and a
+  `chat` tool over loom's authenticated socket. Prefer it for live memory queries.
+- The `handoff` script (numen `harness/bin/handoff`) carries state-of-work between
+  sessions/engines and, when the vault is wired, pushes it into memory for free.
+
+A local `jj` MCP server is also configured — prefer it for jj operations. Context7
+and chrome-devtools MCP servers are available; use them only when a task needs them.
