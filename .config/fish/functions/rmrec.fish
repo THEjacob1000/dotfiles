@@ -1,10 +1,18 @@
-function rmrec
+function rmrec --description 'Recursively remove directories matching any supplied name'
     if test (count $argv) -eq 0
-        echo "usage: rmrec <name>"
+        echo "usage: rmrec <name> [name ...]" >&2
         return 1
     end
 
-    set name $argv[1]
+    set -l escaped_names (string escape --style=regex -- $argv)
+    set -l pattern '^(?:'(string join '|' $escaped_names)')$'
 
-    find . -name "$name" -type d -prune -print -exec rm -rf {} +
+    fd \
+        --hidden \
+        --no-ignore \
+        --one-file-system \
+        --type directory \
+        --print0 \
+        -- "$pattern" . \
+    | xargs -0 --no-run-if-empty --max-procs=8 rm -rf --
 end

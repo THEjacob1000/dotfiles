@@ -1,15 +1,12 @@
 {
   "env": {
-    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-opus-4-8",
-    "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1",
-    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "200000",
-    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "40",
     "ECC_GATEGUARD": "off"
   },
-  "model": "fable",
+  "model": "opus",
   "statusLine": {
     "type": "command",
-    "command": "/home/jacob/.bun/bin/ccstatusline",
+    "command": "bunx -y ccstatusline@latest",
     "padding": 0,
     "refreshInterval": 10
   },
@@ -21,7 +18,9 @@
     "ecc@ecc": true,
     "ralph-loop@claude-plugins-official": true,
     "sentry-cli@claude-plugins-official": true,
-    "pyright-lsp@claude-plugins-official": true
+    "pyright-lsp@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "i-have-adhd@i-have-adhd": true
   },
   "extraKnownMarketplaces": {
     "ecc": {
@@ -41,9 +40,16 @@
         "source": "github",
         "repo": "fallow-rs/fallow-skills"
       }
+    },
+    "i-have-adhd": {
+      "source": {
+        "source": "directory",
+        "path": "/home/jacob/Documents/Developer/i-have-adhd"
+      }
     }
   },
   "effortLevel": "high",
   "tui": "fullscreen",
-  "skipDangerousModePermissionPrompt": true
+  "skipDangerousModePermissionPrompt": true,
+  "agentPushNotifEnabled": true
 }
