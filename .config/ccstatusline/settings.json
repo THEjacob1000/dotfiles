@@ -33,9 +33,9 @@
         "color": "ansi256:240"
       },
       {
-        "id": "e876ebff-6067-4a47-af18-c93375e2b3ac",
-        "type": "reset-timer",
-        "color": "ansi256:66"
+        "id": "7447fbf3-d2a6-4dcf-940a-d3ef7ac3cdc8",
+        "type": "weekly-usage",
+        "color": "ansi256:73"
       },
       {
         "id": "93e36c9a-034d-480c-a497-f1aa8261f974",
@@ -76,8 +76,8 @@
       {
         "id": "8dad271d-3a41-44a9-8896-af61e4244ba9",
         "type": "custom-command",
-        "commandPath": "jj root >/dev/null 2>&1 && b=$(jj log --no-graph -r 'heads(::@ & bookmarks())' -T bookmarks 2>/dev/null) && [ -n \"$b\" ] && printf '\\357\\204\\246 %s' \"$b\" || true",
         "color": "ansi256:72",
+        "commandPath": "jj root >/dev/null 2>&1 && b=$(jj log --no-graph -r 'heads(::@ & bookmarks())' -T bookmarks 2>/dev/null) && [ -n \"$b\" ] && printf '\\357\\204\\246 %s' \"$b\" || true",
         "timeout": 1000
       },
       {
@@ -106,7 +106,23 @@
         }
       }
     ],
-    []
+    [
+      {
+        "id": "f63f9ac8-fefb-4c7b-ad04-fc4a42237a1c",
+        "type": "reset-timer",
+        "color": "ansi256:66"
+      },
+      {
+        "id": "5caf84a9-57af-4fd0-b8a5-9431e809324c",
+        "type": "separator",
+        "color": "ansi256:240"
+      },
+      {
+        "id": "8dfdb4cd-5a63-44e4-931e-c7dc1937951b",
+        "type": "weekly-reset-timer",
+        "color": "ansi256:66"
+      }
+    ]
   ],
   "flexMode": "full",
   "compactThreshold": 60,

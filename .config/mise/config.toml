@@ -22,13 +22,14 @@ railway = { version = "latest", exe = "railway" }
 jjui = "latest"
 "github:rabbitmq/rabbitmqadmin-ng" = "latest"
 just = "latest"
-pnpm = "10.33"
+pnpm = "latest"
 direnv = "latest"
 firebase = "latest"
 sentry = "latest"
 sqlite = "latest"
 python = "latest"
 aws = { version = "latest", symlink_bins = "true" }
+gemini = "latest"
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"]

@@ -76,8 +76,12 @@ Fable is the orchestrator — its tokens are for synthesis and decisions only.
   reports, makes final calls.
 - **opus** (`model: "opus"`): complex work needing real thought — implementation,
   debugging/root-cause, architecture analysis, code review, multi-step research.
-- **sonnet** (`model: "sonnet"`): grunt work with little thinking — bulk
-  search/inventory, mechanical refactors, log scanning, formatting, running suites.
+- **sonnet** (`model: "sonnet"`): grunt work needing a little judgment — targeted
+  search, mechanical refactors that touch logic, triaging suite failures.
+- **haiku** (`model: "haiku"`): real grunt work, no judgment — file inventory,
+  literal grep/glob sweeps, formatting, running a suite and reporting output,
+  log scanning for known patterns. Default here when a task has one obvious
+  answer; only step up to sonnet if it needs a call made.
 
 **Delegate ALWAYS when possible** — a hard rule, not a preference. Fable plans,
 dispatches, and synthesizes; it does not read file sets, run searches, write code,
@@ -85,8 +89,9 @@ or scan output itself when a subagent could. Inline-only work: the plan, reading
 reports, resolving conflicts between them, tiny glue actions, final synthesis.
 
 Whom to delegate to:
-- Bulk search/analysis → Explore or general-purpose (sonnet for lookups, opus for
-  judgment-heavy analysis); parallel when independent.
+- Bulk search/analysis → Explore or general-purpose (haiku for mechanical sweeps,
+  sonnet for lookups needing judgment, opus for judgment-heavy analysis); parallel
+  when independent.
 - After nontrivial changes → the matching `ecc:<lang>-reviewer` on opus.
 - Feature work → the closest installed specialist agent; fan out on multi-domain
   tasks and synthesize their reports.
