@@ -3,11 +3,11 @@
     "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "40",
     "ECC_GATEGUARD": "off"
   },
-  "model": "opus",
   "attribution": {
     "commit": "",
     "pr": ""
   },
+  "model": "opus",
   "statusLine": {
     "type": "command",
     "command": "bunx -y ccstatusline@latest",

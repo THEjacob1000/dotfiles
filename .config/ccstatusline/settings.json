@@ -24,18 +24,10 @@
       },
       {
         "id": "d6c8632d-4aee-4d63-9a85-3ed53e204cf7",
-        "type": "session-usage",
-        "color": "ansi256:73"
-      },
-      {
-        "id": "b4e526b7-1bfa-4750-b069-db228fb90537",
-        "type": "separator",
-        "color": "ansi256:240"
-      },
-      {
-        "id": "7447fbf3-d2a6-4dcf-940a-d3ef7ac3cdc8",
-        "type": "weekly-usage",
-        "color": "ansi256:73"
+        "type": "custom-command",
+        "color": "ansi256:73",
+        "commandPath": "~/.claude/statusline-limits.py usage",
+        "timeout": 4000
       },
       {
         "id": "93e36c9a-034d-480c-a497-f1aa8261f974",
@@ -109,18 +101,10 @@
     [
       {
         "id": "f63f9ac8-fefb-4c7b-ad04-fc4a42237a1c",
-        "type": "reset-timer",
-        "color": "ansi256:66"
-      },
-      {
-        "id": "5caf84a9-57af-4fd0-b8a5-9431e809324c",
-        "type": "separator",
-        "color": "ansi256:240"
-      },
-      {
-        "id": "8dfdb4cd-5a63-44e4-931e-c7dc1937951b",
-        "type": "weekly-reset-timer",
-        "color": "ansi256:66"
+        "type": "custom-command",
+        "color": "ansi256:66",
+        "commandPath": "~/.claude/statusline-limits.py resets",
+        "timeout": 4000
       }
     ]
   ],

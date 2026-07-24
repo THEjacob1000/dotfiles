@@ -82,6 +82,13 @@ set -gx OMX_TEAM_WORKER_LAUNCH_ARGS "--approval-policy auto"
 # Quiet greeting
 set -g fish_greeting
 
+# VTE terminals (guake) send plain ^H for ctrl+backspace; kitty-protocol ones (zed) send ctrl-backspace
+bind ctrl-h backward-kill-word
+bind ctrl-backspace backward-kill-word
+
+# VTE can't distinguish shift+enter, so alt+enter is the portable "newline" key
+bind alt-enter 'commandline -i \n'
+
 if status is-interactive; and not string match -q "screen*" $TERM; and not string match -q "tmux*" $TERM
     set -l session_name (if test "$PWD" = "$HOME"; echo main; else; basename $PWD; end)
     exec tmux new-session -A -s $session_name
