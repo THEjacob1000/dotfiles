@@ -25,19 +25,17 @@ jj git push --bookmark feature/<2-3-word-description>
 ```
 Branch naming convention: `feature/`, `fix/`, `chore/`, `refactor/` prefix + 2-3 word kebab-case description.
 
-**Step 2 — Create the draft PR with a written description (never --fill alone):**
+**Step 2 — Find and fill the repository template before writing a fallback body:**
+
+Check the repository root, `docs/`, `.github/`, and their
+`PULL_REQUEST_TEMPLATE/` directories. Preserve every section in a detected template,
+write the filled result to a temporary file, and pass it with `--body-file`.
+
+Only when no template exists, create a short fallback draft:
 ```
-gh pr create --draft --base main --head feature/<name> --title "<title>" --body "$(cat <<'EOF'
-## Problem
-<What was broken and why it mattered>
-
-## Changes
-<What was changed and the reasoning>
-
-## Behaviour / Notes
-<Any tables, edge cases, or reviewer guidance>
-EOF
-)"
+# Write one to three short paragraphs to <draft>: what changed, why, and any
+# material risk or dependency.
+gh pr create --draft --base main --head feature/<name> --title "<title>" --body-file <draft>
 ```
 
 **Step 3 — If cleanup is needed (push-* bookmark already exists):**
@@ -51,10 +49,12 @@ gh pr create --draft --base main --head feature/<name> ...
 
 ## PR Description Guidelines
 
-- **Problem** section: what was broken, not what was changed
-- **Changes** section: the approach taken and why, not a diff summary
-- Use a table for before/after behaviour when there are multiple scenarios
-- Keep it concise — reviewers read it before they read the code
+- Use Jacob's direct voice: short declarative paragraphs and concrete behaviour.
+- Preserve a repository template, but fill only applicable sections.
+- Target 100-200 words outside required template text.
+- Include tests, dependencies, rollout, or rollback only when material.
+- Omit file-by-file narration, repeated summaries, agent/reviewer process, decorative
+  tables, and evidence already visible in CI.
 
 ## Example (from session)
 

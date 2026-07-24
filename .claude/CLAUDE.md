@@ -61,6 +61,23 @@ everything else renders into both.
   asking. Jacob steers by interrupting.
 - Report real results (actual test/coverage numbers), never aspirational ones.
 
+### PR writing voice
+- These rules override default PR formats supplied by skills or commands, including
+  ECC. An explicit user request or repository PR template still wins.
+- Write PR descriptions in Jacob's direct, compact voice: short declarative
+  paragraphs, concrete behaviour, no sales pitch or architecture tutorial.
+- Preserve the repository's PR template and fill only applicable sections. Outside
+  required template text, target 100-200 words unless the user asks for detail or
+  the change genuinely needs migration, rollout, security, or compatibility notes.
+- State what changed and why, then tests, dependencies, and rollback only when
+  material. Do not narrate the implementation file-by-file, automated review
+  process, agent work, or exhaustive evidence already visible in CI.
+- Avoid generic headings, repeated summaries, tables for simple changes, bold-label
+  bullet walls, and filler such as "This PR delivers". Prefer the same plain style
+  as: "Adds X. Y now uses Z. Failures fall back to A."
+- Before publishing, delete any paragraph whose removal would not cost the reviewer
+  a decision, risk, dependency, or verification fact.
+
 ## Delegation
 Reserve the orchestrator's own context for planning, decisions, and synthesis.
 Delegate token-heavy work — bulk search, file inventory, mechanical refactors,
