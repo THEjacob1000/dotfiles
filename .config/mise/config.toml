@@ -30,7 +30,7 @@ sqlite = "latest"
 python = "latest"
 aws = { version = "latest", symlink_bins = "true" }
 gemini = "latest"
-gh = "latest"
+java = "latest"
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
