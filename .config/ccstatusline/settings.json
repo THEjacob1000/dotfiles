@@ -4,8 +4,10 @@
     [
       {
         "id": "ccb022e8-0a81-4d51-beb3-59aa48c124db",
-        "type": "thinking-effort",
-        "color": "ansi256:103"
+        "type": "custom-command",
+        "color": "ansi256:103",
+        "commandPath": "python3 /home/jacob/.claude/statusline/limits.py effort",
+        "timeout": 1000
       },
       {
         "id": "l1-sep-1",
@@ -23,11 +25,11 @@
         "color": "ansi256:240"
       },
       {
-        "id": "d6c8632d-4aee-4d63-9a85-3ed53e204cf7",
+        "id": "limits-usage",
         "type": "custom-command",
         "color": "ansi256:73",
-        "commandPath": "~/.claude/statusline-limits.py usage",
-        "timeout": 4000
+        "commandPath": "python3 /home/jacob/.claude/statusline/limits.py usage",
+        "timeout": 3500
       },
       {
         "id": "93e36c9a-034d-480c-a497-f1aa8261f974",
@@ -100,11 +102,11 @@
     ],
     [
       {
-        "id": "f63f9ac8-fefb-4c7b-ad04-fc4a42237a1c",
+        "id": "limits-resets",
         "type": "custom-command",
         "color": "ansi256:66",
-        "commandPath": "~/.claude/statusline-limits.py resets",
-        "timeout": 4000
+        "commandPath": "python3 /home/jacob/.claude/statusline/limits.py resets",
+        "timeout": 3500
       }
     ]
   ],
