@@ -1,13 +1,63 @@
 {
   "env": {
     "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "40",
+    "DISABLE_EXTRA_USAGE_COMMAND": "1",
     "ECC_GATEGUARD": "off"
   },
   "attribution": {
     "commit": "",
     "pr": ""
   },
+  "permissions": {
+    "defaultMode": "default"
+  },
   "model": "opus",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "voice-lint --hook",
+            "if": "Bash(gh *)",
+            "statusMessage": "Checking voice"
+          },
+          {
+            "type": "command",
+            "command": "pr-template-check --hook",
+            "if": "Bash(gh pr create *)",
+            "statusMessage": "Checking PR template"
+          },
+          {
+            "type": "command",
+            "command": "pr-template-check --hook",
+            "if": "Bash(gh pr edit *)",
+            "statusMessage": "Checking PR template"
+          },
+          {
+            "type": "command",
+            "command": "voice-lint --hook",
+            "if": "Bash(jj describe *)",
+            "statusMessage": "Checking voice"
+          },
+          {
+            "type": "command",
+            "command": "voice-lint --hook",
+            "if": "Bash(jj commit *)",
+            "statusMessage": "Checking voice"
+          },
+          {
+            "type": "command",
+            "command": "voice-lint --hook",
+            "if": "Bash(git commit *)",
+            "statusMessage": "Checking voice"
+          }
+        ]
+      }
+    ]
+  },
+  "workflowKeywordTriggerEnabled": false,
   "statusLine": {
     "type": "command",
     "command": "bunx -y ccstatusline@latest",
@@ -55,5 +105,6 @@
   "effortLevel": "high",
   "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,
+  "switchModelsOnFlag": false,
   "agentPushNotifEnabled": true
 }
