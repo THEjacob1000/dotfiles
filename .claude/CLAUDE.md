@@ -21,7 +21,10 @@ everything else renders into both.
   colocated jj+git repos). Only fall back to git in a plain-git repo with no
   `.jj/`. Never `git diff/show/log` in a jj repo — use `jj diff` / `jj log`.
 - Branches/bookmarks: `feat/`, `fix/`, `chore/`, `refactor/`. Conventional commits.
-- One logical step = one local commit with a conventional message.
+- One logical step = one local commit with a conventional message. Subject line
+  only, never a body, and it names the actual change ("fix: null-check geocode
+  response", not "chore: implemented PR feedback"). Merge commits keep the
+  standard `Merge branch 'x' into y`, not a conventional prefix.
 - In a shared working copy, scope commits to the files you touched (e.g. jj
   filesets) — a bare commit sweeps every pending change, including other agents'.
 - Run lint + typecheck + tests before committing.
@@ -87,6 +90,37 @@ when the work is independent. Pick a capable model for judgment-heavy work
 work. After any nontrivial change, run a code review before considering the work
 done.
 
+Delegation protects context; it is not a reflex. Size the response to the prompt,
+not to the topic's importance. Do it inline when:
+- The prompt is a **question** — "is X done?", "can we start Y?", "what's the state
+  of Z?". Answering means reading a doc or two and saying so. Spawning an agent to
+  answer a question you could answer in three tool calls is a loss, and a status
+  question about a big subsystem is still just a question.
+- The whole job is a handful of greps, a few file reads, or a single-file edit.
+- You already have the answer in context.
+
+Never spawn an agent whose output you would only relay. If a fresh agent would need
+a long brief just to start, writing the brief was the expensive part — do the work.
+
+### Stay unoccupied
+Once work is delegated, the orchestrator's remaining job is to be reachable. Any
+foreground block — a long command, a blocking wait, a synchronous agent run — stops
+three things at once: new prompts from Jacob, messages from the subagents already
+running, and their completion notifications. The input you are blocking out is often
+the input that would change the plan.
+
+So **the orchestrator never occupies its foreground with anything that has
+duration.** Subagents, test suites, builds, long scans and waits all go to the
+background; the notification brings the result back. Waiting is not work — if
+nothing is left to do inline, end the turn rather than hold it open with a
+blocking command, and never poll a job that will notify you. Inside an autonomous
+loop, where ending the turn ends the loop, park on the loop's own wakeup
+(`ScheduleWakeup`, a `Monitor`) — still never on a blocking waiter.
+
+Being occupied is legitimate only while composing and dispatching a delegation, or
+for a short synchronous read whose answer decides the very next action. If a call
+could outlast a sentence or two, background it instead.
+
 ### Delegation → Claude model tiers
 Fable is the orchestrator — its tokens are for synthesis and decisions only.
 - **fable**: never delegate to. Orchestrates, designs, synthesizes subagent
@@ -100,10 +134,20 @@ Fable is the orchestrator — its tokens are for synthesis and decisions only.
   log scanning for known patterns. Default here when a task has one obvious
   answer; only step up to sonnet if it needs a call made.
 
-**Delegate ALWAYS when possible** — a hard rule, not a preference. Fable plans,
-dispatches, and synthesizes; it does not read file sets, run searches, write code,
-or scan output itself when a subagent could. Inline-only work: the plan, reading
-reports, resolving conflicts between them, tiny glue actions, final synthesis.
+**Delegate ALWAYS for token-heavy work** — for that class it is a hard rule, not a
+preference: Fable plans, dispatches, and synthesizes rather than reading large file
+sets, sweeping searches, writing bulk code, or scanning long output itself. It does
+not override the inline gate above — a question, a couple of greps, or one small
+edit stays on the main thread. Inline work: the plan, those small actions, reading
+reports, resolving conflicts between them, final synthesis.
+
+In practice that means never passing `run_in_background: false` to the Agent tool —
+the default is background, keep it — and `run_in_background: true` on any Bash call
+that runs a suite, a build, or a long scan. Never `TaskOutput` with `block: true`,
+and never hold the turn open on a foreground waiter (`tail -f`, poll loop, `timeout
+… until …`); a background Bash `until` loop or `Monitor` delivers the same signal as
+a notification. Read a finished agent's verdict from its completion notification,
+not by blocking on it or opening its transcript.
 
 Whom to delegate to:
 - Bulk search/analysis → Explore or general-purpose (haiku for mechanical sweeps,
