@@ -102,6 +102,22 @@
       },
       "use_on_type_format": false
     },
+    "Rust": {
+      "format_on_save": "on",
+      "formatter": [
+        {
+          "language_server": {
+            "name": "rust-analyzer"
+          }
+        },
+        {
+          "external": {
+            "command": "/home/jacob/.config/zed/formatters/rust_decimal_separators.py",
+            "arguments": []
+          }
+        }
+      ]
+    },
     "TSX": {
       "format_on_save": "on",
       "code_actions_on_format": {
@@ -120,6 +136,13 @@
     }
   },
   "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "check": {
+          "command": "clippy"
+        }
+      }
+    },
     "biome": {
       "settings": {
         "require_config_file": true
