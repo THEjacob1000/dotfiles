@@ -12,6 +12,7 @@ Managed with [GNU Stow](https://www.gnu.org/software/stow/).
 - `.config/gh/` — GitHub CLI configuration
 - `.config/jj/` — Jujutsu VCS configuration
 - `.config/mise/` — mise version manager configuration
+- `.config/nvim/` — LazyVim (Neovim) configuration
 - `.config/zed/` — Zed editor configuration
 
 ## Restore on a new machine
