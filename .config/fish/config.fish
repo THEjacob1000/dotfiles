@@ -14,6 +14,11 @@ if test -d $HOME/.bun/bin
     fish_add_path $HOME/.bun/bin
 end
 
+# Bun debug build
+if test -d $HOME/Documents/Developer/bun/build/debug
+    fish_add_path $HOME/Documents/Developer/bun/build/debug
+end
+
 # Cargo (Rust)
 if test -d $HOME/.cargo/bin
     fish_add_path $HOME/.cargo/bin
@@ -72,6 +77,17 @@ alias bazel bazelisk
 # Global Vars
 # -----------------------------
 
+set -gx EDITOR nvim
+set -gx VISUAL nvim
+set -gx SSH_AUTH_SOCK "$XDG_RUNTIME_DIR/gcr/ssh"
+# one tmux socket for every shell (desktop, ssh, systemd) or sessions split in two
+set -gx TMUX_TMPDIR /run/user/1000
+set -gx GSM_SKIP_SSH_AGENT_WORKAROUND true
+# systemd-launched tmux has no DISPLAY, so GUI apps started from a shell run headless
+if not set -q DISPLAY; and not set -q WAYLAND_DISPLAY
+    set -l d (loginctl show-session (loginctl show-user $USER -p Display --value) -p Display --value 2>/dev/null)
+    test -n "$d"; and set -gx DISPLAY $d
+end
 set -gx OMX_TEAM_WORKER_LAUNCH_ARGS "--approval-policy auto"
 
 
@@ -82,10 +98,11 @@ set -gx OMX_TEAM_WORKER_LAUNCH_ARGS "--approval-policy auto"
 # Quiet greeting
 set -g fish_greeting
 
-bind ctrl-h backward-kill-word
-bind ctrl-w backward-kill-word
+# key bindings live in functions/fish_user_key_bindings.fish (vi mode)
 
 if status is-interactive; and not string match -q "screen*" $TERM; and not string match -q "tmux*" $TERM
     set -l session_name (if test "$PWD" = "$HOME"; echo main; else; basename $PWD; end)
-    exec env TMUX_TMPDIR=/run/user/1000 tmux new-session -A -s $session_name
+    exec tmux new-session -A -s $session_name
 end
+
+export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
