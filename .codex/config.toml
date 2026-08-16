@@ -96,8 +96,9 @@ args = ["chrome-devtools-mcp@latest"]
 startup_timeout_sec = 30.0
 
 [mcp_servers.numen]
-command = "node"
-args = ["~/Documents/Developer/numen/harness/mcp/numen-mcp.mjs"]
+# via a login shell so ~ expands and bun is on PATH (paths differ per OS)
+command = "bash"
+args = ["-lc", "exec bun ~/Documents/Developer/numen/harness/mcp/numen-mcp.mjs"]
 
 [mcp_servers.atlassian]
 url = "https://mcp.atlassian.com/v1/mcp/authv2"
