@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "env": {
     "DISABLE_EXTRA_USAGE_COMMAND": "1",
     "ECC_GATEGUARD": "off"
@@ -72,8 +73,7 @@
     "ralph-loop@claude-plugins-official": true,
     "sentry-cli@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
-    "hookify@claude-plugins-official": true,
-    "i-have-adhd@i-have-adhd": true
+    "hookify@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "ecc": {
@@ -93,15 +93,9 @@
         "source": "github",
         "repo": "fallow-rs/fallow-skills"
       }
-    },
-    "i-have-adhd": {
-      "source": {
-        "source": "directory",
-        "path": "~/Documents/Developer/i-have-adhd"
-      }
     }
   },
-  "effortLevel": "medium",
+  "effortLevel": "high",
   "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,
   "switchModelsOnFlag": false,
