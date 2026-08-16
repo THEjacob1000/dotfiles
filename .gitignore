@@ -11,6 +11,9 @@
 
 # .codex is ignored globally (gitignore_global) for project repos; here it's the point
 !.codex/
+# ...except config.toml: codex rewrites it constantly (marketplaces, hooks.state,
+# TUI counters) and it holds linux-only MCP servers with no OS conditional.
+.codex/config.toml
 
 # Machine-generated / local state
 .config/jj/repos
