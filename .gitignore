@@ -1,2 +1,11 @@
 .config/jj/repos
 !.claude/settings.local.json
+# Machine-generated: fish rewrites this on every `set -U`
+.config/fish/fish_variables
+# Zed local state
+.config/zed/conversations
+.config/zed/prompts
+.config/zed/settings_backup.json
+# Editor/tool backups
+*.bak-*
+*.pre-*-sync

@@ -97,7 +97,7 @@
     "i-have-adhd": {
       "source": {
         "source": "directory",
-        "path": "/home/jacob/Documents/Developer/i-have-adhd"
+        "path": "~/Documents/Developer/i-have-adhd"
       }
     }
   },

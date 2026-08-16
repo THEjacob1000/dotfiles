@@ -112,7 +112,7 @@
         },
         {
           "external": {
-            "command": "/home/jacob/.config/zed/formatters/rust_decimal_separators.py",
+            "command": "~/.config/zed/formatters/rust_decimal_separators.py",
             "arguments": [],
           },
         },
@@ -188,7 +188,7 @@
     },
     "dart": {
       "binary": {
-        "path": "/home/jacob/.local/share/mise/installs/flutter/3.38.5-stable/bin/dart",
+        "path": "~/.local/share/mise/installs/flutter/3.38.5-stable/bin/dart",
         "arguments": ["language-server", "--protocol=lsp"],
       },
     },
@@ -196,7 +196,7 @@
   "terminal": {
     "font_family": "JetBrainsMono Nerd Font",
     "shell": {
-      "program": "/usr/bin/fish",
+      "program": "fish",
     },
     "detect_venv": {
       "on": {

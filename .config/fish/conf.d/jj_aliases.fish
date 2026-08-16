@@ -56,6 +56,9 @@ function __jj_origin_bookmarks
         | string match -r '^[^:@ \t]+'
 end
 
+# jd = jj diff: -f/--from takes a revision/bookmark, not a path.
+complete -c jd -s f -l from -d 'Show changes from this revision' -r -f -a "(__jj_bookmarks)"
+
 # ---------------------------------------------------------
 # jb = jj bookmark → subcommands
 # ---------------------------------------------------------
