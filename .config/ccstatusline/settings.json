@@ -6,7 +6,7 @@
         "id": "ccb022e8-0a81-4d51-beb3-59aa48c124db",
         "type": "custom-command",
         "color": "ansi256:103",
-        "commandPath": "python3 /home/jacob/.claude/statusline/limits.py effort",
+        "commandPath": "python3 ~/.claude/statusline/limits.py effort",
         "timeout": 1000
       },
       {
@@ -28,7 +28,7 @@
         "id": "limits-usage",
         "type": "custom-command",
         "color": "ansi256:73",
-        "commandPath": "python3 /home/jacob/.claude/statusline/limits.py usage",
+        "commandPath": "python3 ~/.claude/statusline/limits.py usage",
         "timeout": 3500
       },
       {
@@ -105,7 +105,7 @@
         "id": "limits-resets",
         "type": "custom-command",
         "color": "ansi256:66",
-        "commandPath": "python3 /home/jacob/.claude/statusline/limits.py resets",
+        "commandPath": "python3 ~/.claude/statusline/limits.py resets",
         "timeout": 3500
       }
     ]

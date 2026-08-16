@@ -1,9 +1,31 @@
+# Local environment files
+.direnv
+.env
 .envrc.*
+
+# Temporary files/directories
+tmp
+.output
+
+# Local settings
+settings.local.json
+*.local.*
 .claude/settings.local.json
 .claude/reviews
-settings.local.json
 .bk.yaml
-.output
+.codex
+
+# Claude local state
+.claude/scheduled_tasks.lock
+**/.claude/scheduled_tasks.lock
+
+# Certificates and secrets
+*.csr
+*.password
+*.cer
+*.p12
+
+# Oh My Claude / Oh My Codex local state
 **/.om[cx]/sessions
 **/.om[cx]/state
 **/.om[cx]/*.json
@@ -14,9 +36,5 @@ settings.local.json
 **/.omx/context
 **/.omx/reports
 **/.omx/notepad.md
-tmp
-.codex
-*.local.*
+
 **/.DS_Store
-.direnv
-.env

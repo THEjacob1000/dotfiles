@@ -7,4 +7,4 @@
 # resurrecting the two-writers clobber fight. Edit doctrine/skills in the numen
 # repo (harness/canonical/), not here.
 set -euo pipefail
-exec node /home/jacob/Documents/Developer/numen/harness/sync.mjs "$@"
+exec node $HOME/Documents/Developer/numen/harness/sync.mjs "$@"

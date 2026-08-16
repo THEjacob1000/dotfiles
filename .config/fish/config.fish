@@ -3,6 +3,9 @@ if not status is-interactive
     exit
 end
 
+# OS-specific setup lives in conf.d/os-linux.fish and conf.d/os-darwin.fish,
+# which fish sources before this file.
+
 # -----------------------------
 # PATHs & package managers
 # -----------------------------
@@ -32,6 +35,11 @@ end
 # Dart
 if test -d $HOME/.pub-cache/bin
     fish_add_path $HOME/.pub-cache/bin
+end
+
+# Shorebird
+if test -d $HOME/.shorebird/bin
+    fish_add_path $HOME/.shorebird/bin
 end
 
 function __remove_mise_paths --description 'Remove all mise-managed paths from PATH'
@@ -79,15 +87,6 @@ alias bazel bazelisk
 
 set -gx EDITOR nvim
 set -gx VISUAL nvim
-set -gx SSH_AUTH_SOCK "$XDG_RUNTIME_DIR/gcr/ssh"
-# one tmux socket for every shell (desktop, ssh, systemd) or sessions split in two
-set -gx TMUX_TMPDIR /run/user/1000
-set -gx GSM_SKIP_SSH_AGENT_WORKAROUND true
-# systemd-launched tmux has no DISPLAY, so GUI apps started from a shell run headless
-if not set -q DISPLAY; and not set -q WAYLAND_DISPLAY
-    set -l d (loginctl show-session (loginctl show-user $USER -p Display --value) -p Display --value 2>/dev/null)
-    test -n "$d"; and set -gx DISPLAY $d
-end
 set -gx OMX_TEAM_WORKER_LAUNCH_ARGS "--approval-policy auto"
 
 
@@ -104,5 +103,3 @@ if status is-interactive; and not string match -q "screen*" $TERM; and not strin
     set -l session_name (if test "$PWD" = "$HOME"; echo main; else; basename $PWD; end)
     exec tmux new-session -A -s $session_name
 end
-
-export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
