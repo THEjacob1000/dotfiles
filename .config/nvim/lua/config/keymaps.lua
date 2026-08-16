@@ -15,3 +15,11 @@ end, { desc = "jjui (Root Dir)" })
 vim.keymap.set({ "n", "t" }, "<C-j>", function()
   Snacks.terminal.toggle()
 end, { desc = "Toggle Terminal" })
+
+vim.keymap.set("n", "<leader>yp", function()
+  vim.fn.setreg("+", vim.fn.expand("%"))
+end, { desc = "Yank Relative File Path" })
+
+vim.keymap.set("n", "<leader>yP", function()
+  vim.fn.setreg("+", vim.fn.expand("%:p"))
+end, { desc = "Yank Absolute File Path" })
