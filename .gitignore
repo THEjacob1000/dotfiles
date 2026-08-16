@@ -43,3 +43,7 @@
 *.orig
 *.pre-*-sync
 *.pre-numen-sync
+
+# Python bytecode
+__pycache__/
+*.pyc
