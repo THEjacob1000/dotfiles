@@ -2,8 +2,7 @@
 # quick-terminal) live in config.local, which is untracked — see README.
 
 theme = sandy-dark
-background-opacity = 0.9
-background-blur = true
+background-opacity = 1
 
 cursor-style = block
 cursor-style-blink = false
