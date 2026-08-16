@@ -1,0 +1,51 @@
+{
+    "complex_modifications": {
+        "rules": [
+            {
+                "description": "Caps Lock = Ctrl when held, Caps Lock when tapped",
+                "manipulators": [
+                    {
+                        "from": {
+                            "key_code": "caps_lock",
+                            "modifiers": { "optional": ["any"] }
+                        },
+                        "parameters": { "basic.to_if_alone_timeout_milliseconds": 150 },
+                        "to": [{ "key_code": "left_control" }],
+                        "to_if_alone": [{ "key_code": "caps_lock" }],
+                        "type": "basic"
+                    }
+                ]
+            }
+        ]
+    },
+    "profiles": [
+        {
+            "complex_modifications": {
+                "rules": [
+                    {
+                        "description": "Caps Lock = Ctrl when held, Caps Lock when tapped",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "caps_lock",
+                                    "modifiers": { "optional": ["any"] }
+                                },
+                                "to": [{ "key_code": "left_control" }],
+                                "to_if_alone": [
+                                    {
+                                        "hold_down_milliseconds": 200,
+                                        "key_code": "caps_lock"
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "name": "Default profile",
+            "selected": true,
+            "virtual_hid_keyboard": { "keyboard_type_v2": "ansi" }
+        }
+    ]
+}

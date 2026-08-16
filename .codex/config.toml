@@ -1,0 +1,121 @@
+model_reasoning_effort = "low"
+
+model_context_window = 1000000
+model_auto_compact_token_limit = 900000
+
+model = "gpt-5.6-sol"
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+web_search = "live"
+notify = [
+  "terminal-notifier",
+  "-title",
+  "Codex ECC",
+  "-message",
+  "Task completed!",
+  "-sound",
+  "default"
+]
+persistent_instructions = "Follow project AGENTS.md guidelines. Use available MCP servers when they can help."
+
+[features]
+use_linux_sandbox_bwrap = true
+multi_agent = true
+
+child_agents_md = true
+hooks = true
+goals = true
+
+[notice]
+hide_rate_limit_model_nudge = true
+[notice.model_migrations]
+"gpt-5.3-codex" = "gpt-5.4"
+
+[agents]
+max_threads = 6
+max_depth = 2
+
+[tui]
+status_line_use_colors = true
+status_line = [
+    "model-with-reasoning",
+    "five-hour-limit",
+    "weekly-limit",
+    "context-remaining",
+    "current-dir",
+    "git-branch",
+]
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4
+"gpt-5.6-sol" = 4
+
+[marketplaces.ecc]
+last_updated = "2026-08-12T23:03:57Z"
+last_revision = "eb4970265169fec82371c92f615e2e133d875e27"
+source_type = "git"
+source = "https://github.com/affaan-m/ECC.git"
+
+[marketplaces.i-have-adhd]
+last_updated = "2026-08-10T21:59:51Z"
+last_revision = "2ed064090711586e0c97a2fbbf15465fe8f1808b"
+source_type = "git"
+source = "https://github.com/ayghri/i-have-adhd.git"
+ref = "main"
+
+[plugins."ecc@ecc"]
+enabled = true
+
+[plugins."i-have-adhd@i-have-adhd"]
+enabled = true
+
+[profiles.strict]
+approval_policy = "on-request"
+sandbox_mode = "read-only"
+web_search = "cached"
+
+[profiles.yolo]
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+web_search = "live"
+
+[hooks.state]
+
+[mcp_servers.jj]
+command = "bunx"
+args = ["jj-mcp-server"]
+
+[mcp_servers.context7]
+command = "bunx"
+args = ["-y", "@upstash/context7-mcp"]
+
+[mcp_servers.chrome-devtools]
+command = "bunx"
+args = ["chrome-devtools-mcp@latest"]
+startup_timeout_sec = 30.0
+
+[mcp_servers.numen]
+command = "node"
+args = ["~/Documents/Developer/numen/harness/mcp/numen-mcp.mjs"]
+
+[mcp_servers.atlassian]
+url = "https://mcp.atlassian.com/v1/mcp/authv2"
+
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+
+[mcp_servers.numen-computer-use]
+command = "/opt/numen/bin/numen-computer-use-mcp"
+
+[agents.explorer]
+description = "Read-only codebase explorer for gathering evidence before changes are proposed."
+config_file = "agents/explorer.toml"
+
+[agents.reviewer]
+description = "PR reviewer focused on correctness, security, and missing tests."
+config_file = "agents/reviewer.toml"
+
+[agents.docs_researcher]
+description = "Documentation specialist that verifies APIs, framework behavior, and release notes."
+config_file = "agents/docs-researcher.toml"

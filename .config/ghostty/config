@@ -1,0 +1,23 @@
+# Shared Ghostty config. Per-machine bits (font sizing, shell path, macOS
+# quick-terminal) live in config.local, which is untracked — see README.
+
+theme = sandy-dark
+background-opacity = 0.9
+background-blur = true
+
+cursor-style = block
+cursor-style-blink = false
+
+window-width = 120
+window-height = 32
+term = xterm-256color
+
+scrollback-limit = 10000000
+confirm-close-surface = false
+copy-on-select = clipboard
+
+# Guake used Alt+Enter for multiline; VTE couldn't encode shift+enter, ghostty can.
+keybind = shift+enter=text:\x1b\r
+
+# Machine-local overrides. `?` = optional, no error when absent.
+config-file = ?config.local
