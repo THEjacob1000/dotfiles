@@ -57,8 +57,23 @@ One tree serves both machines. Three mechanisms handle the differences:
 - **tmux** — `if-shell` sets `@copy_cmd`/`@paste_cmd` to `pbcopy`/`pbpaste` on
   macOS and `xclip` on X11; the copy-mode binds reference those.
 
+- **ghostty** — `config` ends with `config-file = ?config.local`, an optional
+  untracked file holding the shell path and font sizing (DPI differs per screen).
+
 mise tools that only make sense on one OS use its `os` filter, e.g.
 `cocoapods = { version = "latest", os = ["macos"] }`.
+
+### Untracked per-machine files
+
+Not in git; recreate on each machine:
+
+| File | Holds |
+|---|---|
+| `~/.gitconfig.local` | commit signing key, CodeRabbit machine ID |
+| `~/.config/ghostty/config.local` | `command`, `font-family`, `font-size` |
+| `~/.config/direnv/direnv.toml` | `bash_path` (macOS needs Homebrew bash) |
+| `~/.config/gh/` | OAuth tokens |
+| `~/.config/graphite/user_config` | auth token |
 
 Everything else is written to be path-agnostic — `~` or `$HOME`, never
 `/home/jacob`. Keep it that way when adding files.
