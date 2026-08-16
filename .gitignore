@@ -1,11 +1,42 @@
-.config/jj/repos
 !.claude/settings.local.json
-# Machine-generated: fish rewrites this on every `set -U`
+
+# Per-machine credentials and IDs — never shareable
+.config/gh/
+.config/graphite/user_config
+.gitconfig.local
+.config/ghostty/config.local
+
+# Per-machine because the tool has no OS conditional
+.config/direnv/direnv.toml
+
+# .codex is ignored globally (gitignore_global) for project repos; here it's the point
+!.codex/
+
+# Machine-generated / local state
+.config/jj/repos
 .config/fish/fish_variables
-# Zed local state
 .config/zed/conversations
 .config/zed/prompts
 .config/zed/settings_backup.json
+.config/raycast/extensions/
+
+# Claude Code local session state
+.claude/projects/
+.claude/sessions/
+.claude/session-data/
+.claude/session-env/
+.claude/shell-snapshots/
+.claude/paste-cache/
+.claude/plans/
+.claude/metrics/
+.claude/history.jsonl
+.claude/*-cache.json
+.claude/policy-limits.json
+.claude/remote-settings.json
+
 # Editor/tool backups
+*.bak
 *.bak-*
+*.orig
 *.pre-*-sync
+*.pre-numen-sync

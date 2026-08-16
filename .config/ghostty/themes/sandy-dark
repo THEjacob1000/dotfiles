@@ -1,0 +1,24 @@
+# Ported from Zed's "Sandy Dark" theme (Tokyo Night palette, near-black surfaces)
+palette = 0=#363b54
+palette = 1=#f7768e
+palette = 2=#73daca
+palette = 3=#e0af68
+palette = 4=#7aa2f7
+palette = 5=#bb9af7
+palette = 6=#7dcfff
+palette = 7=#787c99
+palette = 8=#363b54
+palette = 9=#f7768e
+palette = 10=#41a6b5
+palette = 11=#e0af68
+palette = 12=#7aa2f7
+palette = 13=#bb9af7
+palette = 14=#7dcfff
+palette = 15=#acb0d0
+
+background = #08080b
+foreground = #a9b1d6
+cursor-color = #7c7f93
+cursor-text = #08080b
+selection-background = #267ead
+selection-foreground = #c0caf5
