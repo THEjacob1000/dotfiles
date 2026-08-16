@@ -59,7 +59,12 @@ def codex_windows():
 
 
 def claude_windows():
-    creds = json.load(open(os.path.expanduser("~/.claude/.credentials.json")))
+    # macOS keeps the OAuth creds in the Keychain, so this file is Linux-only.
+    # No creds means no usage segment, not a traceback in the status line.
+    try:
+        creds = json.load(open(os.path.expanduser("~/.claude/.credentials.json")))
+    except (FileNotFoundError, ValueError, KeyError):
+        return None
     data = fetch(
         "https://api.anthropic.com/api/oauth/usage",
         {"Authorization": "Bearer " + creds["claudeAiOauth"]["accessToken"],
