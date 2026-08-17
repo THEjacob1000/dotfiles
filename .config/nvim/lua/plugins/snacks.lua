@@ -8,21 +8,21 @@ return {
           explorer = {
             ignored = true,
             hidden = true,
-            exclude = { ".git", ".jj", "node_modules", "target" },
+            exclude = { ".git", ".jj", ".next", "node_modules", "target" },
           },
           smart = {
             ignored = true,
             hidden = true,
-            exclude = { ".git", ".jj", ".DS_Store", ".venv", "node_modules", "target" },
+            exclude = { ".git", ".jj", ".DS_Store", ".next", ".venv", "node_modules", "target" },
           },
           files = {
             ignored = true,
             hidden = true,
-            exclude = { ".git", ".jj", ".DS_Store", ".venv", "node_modules", "target" },
+            exclude = { ".git", ".jj", ".DS_Store", ".next", ".venv", "node_modules", "target" },
           },
           grep = {
             hidden = true,
-            exclude = { ".git", ".jj", ".DS_Store", ".venv", "node_modules", "target" },
+            exclude = { ".git", ".jj", ".DS_Store", ".next", ".venv", "node_modules", "target" },
           },
         },
       },
