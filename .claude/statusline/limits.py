@@ -8,6 +8,7 @@ import glob
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 import urllib.request
@@ -58,16 +59,34 @@ def codex_windows():
     return out
 
 
-def claude_windows():
-    # macOS keeps the OAuth creds in the Keychain, so this file is Linux-only.
-    # No creds means no usage segment, not a traceback in the status line.
+def claude_creds():
     try:
-        creds = json.load(open(os.path.expanduser("~/.claude/.credentials.json")))
-    except (FileNotFoundError, ValueError, KeyError):
+        return json.load(open(os.path.expanduser("~/.claude/.credentials.json")))
+    except (FileNotFoundError, ValueError):
+        pass
+    try:
+        result = subprocess.run(
+            ["security", "find-generic-password", "-s", "Claude Code-credentials", "-w"],
+            capture_output=True,
+            check=True,
+            text=True,
+            timeout=5,
+        )
+        return json.loads(result.stdout)
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
+
+
+def claude_windows():
+    # Linux uses a credentials file; macOS stores the same payload in Keychain.
+    creds = claude_creds()
+    try:
+        access_token = creds["claudeAiOauth"]["accessToken"]
+    except (KeyError, TypeError):
         return None
     data = fetch(
         "https://api.anthropic.com/api/oauth/usage",
-        {"Authorization": "Bearer " + creds["claudeAiOauth"]["accessToken"],
+        {"Authorization": "Bearer " + access_token,
          "anthropic-beta": "oauth-2025-04-20"},
         "limits-claude.json")
     if not data:
