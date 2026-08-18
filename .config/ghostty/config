@@ -18,5 +18,8 @@ copy-on-select = clipboard
 # Guake used Alt+Enter for multiline; VTE couldn't encode shift+enter, ghostty can.
 keybind = shift+enter=text:\x1b\r
 
+# Send the conventional erase-word control byte without conflating it with Ctrl+h.
+keybind = ctrl+backspace=text:\x17
+
 # Machine-local overrides. `?` = optional, no error when absent.
 config-file = ?config.local
