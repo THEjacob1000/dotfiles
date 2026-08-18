@@ -16,6 +16,13 @@ return {
         c.comment = "#51597d"
         c.fg_gutter = "#363b54" -- line numbers
       end,
+      -- tokyonight tints the background behind markdown headings; Zed coloured
+      -- the text and left the line alone
+      on_highlights = function(hl, c)
+        for i, color in ipairs(c.rainbow) do
+          hl["@markup.heading." .. i .. ".markdown"] = { fg = color, bold = true }
+        end
+      end,
     },
   },
 }
