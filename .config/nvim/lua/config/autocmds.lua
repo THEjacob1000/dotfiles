@@ -6,3 +6,14 @@
 --
 -- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
 -- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
+
+-- LazyVim wraps markdown mid-word and spellchecks it; Zed did neither
+vim.api.nvim_create_autocmd("FileType", {
+  group = vim.api.nvim_create_augroup("jacob_markdown", { clear = true }),
+  pattern = { "markdown", "markdown.mdx", "text", "gitcommit" },
+  callback = function()
+    vim.opt_local.linebreak = true
+    vim.opt_local.breakindent = true
+    vim.opt_local.spell = false
+  end,
+})
