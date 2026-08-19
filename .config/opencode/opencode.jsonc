@@ -1,0 +1,107 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "openrouter/stealth/ox-alpha",
+  "small_model": "openrouter/stealth/ox-alpha",
+  "share": "disabled",
+  "autoupdate": "notify",
+  "snapshot": true,
+  "compaction": {
+    "auto": true,
+    "tail_turns": 15
+  },
+  "permission": {
+    "*": "allow",
+    "external_directory": "ask",
+    "bash": {
+      "*": "allow",
+      "git push": "deny",
+      "git push *": "deny",
+      "jj git push": "deny",
+      "jj git push *": "deny",
+      "gh *": "deny"
+    }
+  },
+  "agent": {
+    "explorer": {
+      "mode": "subagent",
+      "model": "openrouter/stealth/ox-alpha",
+      "description": "Read-only codebase explorer for gathering evidence before changes are proposed",
+      "prompt": "Stay in exploration mode. Trace the real execution path, cite files and symbols, and avoid proposing fixes unless the parent agent asks for them. Prefer targeted search and file reads over broad scans.",
+      "permission": {
+        "edit": "deny",
+        "bash": "deny"
+      }
+    },
+    "reviewer": {
+      "mode": "subagent",
+      "model": "openrouter/stealth/ox-alpha",
+      "description": "Read-only reviewer focused on correctness, security, regressions, and missing tests",
+      "prompt": "Review like an owner. Prioritize correctness, security, behavioral regressions, and missing tests. Lead with concrete findings and avoid style-only feedback unless it hides a real bug.",
+      "permission": {
+        "edit": "deny",
+        "bash": "deny"
+      }
+    },
+    "docs-researcher": {
+      "mode": "subagent",
+      "model": "openrouter/stealth/ox-alpha",
+      "description": "Read-only documentation specialist for APIs, framework behavior, and release notes",
+      "prompt": "Verify APIs, framework behavior, and release-note claims against primary documentation before changes land. Cite the exact docs or file paths that support each claim. Do not invent undocumented behavior.",
+      "permission": {
+        "edit": "deny",
+        "bash": "deny"
+      }
+    }
+  },
+  "mcp": {
+    "jj": {
+      "type": "local",
+      "command": ["bunx", "jj-mcp-server"],
+      "enabled": true
+    },
+    "context7": {
+      "type": "local",
+      "command": ["bunx", "-y", "@upstash/context7-mcp"],
+      "enabled": true
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["bunx", "chrome-devtools-mcp@latest"],
+      "enabled": true,
+      "timeout": 30000
+    },
+    "numen": {
+      "type": "local",
+      "command": ["bash", "-lc", "exec bun ~/Documents/Developer/numen/harness/mcp/numen-mcp.mjs"],
+      "enabled": true
+    },
+    "atlassian": {
+      "type": "remote",
+      "url": "https://mcp.atlassian.com/v1/mcp/authv2",
+      "enabled": true
+    },
+    "figma": {
+      "type": "remote",
+      "url": "https://mcp.figma.com/mcp",
+      "enabled": true
+    },
+    "numen-computer-use": {
+      "type": "local",
+      "command": ["/opt/numen/bin/numen-computer-use-mcp"],
+      "environment": {
+        "XAUTHORITY": "/home/jacob/.Xauthority"
+      },
+      "enabled": false
+    },
+    "grafana": {
+      "type": "local",
+      "command": ["uvx", "mcp-grafana"],
+      "enabled": true
+    },
+    "datadog": {
+      "type": "remote",
+      "url": "https://mcp.datadoghq.com/api/unstable/mcp-server/mcp",
+      "enabled": true
+    }
+  }
+}
