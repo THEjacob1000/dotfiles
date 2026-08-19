@@ -30,3 +30,5 @@
 # Per-machine: signing key, coderabbit machineId. Untracked; see README.
 [include]
 	path = ~/.gitconfig.local
+[coderabbit]
+	machineId = cli/786bbb8f17b14d7098ac4dbe81d2cac0

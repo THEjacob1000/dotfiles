@@ -103,3 +103,6 @@ if status is-interactive; and not string match -q "screen*" $TERM; and not strin
     set -l session_name (if test "$PWD" = "$HOME"; echo main; else; basename $PWD; end)
     exec tmux new-session -A -s $session_name
 end
+
+# opencode
+fish_add_path /home/jacob/.opencode/bin
