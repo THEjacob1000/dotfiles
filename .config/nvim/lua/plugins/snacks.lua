@@ -1,3 +1,19 @@
+local ignored_file_globs = {
+  ".env",
+  ".env.*",
+  "*.local",
+  "*.local.*",
+  "google-services.json",
+  "GoogleService-Info.plist",
+}
+
+local ignored_file_args = table.concat(vim.tbl_map(function(pattern)
+  return "--glob " .. vim.fn.shellescape(pattern)
+end, ignored_file_globs), " ")
+
+local files_command = ("{ rg --files --hidden --glob '!.git' --glob '!.jj'; "
+  .. "rg --files --hidden --no-ignore --glob '!.git' --glob '!.jj' %s; } | sort -u"):format(ignored_file_args)
+
 return {
   {
     "folke/snacks.nvim",
@@ -6,42 +22,24 @@ return {
       picker = {
         sources = {
           explorer = {
-            ignored = true,
             hidden = true,
-            exclude = {
-              "**/.git",
-              "**/.svn",
-              "**/.hg",
-              "**/.jj",
-              "**/CVS",
-              "**/.DS_Store",
-              "**/Thumbs.db",
-              "**/.classpath",
-              "**/.settings",
-              "**/.next",
-              "**/.venv",
-              "**/dist",
-              "**/node_modules",
-              "**/target",
-              "**/result",
-              "**/result-*",
-              "**/results-*",
-              "**/check-results-*",
-            },
-          },
-          smart = {
-            ignored = true,
-            hidden = true,
-            exclude = { ".git", ".jj", ".DS_Store", ".next", ".venv", "dist", "node_modules", "target" },
+            include = ignored_file_globs,
+            exclude = { "**/.git", "**/.jj" },
           },
           files = {
-            ignored = true,
-            hidden = true,
-            exclude = { ".git", ".jj", ".DS_Store", ".next", ".venv", "dist", "node_modules", "target" },
+            finder = "proc",
+            cmd = "sh",
+            args = { "-c", files_command },
+            format = "file",
+            show_empty = true,
+            transform = function(item, ctx)
+              item.file = item.text
+              item.cwd = ctx.filter.cwd
+            end,
           },
           grep = {
             hidden = true,
-            exclude = { ".git", ".jj", ".DS_Store", ".next", ".venv", "dist", "node_modules", "target" },
+            exclude = { ".git", ".jj" },
           },
         },
       },
