@@ -1,6 +1,6 @@
 # ~/.config/fish/conf.d/bun_aliases.fish
 #
-# Completions for bun aliases (bb, bi, br, bt, bts, bd, brt, brb).
+# Completions for bun aliases (bb, bi, birf, br, bt, bts, bd, brt, brb).
 # `b` = `bun` works via --wraps automatically — no extra completions needed.
 # `bx` = `bunx` is a real binary with its own completions — skip it too.
 
@@ -10,6 +10,9 @@
 alias b="bun"
 alias bb="bun build"
 alias bi="bun i"
+function birf
+    bun install $argv; and rm -f bun.lock bun.lockb
+end
 alias bx="bunx"
 alias bts="bun test"
 alias br="bun run"
