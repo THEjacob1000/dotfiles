@@ -61,11 +61,16 @@ return {
   {
     "nicolasgb/jj.nvim",
     version = "*",
+    dependencies = { "sindrets/diffview.nvim" },
     cmd = { "J", "Jread", "Jbrowse" },
     keys = {
       { "<leader>gj", "<cmd>J log<cr>", desc = "jj log" },
     },
-    opts = {},
+    opts = {
+      diff = {
+        backend = "diffview",
+      },
+    },
   },
   {
     "nvim-lualine/lualine.nvim",
