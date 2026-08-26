@@ -35,7 +35,14 @@ end
 return {
   {
     "sindrets/diffview.nvim",
-    cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewFileHistory" },
+    cmd = {
+      "DiffviewClose",
+      "DiffviewFileHistory",
+      "DiffviewFocusFiles",
+      "DiffviewOpen",
+      "DiffviewRefresh",
+      "DiffviewToggleFiles",
+    },
     keys = {
       {
         "<leader>jd",
@@ -51,6 +58,10 @@ return {
         end,
         desc = "JJ branch diff",
       },
+      { "<leader>gd", "<cmd>DiffviewOpen<cr>", desc = "Git Diff View" },
+      { "<leader>gD", "<cmd>DiffviewClose<cr>", desc = "Close Diff View" },
+      { "<leader>gH", "<cmd>DiffviewFileHistory %<cr>", desc = "Git File History" },
     },
+    opts = {},
   },
 }
