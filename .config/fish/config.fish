@@ -73,6 +73,7 @@ end
 alias py="python3"
 alias tf="terraform"
 alias cf-tf="cf-terraforming"
+alias kiro="kiro-cli"
 alias bazel bazelisk
 
 # Git SSH commit signing: configured once via:
