@@ -23,6 +23,16 @@
 .config/zed/settings_backup.json
 .config/raycast/extensions/
 
+# Kiro CLI local state and generated projections
+.kiro/logs/
+.kiro/session-index/
+.kiro/sessions/
+.kiro/skills/
+.kiro/settings/feed_state.json
+.kiro/settings/mcp.json
+.kiro/settings/survey_state.json
+.kiro/agents/agent_config.json.example
+
 # Claude Code local session state
 .claude/projects/
 .claude/sessions/

@@ -1,0 +1,38 @@
+{
+  "name": "numen",
+  "description": "Numen workspace agent with safe defaults for Rust development",
+  "prompt": "Follow the project AGENTS.md guidelines. Use jj exclusively (never git). Never push or mutate remote state.",
+  "mcpServers": {},
+  "tools": ["read", "write", "shell", "grep", "glob", "code", "knowledge", "todo"],
+  "toolAliases": {},
+  "allowedTools": ["read", "grep", "glob", "code", "knowledge", "@jj", "@context7"],
+  "resources": [
+    "file://AGENTS.md",
+    "file://RESEARCH.md",
+    "skill://.kiro/skills/**/SKILL.md"
+  ],
+  "toolsSettings": {
+    "shell": {
+      "allowedCommands": [
+        "jj diff.*", "jj log.*", "jj status.*", "jj show.*", "jj file show.*",
+        "mise run build", "mise run test", "mise run lint", "mise install",
+        "cargo check.*", "cargo build.*", "cargo test.*", "cargo clippy.*",
+        "uv sync", "uv run ruff check.*", "uv run pytest.*",
+        "rg .*", "fd .*",
+        "journalctl -u numen-loom.*",
+        "systemctl status numen-loom"
+      ],
+      "deniedCommands": [
+        "git push.*", "jj git push.*",
+        "gh pr create.*", "gh pr merge.*", "gh pr edit.*",
+        "rm -rf /.*", "sudo rm.*"
+      ],
+      "autoAllowReadonly": true
+    }
+  },
+  "includeMcpJson": true,
+  "model": null,
+  "permissions": {
+    "rules": []
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "yolo",
+  "description": "All Kiro tools enabled and pre-approved; repository instructions still govern allowed actions.",
+  "prompt": "Follow all applicable AGENTS.md instructions. Tool approval is not authorization to violate repository boundaries.",
+  "mcpServers": {},
+  "tools": [
+    "*"
+  ],
+  "toolAliases": {},
+  "allowedTools": [
+    "*"
+  ],
+  "resources": [],
+  "toolsSettings": {},
+  "includeMcpJson": true,
+  "model": null,
+  "permissions": {
+    "rules": []
+  }
+}
