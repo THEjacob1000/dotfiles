@@ -11,7 +11,7 @@
   "permissions": {
     "defaultMode": "auto"
   },
-  "model": "opus",
+  "model": "fable",
   "hooks": {
     "PreToolUse": [
       {
@@ -74,10 +74,10 @@
     "typescript-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {},
+  "outputStyle": "Concise",
   "effortLevel": "medium",
   "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,
   "switchModelsOnFlag": false,
-  "agentPushNotifEnabled": true,
-  "outputStyle": "Concise"
+  "agentPushNotifEnabled": true
 }

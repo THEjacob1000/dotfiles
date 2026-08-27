@@ -1,4 +1,5 @@
-alias cc="claude --dangerously-skip-permissions"
-alias cx="codex --yolo"
-alias kk="kiro-cli --agent yolo --v3"
+alias cc="agent-run claude claude --dangerously-skip-permissions"
+alias cx="agent-run codex codex --yolo"
+alias kk="agent-run kiro kiro-cli --agent yolo --v3"
+abbr --add kiro-cli 'agent-run kiro /home/jacob/.local/bin/kiro-cli'
 alias kiro="kiro-cli"

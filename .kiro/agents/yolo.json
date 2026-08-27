@@ -1,23 +1,110 @@
 {
   "name": "yolo",
   "description": "All Kiro tools enabled and pre-approved; repository instructions still govern allowed actions.",
-  "prompt": "Follow all applicable AGENTS.md instructions. Tool approval is not authorization to violate repository boundaries.",
-  "mcpServers": {},
+  "model": "auto",
   "tools": [
-    "*"
+    "execute_bash",
+    "fs_read",
+    "fs_write",
+    "code",
+    "grep",
+    "glob",
+    "web_fetch",
+    "web_search",
+    "introspect",
+    "session",
+    "report",
+    "tool_search",
+    "@kirocrew-cron",
+    "@kirocrew-core",
+    "@kirocrew-computer",
+    "@numen-computer-use",
+    "@loke-wiki"
   ],
-  "toolAliases": {},
-  "allowedTools": [],
-  "resources": [],
-  "toolsSettings": {},
+  "allowedTools": [
+    "execute_bash",
+    "fs_read",
+    "fs_write",
+    "code",
+    "grep",
+    "glob",
+    "web_fetch",
+    "web_search",
+    "introspect",
+    "session",
+    "report",
+    "tool_search",
+    "@kirocrew-cron",
+    "@kirocrew-core",
+    "@kirocrew-computer",
+    "@numen-computer-use",
+    "@loke-wiki"
+  ],
+  "resources": [
+    "file://.kiro/steering/**/*.md"
+  ],
   "includeMcpJson": true,
-  "model": null,
   "permissions": {
     "rules": [
       {
-        "capability": "all",
+        "capability": "*",
+        "effect": "allow"
+      },
+      {
+        "capability": "mcp",
+        "match": [
+          "*"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "execute_bash",
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_write",
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_read",
+        "effect": "allow"
+      },
+      {
+        "capability": "web_fetch",
+        "effect": "allow"
+      },
+      {
+        "capability": "web_search",
         "effect": "allow"
       }
     ]
-  }
+  },
+  "mcpServers": {
+    "kirocrew-cron": {
+      "command": "/home/jacob/.local/bin/kirocrew-managed",
+      "args": [
+        "mcp-cron"
+      ]
+    },
+    "kirocrew-core": {
+      "command": "/home/jacob/.local/bin/kirocrew-managed",
+      "args": [
+        "mcp-core"
+      ]
+    },
+    "numen-computer-use": {
+      "command": "/opt/numen/bin/numen-computer-use-mcp"
+    },
+    "loke-wiki": {
+      "command": "/home/jacob/.local/share/mise/shims/bunx",
+      "args": [
+        "-y",
+        "@anthropic-ai/mcp-proxy",
+        "--endpoint",
+        "https://loke-wiki-mcp.example.com/mcp"
+      ],
+      "disabled": true
+    }
+  },
+  "prompt": null
 }

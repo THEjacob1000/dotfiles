@@ -56,4 +56,4 @@ Two ways in to Numen's memory/context, both engine-agnostic:
   sessions/engines and, when the vault is wired, pushes it into memory for free.
 
 A local `jj` MCP server is also configured — prefer it for jj operations. Context7
-and chrome-devtools MCP servers are available; use them only when a task needs them.
+is available; use it only when a task needs it.
