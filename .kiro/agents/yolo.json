@@ -7,14 +7,17 @@
     "*"
   ],
   "toolAliases": {},
-  "allowedTools": [
-    "*"
-  ],
+  "allowedTools": [],
   "resources": [],
   "toolsSettings": {},
   "includeMcpJson": true,
   "model": null,
   "permissions": {
-    "rules": []
+    "rules": [
+      {
+        "capability": "all",
+        "effect": "allow"
+      }
+    ]
   }
 }

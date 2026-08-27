@@ -43,10 +43,9 @@ Get the build green without changing what the code means. You fix compile and ty
 
 ## Python
 
-`uv run pyright`, `uv run ruff check`, `uv run pytest`.
+`uv run ruff check`, `uv run pytest`.
 
 - Import errors are usually a package layout or `pyproject.toml` problem, not a missing type stub.
-- Add the real type rather than `Any` when pyright complains.
 
 ## Output
 
