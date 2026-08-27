@@ -73,14 +73,12 @@ end
 alias py="python3"
 alias tf="terraform"
 alias cf-tf="cf-terraforming"
-alias kiro="kiro-cli"
 alias bazel bazelisk
 
 # Git SSH commit signing: configured once via:
 #   git config --global gpg.format ssh
 #   git config --global commit.gpgsign true
 #   git config --global user.signingkey ~/.ssh/id_ed25519.pub
-
 
 # -----------------------------
 # Global Vars
@@ -89,7 +87,6 @@ alias bazel bazelisk
 set -gx EDITOR nvim
 set -gx VISUAL nvim
 set -gx OMX_TEAM_WORKER_LAUNCH_ARGS "--approval-policy auto"
-
 
 # -----------------------------
 # Quality-of-life
