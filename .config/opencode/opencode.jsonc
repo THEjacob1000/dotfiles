@@ -64,12 +64,6 @@
       "command": ["bunx", "-y", "@upstash/context7-mcp"],
       "enabled": true
     },
-    "chrome-devtools": {
-      "type": "local",
-      "command": ["bunx", "chrome-devtools-mcp@latest"],
-      "enabled": true,
-      "timeout": 30000
-    },
     "numen": {
       "type": "local",
       "command": ["bash", "-lc", "exec bun ~/Documents/Developer/numen/harness/mcp/numen-mcp.mjs"],

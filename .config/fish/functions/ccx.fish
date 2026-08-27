@@ -1,5 +1,5 @@
 function ccx
-    env \
+    agent-run claude env \
         ANTHROPIC_BASE_URL=http://127.0.0.1:8317 \
         ANTHROPIC_AUTH_TOKEN=(cat ~/.cli-proxy-api/client.key) \
         ANTHROPIC_DEFAULT_OPUS_MODEL='gpt-5.6-sol(medium)' \
