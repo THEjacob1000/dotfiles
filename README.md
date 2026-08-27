@@ -14,6 +14,7 @@ Managed with [GNU Stow](https://www.gnu.org/software/stow/).
 - `.config/mise/` — mise version manager configuration
 - `.config/nvim/` — LazyVim (Neovim) configuration
 - `.config/zed/` — Zed editor configuration
+- `.kiro/agents/` and `.kiro/settings/cli.json` — Kiro CLI agents and global defaults
 
 Works on Linux and macOS from the same tree — see [Cross-platform](#cross-platform).
 

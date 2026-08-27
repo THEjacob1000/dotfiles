@@ -1,0 +1,4 @@
+{
+  "chat.defaultAgent": "yolo",
+  "chat.disableTrustAllConfirmation": true
+}
