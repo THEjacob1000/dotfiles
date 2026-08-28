@@ -27,6 +27,9 @@
 	helper =
 	helper = !gh auth git-credential
 
+[url "git@github.com:"]
+	insteadOf = https://github.com/
+
 # Per-machine: signing key, coderabbit machineId. Untracked; see README.
 [include]
 	path = ~/.gitconfig.local
