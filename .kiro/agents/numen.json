@@ -20,7 +20,13 @@
         "uv sync", "uv run ruff check.*", "uv run pytest.*",
         "rg .*", "fd .*",
         "journalctl -u numen-loom.*",
-        "systemctl status numen-loom"
+        "systemctl status numen-loom",
+        "node .*/harness/sync.mjs.*",
+        "kiro-cli config.*", "kiro-cli agent.*", "kiro-cli skill.*",
+        "stow --dir.*\\.dotfiles.*", "stow -R.*\\.dotfiles.*",
+        "cat ~/.kiro/settings/cli.json", "cat ~/.kiro/agents/numen.json",
+        "ls -la ~/.kiro/agents/.*", "ls -la ~/.kiro/settings/.*", "ls -la ~/.kiro/skills/.*",
+        "readlink ~/.kiro/.*"
       ],
       "deniedCommands": [
         "git push.*", "jj git push.*",

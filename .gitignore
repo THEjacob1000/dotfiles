@@ -30,8 +30,17 @@
 .kiro/skills/
 .kiro/settings/feed_state.json
 .kiro/settings/mcp.json
+.kiro/settings/mcp.lock
 .kiro/settings/survey_state.json
 .kiro/agents/agent_config.json.example
+.kiro/agents/kirocrew*.json
+.kiro/agents/kirocrew.lock
+.kiro/agents/crew-manager*.json
+
+# KiroCrew workspace runtime state (rebuilt per-machine)
+.kiro/crew/workspace/memory/
+.kiro/crew/workspace/knowledge/
+.kiro/crew/workspace/HEARTBEAT.md
 
 # Claude Code local session state
 .claude/projects/
