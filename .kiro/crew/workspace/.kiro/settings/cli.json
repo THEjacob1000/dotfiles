@@ -1,6 +1,4 @@
 {
-  "chat.defaultAgent": "yolo",
-  "chat.disableTrustAllConfirmation": true,
   "toolSearch.enabled": true,
   "toolSearch.minPct": 5,
   "toolSearch.minTokens": 50000
