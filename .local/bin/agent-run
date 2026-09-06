@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+label=$1
+shift
+
+exec systemd-run \
+  --user \
+  --scope \
+  --collect \
+  --slice=agents.slice \
+  --unit="agent-${label}-$(date +%s)-$$" \
+  -- "$@"
