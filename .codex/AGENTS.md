@@ -269,12 +269,8 @@ where `<project-slug>` is the project's absolute path with `/` replaced by `-`
 open a linked file under that `memory/` dir only when its hook looks relevant.
 
 ### MCP
-Two engine-agnostic ways into Numen's memory:
-- The **numen** MCP server (`~/.codex/config.toml [mcp_servers]`) exposes loom's
-  read surfaces (memory search/facts/episodes/brief/node) and a `chat` tool over
-  loom's authenticated socket. Prefer it for live memory queries.
-- The `handoff` script (`harness/bin/handoff`) carries state-of-work between
-  sessions/engines and, when the vault is wired, pushes it into memory for free.
+The `handoff` script (`harness/bin/handoff`) carries state-of-work between
+sessions/engines and, when the vault is wired, pushes it into memory for free.
 
 A local `jj` MCP server is also configured, prefer it for jj operations. Context7
 is available; use it only when a task needs it.

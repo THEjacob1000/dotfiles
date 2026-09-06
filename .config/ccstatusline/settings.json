@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "lines": [
     [
       {
@@ -47,7 +47,7 @@
         "type": "jj-root-dir",
         "color": "ansi256:108",
         "metadata": {
-          "hideNoJj": "true"
+          "hide": "no-jj"
         }
       },
       {
@@ -96,7 +96,7 @@
         "type": "jj-description",
         "color": "ansi256:245",
         "metadata": {
-          "hideNoJj": "true"
+          "hide": "no-jj"
         }
       }
     ],
