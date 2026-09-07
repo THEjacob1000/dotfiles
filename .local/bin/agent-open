@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+uri=${1:?missing file URI}
+case "$uri" in
+  file://*)
+    fragment=
+    if [[ "$uri" == *#* ]]; then
+      fragment=${uri#*#}
+      uri=${uri%%#*}
+    fi
+    path=${uri#file://}
+    path=${path#localhost}
+    path=$(printf '%b' "${path//%/\\x}")
+    ;;
+  /*) path=$uri; fragment= ;;
+  *) exit 0 ;;
+esac
+
+if [[ "$path" != /* ]]; then
+  session=$(tmux list-clients -F '#{client_activity} #{client_session}' 2>/dev/null | sort -rn | awk 'NR == 1 { print $2 }')
+  [[ -n "$session" ]] || exit 1
+  path=$(realpath -m "$(tmux display-message -t "$session" -p '#{pane_current_path}')/$path")
+fi
+
+path=$(realpath -m "$path")
+directory=$path
+[[ -d "$directory" ]] || directory=${path%/*}
+root=$(git -C "$directory" rev-parse --show-toplevel 2>/dev/null || true)
+[[ -n "$root" ]] || root=$directory
+name=${root##*/}
+
+session=$(tmux list-clients -F '#{client_activity} #{client_session}' 2>/dev/null | sort -rn | awk 'NR == 1 { print $2 }')
+[[ -n "$session" ]] || exit 1
+
+active_window=$(tmux display-message -t "$session" -p '#{window_index}')
+active_pane=$(tmux display-message -t "$session" -p '#{pane_id}')
+active_command=$(tmux display-message -t "$active_pane" -p '#{pane_current_command}')
+active_root=$(git -C "$(tmux display-message -t "$active_pane" -p '#{pane_current_path}')" rev-parse --show-toplevel 2>/dev/null || true)
+
+if [[ "$active_root" == "$root" && "$active_command" == "nvim" ]]; then
+  window=$active_window
+  pane=$active_pane
+else
+  window=$(tmux list-windows -t "$session" -F '#{window_index} #{window_name}' | awk -v name="$name" '$2 == name { print $1; exit }')
+  if [[ -z "$window" ]]; then
+    tmux new-window -d -t "$session" -n "$name" -c "$root" nvim -- "$path"
+    window=$(tmux list-windows -t "$session" -F '#{window_index} #{window_name}' | awk -v name="$name" '$2 == name { print $1; exit }')
+    tmux select-window -t "$session:$window"
+    exit 0
+  fi
+
+  pane=$(tmux list-panes -t "$session:$window" -F '#{pane_id} #{pane_current_command}' | awk '$2 == "nvim" { print $1; exit }')
+  if [[ -z "$pane" ]]; then
+    tmux split-window -d -t "$session:$window" -h -c "$root" nvim -- "$path"
+    tmux select-window -t "$session:$window"
+    exit 0
+  fi
+fi
+
+escaped=${path//\\/\\\\}
+escaped=${escaped// /\\ }
+tmux select-window -t "$session:$window"
+tmux select-pane -t "$pane"
+tmux send-keys -t "$pane" Escape
+tmux send-keys -t "$pane" -l ":edit $escaped"
+tmux send-keys -t "$pane" Enter
+
+if [[ "$fragment" =~ [Ll]([0-9]+) || "$fragment" =~ [Ll]ine[=:]?([0-9]+) ]]; then
+  sleep 0.1
+  tmux send-keys -t "$pane" Escape
+  tmux send-keys -t "$pane" -l ":call cursor(${BASH_REMATCH[1]}, 1)"
+  tmux send-keys -t "$pane" Enter
+fi
