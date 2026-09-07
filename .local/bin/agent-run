@@ -4,6 +4,10 @@ set -euo pipefail
 label=$1
 shift
 
+if [[ $(uname -s) != Linux ]]; then
+  exec "$@"
+fi
+
 exec systemd-run \
   --user \
   --scope \
