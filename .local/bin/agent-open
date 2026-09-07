@@ -2,6 +2,7 @@
 set -euo pipefail
 
 uri=${1:?missing file URI}
+line=
 case "$uri" in
   file://*)
     fragment=
@@ -21,6 +22,11 @@ if [[ "$path" != /* ]]; then
   session=$(tmux list-clients -F '#{client_activity} #{client_session}' 2>/dev/null | sort -rn | awk 'NR == 1 { print $2 }')
   [[ -n "$session" ]] || exit 1
   path=$(realpath -m "$(tmux display-message -t "$session" -p '#{pane_current_path}')/$path")
+fi
+
+if [[ "$path" =~ ^(.*):([0-9]+)(:[0-9]+)?$ ]] && [[ -e "${BASH_REMATCH[1]}" ]]; then
+  path=${BASH_REMATCH[1]}
+  line=${BASH_REMATCH[2]}
 fi
 
 path=$(realpath -m "$path")
@@ -67,8 +73,12 @@ tmux send-keys -t "$pane" -l ":edit $escaped"
 tmux send-keys -t "$pane" Enter
 
 if [[ "$fragment" =~ [Ll]([0-9]+) || "$fragment" =~ [Ll]ine[=:]?([0-9]+) ]]; then
+  line=${BASH_REMATCH[1]}
+fi
+
+if [[ -n "$line" ]]; then
   sleep 0.1
   tmux send-keys -t "$pane" Escape
-  tmux send-keys -t "$pane" -l ":call cursor(${BASH_REMATCH[1]}, 1)"
+  tmux send-keys -t "$pane" -l ":call cursor($line, 1)"
   tmux send-keys -t "$pane" Enter
 fi
