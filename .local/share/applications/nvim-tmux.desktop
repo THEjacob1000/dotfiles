@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Neovim in tmux
+Comment=Open files in the project Neovim tmux window
+Exec=/home/jacob/.local/bin/agent-open %u
+NoDisplay=true
+Terminal=false
+MimeType=text/plain;text/markdown;text/x-csrc;text/x-c++src;text/x-python;application/json;application/javascript;application/x-shellscript;
