@@ -67,7 +67,8 @@ This is what he accepted, same PR:
 
 - Prose, not bullets. A bullet list of what the diff did is the tell: his own PRs have no bullets in the body outside the template's own sections. Bullets only for genuinely discrete items, four max.
 - What changed and why. Tests, dependencies, rollback only when material.
-- No file-by-file narration, no "This PR delivers", no tables for simple changes, no bold-label bullet walls, no narrating the agent/automated-review process, no evidence already visible in CI.
+- No file-by-file narration, no "This PR delivers", no tables for simple changes, no bold-label bullet walls, no narrating the agent/automated-review process.
+- Never recount what CI shows: no "all tests pass", test counts, lint/typecheck/clippy results, coverage numbers. The reviewer sees those on the PR. "Evidence" in a template means the change exercised by hand and captured (the **pr-evidence** skill), never a test-run screenshot.
 - Delete any paragraph whose removal wouldn't cost the reviewer a decision, risk, or fact.
 - Templates: keep every required section, fill only the applicable ones tersely, and leave `<!-- -->` blocks commented out unless you have real content for them.
 
