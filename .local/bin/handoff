@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# handoff — portable session state-of-work between coding agents (any engine).
+#
+#   handoff emit   [-]   write a dated state-of-work markdown file (stdin, or $EDITOR)
+#   handoff ingest       print the most recent state-of-work file (for session start)
+#   handoff list         list known state-of-work files, newest first
+#
+# Dir resolution (first that applies):
+#   1. $NUMEN_SESSIONS_DIR                      — explicit override
+#   2. <vault>/numen-sessions  (if vault dir exists)  — loom's obsidian connector
+#      recursively ingests every .md under the vault as a TRUSTED episode on the
+#      next `loom ingest`, so handoffs land in memory for free (the sanctioned
+#      episode-push path — the open viewer has no write endpoint). Namespaced in
+#      its own subfolder so it never litters the note tree.
+#   3. ~/.local/share/numen/sessions           — plain portable fallback
+# Either way this script only writes a markdown file; it never talks to loom.
+set -euo pipefail
+
+DIR="${NUMEN_SESSIONS_DIR:-}"
+if [[ -z "$DIR" ]]; then
+  # Default vault kept in a plain assignment (not a ${:-} default) — the
+  # apostrophe in the path would otherwise break shell quoting.
+  VAULT="${NUMEN_VAULT_ROOT:-}"
+  [[ -z "$VAULT" ]] && VAULT="$HOME/Documents/Jacob's Vault"
+  if [[ -d "$VAULT" ]]; then
+    DIR="$VAULT/numen-sessions"
+  else
+    DIR="$HOME/.local/share/numen/sessions"
+  fi
+fi
+
+usage() { sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+
+cmd="${1:-}"
+case "$cmd" in
+  emit)
+    mkdir -p "$DIR"
+    ts="$(date +%Y-%m-%dT%H-%M-%S)"
+    out="$DIR/handoff-$ts.md"
+    if [[ "${2:-}" == "-" || ! -t 0 ]]; then
+      # body piped on stdin
+      cat > "$out"
+    else
+      # scaffold + open $EDITOR
+      cat > "$out" <<EOF
+# Session handoff — $(date '+%Y-%m-%d %H:%M')
+
+## Goal
+
+## Decisions made
+
+## Open threads
+
+## Next step
+EOF
+      "${EDITOR:-vi}" "$out"
+    fi
+    echo "$out"
+    ;;
+  ingest)
+    latest="$(ls -1t "$DIR"/handoff-*.md 2>/dev/null | head -1 || true)"
+    [[ -z "$latest" ]] && { echo "no handoff files in $DIR" >&2; exit 1; }
+    cat "$latest"
+    ;;
+  list)
+    ls -1t "$DIR"/handoff-*.md 2>/dev/null || { echo "no handoff files in $DIR" >&2; exit 1; }
+    ;;
+  ""|-h|--help) usage 0 ;;
+  *) echo "unknown command: $cmd" >&2; usage 1 ;;
+esac

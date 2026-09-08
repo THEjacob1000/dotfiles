@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+# voice-lint — deterministic check that text written as Jacob actually sounds
+# like him. The rules live in the write-as-jacob skill; this only catches the
+# mechanical tells (length, ceremony phrases, markdown bloat, empty sections).
+#
+#   voice-lint --mode comment reply.txt     # lint a file (or stdin with -)
+#   voice-lint --hook                       # stdin = PreToolUse JSON; exit 2 blocks
+#
+# Modes: comment (review replies, issue comments) | pr (PR bodies) | commit |
+# doc (harness docs: dashes and emoji only, no length or ceremony rules).
+# Escape hatch: VOICE_LINT=off skips every check, for the rare body that
+# genuinely needs the length.
+set -euo pipefail
+
+MODE=comment
+HOOK=0
+FILE=""
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --mode) MODE=$2; shift 2 ;;
+    --hook) HOOK=1; shift ;;
+    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
+    *) FILE=$1; shift ;;
+  esac
+done
+
+[[ ${VOICE_LINT:-} == off ]] && exit 0
+
+TEXT=""
+if [[ $HOOK == 1 ]]; then
+  CMD=$(jq -r '.tool_input.command // empty' 2>/dev/null || true)
+  [[ -z $CMD ]] && exit 0
+  # Same command-position guard as pr-template-check: don't lint a payload that
+  # merely quotes one of these commands.
+  grep -qE '(^|[;&|]|&&|\|\||\bthen[[:space:]])[[:space:]]*(gh|jj|git)[[:space:]]' <<<"$CMD" || exit 0
+  case $CMD in
+    *"gh pr create"*|*"gh pr edit"*)                         MODE=pr ;;
+    *"gh pr comment"*|*"gh pr review"*|*"gh issue comment"*) MODE=comment ;;
+    *replies*)                                               MODE=comment ;;
+    *"jj describe"*|*"jj commit"*|*"git commit"*)            MODE=commit ;;
+    *) exit 0 ;;
+  esac
+  # Body comes from a file (--body-file X, -F body=@X) or inline (-m '...').
+  if [[ $CMD =~ --body-file[[:space:]]+\"?([^[:space:]\"\']+) ]]; then
+    F=${BASH_REMATCH[1]}
+  elif [[ $CMD =~ (-F|--field)[[:space:]]+\"?body=@([^[:space:]\"\']+) ]]; then
+    F=${BASH_REMATCH[2]}
+  else
+    F=""
+  fi
+  if [[ -n $F && $F != "-" && -f $F ]]; then
+    TEXT=$(cat "$F")
+  elif [[ $CMD =~ (--body|--message|-b|-m)[[:space:]]+\'([^\']*)\' ]]; then
+    TEXT=${BASH_REMATCH[2]}
+  elif [[ $CMD =~ (--body|--message|-b|-m)[[:space:]]+\"([^\"]*)\" ]]; then
+    TEXT=${BASH_REMATCH[2]}
+  fi
+  # Nothing extractable (heredoc, stdin, --fill) — never block on a guess.
+  [[ -z $TEXT ]] && exit 0
+else
+  if [[ -z $FILE || $FILE == "-" ]]; then TEXT=$(cat); else TEXT=$(cat "$FILE"); fi
+fi
+
+case $MODE in
+  pr)      LIMIT=130 ;;
+  commit)  LIMIT=50 ;;
+  *)       LIMIT=60 ;;
+esac
+
+# Commented-out template blocks aren't content — strip them before anything else.
+LIVE=$(printf '%s\n' "$TEXT" | perl -0777 -pe 's/<!--.*?-->//gs')
+# Prose only: also drop checkboxes, headings, code fences, before counting words.
+PROSE=$(grep -vE '^\s*(- \[[ xX]\]|#{1,6} |```)' <<<"$LIVE" || true)
+WORDS=$(wc -w <<<"$PROSE")
+
+FAIL=()
+if [[ $MODE != doc ]]; then
+(( WORDS > LIMIT )) && FAIL+=("$WORDS words in a $MODE, cap is ~$LIMIT. Cut it to the decision, the reason, and nothing else.")
+
+CEREMONY='thanks for|thank you|great catch|good catch|nice catch|i appreciate|let me know if|feel free|happy to|hope this helps|as an ai|you.?re absolutely right|absolutely right|certainly[,!]|i.?d be happy|kindly|apolog|this pr (delivers|introduces|provides)|in summary|to summari[sz]e|it.?s worth noting|please note|i.?ve decided|i have decided|i understand your concern'
+HITS=$(grep -inE "$CEREMONY" <<<"$TEXT" | head -4 || true)
+[[ -n $HITS ]] && FAIL+=("Ceremony/LLM tells, delete these: $(tr '\n' ';' <<<"$HITS")")
+fi
+
+grep -qP '[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}\x{2B00}-\x{2BFF}\x{FE0F}]' <<<"$TEXT" 2>/dev/null \
+  && FAIL+=("Emoji. Jacob doesn't use them here.")
+
+# The classic AI tell. En dash only counts between words, so numeric ranges
+# (100-200 words) stay legal.
+grep -qP '—|\S\s–\s\S' <<<"$TEXT" 2>/dev/null \
+  && FAIL+=("Em/en dash, the most recognisable machine-wrote-this tell. Use a comma, full stop, or brackets.")
+
+if [[ $MODE == comment ]]; then
+  grep -qE '^#{1,6} ' <<<"$TEXT" && FAIL+=("Markdown headings in a review comment — write a sentence.")
+  grep -qE '\*\*[^*]+\*\*' <<<"$TEXT" && FAIL+=("Bold labels. No **[Category]** headers, no **Fix:** lines.")
+  (( $(grep -cE '^\s*[-*] ' <<<"$TEXT" || true) > 2 )) && FAIL+=("Bullet wall in a comment — one or two sentences instead.")
+fi
+
+if [[ $MODE == pr ]]; then
+  # CI already shows the reviewer whether tests, lint and typecheck passed.
+  CIRECOUNT='(all|[0-9]+) (unit |integration |e2e )?tests? (pass|passing|passed|green)|tests? (are|is) (passing|green)|(lint|clippy|typecheck|type-?check|mypy|ruff|biome|eslint|tsc|fmt|rustfmt|cargo (test|clippy)|bun test|pytest|ci) (is |are )?(pass(es|ing|ed)?|clean|green)|coverage (is|at|of) [0-9]|[0-9]+(\.[0-9]+)?% coverage|[0-9]+ (passed|failed), [0-9]+'
+  HITS=$(grep -inE "$CIRECOUNT" <<<"$LIVE" | head -3 || true)
+  [[ -n $HITS ]] && FAIL+=("Recounts what CI already shows (test/lint/coverage results). Delete it; evidence means the change exercised by hand, see pr-evidence: $(tr '\n' ';' <<<"$HITS")")
+fi
+
+if [[ $MODE == pr || $MODE == comment ]]; then
+  # Hard-wrapped prose. GitHub turns a single newline into a <br>, so an
+  # 80-column paragraph renders ragged. A long line followed by more prose is a
+  # wrap; short line then prose is a deliberate break and stays legal.
+  WRAPPED=$(awk '
+    /^\s*```/ { fence = !fence; prev = ""; next }
+    fence { next }
+    /^[[:space:]]*$/ { prev = ""; next }
+    {
+      cur = $0
+      isprose = (cur !~ /^[[:space:]]*([-*+>|]|[0-9]+[.)]|#{1,6} |<)/)
+      if (prev != "" && isprose && length(prev) >= 60) { print NR; exit }
+      prev = (isprose || cur ~ /^[[:space:]]*([-*+]|[0-9]+[.)]) /) ? cur : ""
+    }
+  ' <<<"$LIVE" || true)
+  [[ -n $WRAPPED ]] && FAIL+=("Hard-wrapped prose (line $WRAPPED). GitHub renders the newline as a break. One paragraph = one line.")
+fi
+
+if [[ $MODE == commit ]] && grep -qiE '^(Merge |Revert ")' <<<"$TEXT"; then
+  # Merge and revert commits keep the tool's standard message, prefix and all.
+  exit 0
+fi
+
+if [[ $MODE == commit ]]; then
+  # Subject line only. A second non-empty line is a body, and Jacob doesn't
+  # write them (bullet summaries, why-paragraphs, Co-authored-by trailers).
+  (( $(grep -c '[^[:space:]]' <<<"$TEXT" || true) > 1 )) \
+    && FAIL+=("Commit body. Subject line only, drop everything after the first line.")
+  # Messages that describe the occasion instead of the change.
+  VAGUE='(implement|address|appl|resolv|incorporat)[a-z]* (the )?((pr|code) )?(review )?(feedback|comments?|review)|as requested|^[a-z]+(\([^)]*\))?!?: *(various|misc|minor|small|assorted|general)\b|^[a-z]+(\([^)]*\))?!?: *(bug ?fixes|fixes|updates?|changes|improvements?|cleanup|tweaks?|refactor(ing)?|lint(ing)?( fixes)?)[[:space:]]*$'
+  grep -qiE "$VAGUE" <<<"$TEXT" \
+    && FAIL+=("Says nothing about what changed. Name the thing you touched and what happened to it.")
+fi
+
+if [[ $MODE == pr ]]; then
+  # A section uncommented just to say "none" should have stayed inside its
+  # <!-- --> block. Empty-but-present sections only count for the two the LOKE
+  # template ships commented out — the rest ship empty on purpose.
+  EMPTY=$(awk '
+    function flush() {
+      if (h == "") return
+      if (n == 0) { if (tolower(h) ~ /related prs|rollback/) print h }
+      else if (neg == n) print h
+    }
+    /^## / { flush(); h = $0; n = 0; neg = 0; next }
+    NF && h != "" {
+      n++
+      if (tolower($0) ~ /^(n\/?a|none|no [a-z ]*|not applicable|just a code revert)\.?$/) neg++
+    }
+    END { flush() }
+  ' <<<"$LIVE" | head -3 || true)
+  [[ -n $EMPTY ]] && FAIL+=("Empty/negative sections — leave them commented out instead: $(tr '\n' ';' <<<"$EMPTY")")
+fi
+
+if (( ${#FAIL[@]} )); then
+  { echo "voice-lint ($MODE): rewrite before sending."
+    printf ' - %s\n' "${FAIL[@]}"
+    echo "Rules: the write-as-jacob skill. Genuinely needs the length? VOICE_LINT=off."
+  } >&2
+  exit 2
+fi
+exit 0
