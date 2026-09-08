@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+# pr-prep — mechanical PR context for the current repo, so an agent doesn't have
+# to burn tokens rediscovering it every time.
+#
+#   pr-prep            # print context block, write a filled body draft
+#   pr-prep --context  # same, without writing a draft (for hooks/checks)
+#
+# Prints (stdout, one key per line):
+#   repo, org, bookmark, tickets, title_prefix, template, template_source, pr, draft
+#
+# Template resolution: a repo-local PR template always wins; otherwise, for repos
+# under the LOKE org, the shared LOKE template. Ticket ids are lifted from the
+# bookmark name first (the reliable source) and only then from commit
+# descriptions on the stack.
+set -euo pipefail
+
+LOKE_TEMPLATE="${LOKE_PR_TEMPLATE:-$HOME/Documents/Developer/loke-github/pull_request_template.md}"
+CONTEXT_ONLY=0
+[[ ${1:-} == --context ]] && CONTEXT_ONLY=1
+
+if jj root >/dev/null 2>&1; then
+  VCS=jj; ROOT=$(jj root)
+elif git rev-parse --show-toplevel >/dev/null 2>&1; then
+  VCS=git; ROOT=$(git rev-parse --show-toplevel)
+else
+  echo "pr-prep: not a jj or git repo" >&2; exit 1
+fi
+cd "$ROOT"
+
+# ---- remote → owner/repo ---------------------------------------------------
+if [[ $VCS == jj ]]; then
+  URL=$(jj git remote list 2>/dev/null | awk '$1=="origin"{print $2; exit}')
+else
+  URL=$(git remote get-url origin 2>/dev/null || true)
+fi
+SLUG=$(printf '%s' "${URL:-}" | sed -E 's#^git\+ssh://##; s#^ssh://##; s#^git@[^:/]+[:/]##; s#^https?://[^/]+/##; s#\.git$##')
+ORG=${SLUG%%/*}
+
+# ---- bookmark / branch -----------------------------------------------------
+if [[ $VCS == jj ]]; then
+  # trunk()..@ excludes main/master, so this is the feature bookmark only.
+  BOOKMARK=$(jj bookmark list -r 'trunk()..@' -T 'name ++ "\n"' 2>/dev/null | head -1)
+  DESCS=$(jj log -r 'trunk()..@' --no-graph -T 'description ++ "\n"' 2>/dev/null || true)
+else
+  BOOKMARK=$(git branch --show-current 2>/dev/null || true)
+  DESCS=$(git log --format=%B origin/HEAD..HEAD 2>/dev/null || true)
+fi
+
+# ---- ticket ids ------------------------------------------------------------
+# 2+ digits keeps UTF-8 / ES-6 style noise out; the denylist catches the rest.
+scan_tickets() {
+  grep -oE '[A-Z][A-Z0-9]{1,9}-[0-9]{2,}' <<<"${1:-}" \
+    | grep -vE '^(UTF|ISO|RFC|SHA|BASE|IPV|CVE|HTTP)-' \
+    | awk '!seen[$0]++' || true
+}
+TICKETS=$(scan_tickets "$BOOKMARK")
+[[ -z $TICKETS ]] && TICKETS=$(scan_tickets "$DESCS")
+TICKET_LINE=$(tr '\n' ' ' <<<"$TICKETS" | sed -E 's/ +$//; s/([A-Z0-9-]+)/[\1]/g')
+
+# ---- template --------------------------------------------------------------
+TEMPLATE=""; SOURCE=none
+for c in .github/pull_request_template.md .github/PULL_REQUEST_TEMPLATE.md \
+         pull_request_template.md PULL_REQUEST_TEMPLATE.md \
+         docs/pull_request_template.md docs/PULL_REQUEST_TEMPLATE.md; do
+  [[ -f $c ]] && { TEMPLATE=$c; SOURCE=repo; break; }
+done
+if [[ -z $TEMPLATE && -d .github/PULL_REQUEST_TEMPLATE ]]; then
+  TEMPLATE=$(find .github/PULL_REQUEST_TEMPLATE -maxdepth 1 -name '*.md' | sort | head -1)
+  [[ -n $TEMPLATE ]] && SOURCE=repo
+fi
+if [[ -z $TEMPLATE && ${ORG,,} == loke && -f $LOKE_TEMPLATE ]]; then
+  TEMPLATE=$LOKE_TEMPLATE; SOURCE=loke-default
+fi
+
+# ---- draft -----------------------------------------------------------------
+DRAFT=""
+if [[ -n $TEMPLATE && $CONTEXT_ONLY == 0 ]]; then
+  DRAFT=$(mktemp "${TMPDIR:-/tmp}/pr-body-XXXXXX.md")
+  cp "$TEMPLATE" "$DRAFT"
+  # Fill the ticket placeholder only — [LOKE-XXXX] and friends. No tickets
+  # found means the placeholder stays put, which is the wanted behaviour.
+  if [[ -n $TICKET_LINE ]]; then
+    sed -i -E "s/^\[[A-Za-z]+-[Xx]+\]$/${TICKET_LINE//\//\\/}/" "$DRAFT"
+  fi
+fi
+
+# ---- existing PR -----------------------------------------------------------
+PR=none
+if [[ -n $BOOKMARK ]] && command -v gh >/dev/null 2>&1; then
+  PR=$(gh pr list --head "$BOOKMARK" --json number --jq '.[0].number // "none"' 2>/dev/null || echo none)
+  [[ -z $PR ]] && PR=none
+fi
+
+printf 'repo: %s\n'            "${SLUG:-unknown}"
+printf 'org: %s\n'             "${ORG:-unknown}"
+printf 'bookmark: %s\n'        "${BOOKMARK:-none}"
+printf 'tickets: %s\n'         "${TICKETS:-none (leave the placeholder)}"
+printf 'title_prefix: %s\n'    "${TICKET_LINE:-}"
+printf 'template: %s\n'        "${TEMPLATE:-none}"
+printf 'template_source: %s\n' "$SOURCE"
+printf 'pr: %s\n'              "$PR"
+printf 'draft: %s\n'           "${DRAFT:-none}"

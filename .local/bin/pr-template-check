@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# pr-template-check — refuse to open a PR that ignores the repo's (or LOKE's)
+# template. The voice rules get enforced by a hook, so the template rules do
+# too; a skill that only *documents* the convention gets skipped when the model
+# never loads it.
+#
+#   pr-template-check --hook          # stdin = PreToolUse JSON; exit 2 blocks
+#   pr-template-check body.md         # lint a draft directly
+#
+# Escape hatch: PR_TEMPLATE_CHECK=off.
+set -euo pipefail
+
+[[ ${PR_TEMPLATE_CHECK:-} == off ]] && exit 0
+
+HOOK=0; FILE=""; TITLE=""
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --hook) HOOK=1; shift ;;
+    *) FILE=$1; shift ;;
+  esac
+done
+
+BODY=""
+if [[ $HOOK == 1 ]]; then
+  CMD=$(jq -r '.tool_input.command // empty' 2>/dev/null || true)
+  # Must be an actual invocation, not the string mentioned inside a quoted
+  # argument (an echo/jq/python payload that happens to contain it).
+  grep -qE '(^|[;&|]|&&|\|\||\bthen[[:space:]])[[:space:]]*gh[[:space:]]+pr[[:space:]]+(create|edit)\b' <<<"$CMD" || exit 0
+  # Same extraction as voice-lint. Two call sites doesn't earn a shared lib yet.
+  if [[ $CMD =~ --body-file[[:space:]]+\"?([^[:space:]\"\']+) ]]; then
+    F=${BASH_REMATCH[1]}
+    [[ $F != "-" && -f $F ]] && BODY=$(cat "$F")
+  elif [[ $CMD =~ --body[[:space:]]+\'([^\']*)\' ]]; then
+    BODY=${BASH_REMATCH[1]}
+  elif [[ $CMD =~ --body[[:space:]]+\"([^\"]*)\" ]]; then
+    BODY=${BASH_REMATCH[1]}
+  fi
+  if [[ $CMD =~ --title[[:space:]]+\'([^\']*)\' ]]; then TITLE=${BASH_REMATCH[1]}
+  elif [[ $CMD =~ --title[[:space:]]+\"([^\"]*)\" ]]; then TITLE=${BASH_REMATCH[1]}
+  fi
+  # The hook runs in the session cwd, so a `cd <repo> && gh pr create` would
+  # otherwise resolve the wrong repo (or none) and silently pass.
+  if [[ $CMD =~ ^[[:space:]]*cd[[:space:]]+\'?\"?([^\'\"[:space:]\&\;]+) ]]; then
+    cd "${BASH_REMATCH[1]}" 2>/dev/null || true
+  fi
+  # --fill or a heredoc body: nothing to compare, but --fill is itself wrong
+  # when a template applies, so fall through with an empty body.
+  [[ -z $BODY && $CMD != *--fill* ]] && exit 0
+else
+  [[ -z $FILE || $FILE == "-" ]] && BODY=$(cat) || BODY=$(cat "$FILE")
+fi
+
+CTX=$(pr-prep --context 2>/dev/null || true)
+[[ -z $CTX ]] && exit 0
+val() { sed -n "s/^$1: //p" <<<"$CTX"; }
+TEMPLATE=$(val template)
+[[ -z $TEMPLATE || $TEMPLATE == none ]] && exit 0
+
+norm() { tr -s ' ' ' ' | sed -E 's/[[:space:]]+$//'; }
+# Only headings the template ships live — commented-out blocks stay optional.
+REQUIRED=$(perl -0777 -pe 's/<!--.*?-->//gs' "$TEMPLATE" | grep -E '^#{2,3} ' | norm || true)
+
+FAIL=()
+while IFS= read -r h; do
+  [[ -z $h ]] && continue
+  grep -qxF "$h" <<<"$(norm <<<"$BODY")" || FAIL+=("missing section: $h")
+done <<<"$REQUIRED"
+
+# The checklist is the point of the LOKE template; an empty body drops it silently.
+if grep -qE '^\s*- \[[ xX]\]' "$TEMPLATE" && ! grep -qE '^\s*- \[[ xX]\]' <<<"$BODY"; then
+  FAIL+=("missing the checklist")
+fi
+
+PREFIX=$(val title_prefix)
+if [[ -n $PREFIX && -n $TITLE && $TITLE != *"$PREFIX"* ]]; then
+  FAIL+=("title is missing the ticket prefix '$PREFIX'")
+fi
+
+if (( ${#FAIL[@]} )); then
+  { echo "pr-template-check: this repo's PR template wasn't used."
+    printf ' - %s\n' "${FAIL[@]}"
+    echo "Template: $TEMPLATE ($(val template_source))"
+    echo "Run pr-prep for a pre-filled draft, keep every section, and leave <!-- --> blocks commented."
+    echo "Deliberate exception? PR_TEMPLATE_CHECK=off."
+  } >&2
+  exit 2
+fi
+exit 0

@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# r2-upload — put local files in Jacob's public R2 evidence bucket, print one public URL per file.
+#
+#   r2-upload <file>...            # keys are <R2_PREFIX>/<yyyy-mm-dd>/<sha256[0:12]>-<basename>
+#   r2-upload --check              # verify credentials and bucket reachability, upload nothing
+#
+# Credentials come from ~/.config/r2/env (mode 0600, never synced between machines):
+#   R2_ACCOUNT_ID, R2_BUCKET, R2_PUBLIC_BASE, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
+#   R2_PREFIX (optional, default pr-evidence)
+# Everything uploaded is world-readable at R2_PUBLIC_BASE/<key>. Never upload a secret.
+set -euo pipefail
+
+ENV_FILE="${R2_ENV_FILE:-$HOME/.config/r2/env}"
+[[ -r $ENV_FILE ]] || { echo "r2-upload: no credentials at $ENV_FILE (see the pr-evidence skill)" >&2; exit 2; }
+mode=$(stat -c %a "$ENV_FILE" 2>/dev/null || stat -f %Lp "$ENV_FILE")
+[[ $mode == 600 ]] || { echo "r2-upload: $ENV_FILE must be mode 0600, is $mode" >&2; exit 2; }
+set -a; . "$ENV_FILE"; set +a
+for v in R2_ACCOUNT_ID R2_BUCKET R2_PUBLIC_BASE R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY; do
+  [[ -n ${!v:-} ]] || { echo "r2-upload: $v is unset in $ENV_FILE" >&2; exit 2; }
+done
+PREFIX=${R2_PREFIX:-pr-evidence}
+ENDPOINT="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET}"
+
+s3() {
+  curl --silent --show-error --fail-with-body \
+    --user "${R2_ACCESS_KEY_ID}:${R2_SECRET_ACCESS_KEY}" \
+    --aws-sigv4 "aws:amz:auto:s3" "$@"
+}
+
+if [[ ${1:-} == --check ]]; then
+  s3 --output /dev/null "${ENDPOINT}?list-type=2&max-keys=1" && echo "r2-upload: ok bucket=${R2_BUCKET} public=${R2_PUBLIC_BASE}"
+  exit
+fi
+[[ $# -ge 1 ]] || { echo "usage: r2-upload <file>... | --check" >&2; exit 2; }
+
+digest() {
+  if command -v sha256sum >/dev/null; then sha256sum "$1"; else shasum -a 256 "$1"; fi | cut -c1-12
+}
+content_type() {
+  case "${1##*.}" in
+    png) echo image/png ;; jpg|jpeg) echo image/jpeg ;; gif) echo image/gif ;;
+    webp) echo image/webp ;; svg) echo image/svg+xml ;; mp4) echo video/mp4 ;;
+    txt|log) echo text/plain ;; *) echo application/octet-stream ;;
+  esac
+}
+
+day=$(date -u +%Y-%m-%d)
+for f in "$@"; do
+  [[ -f $f ]] || { echo "r2-upload: not a file: $f" >&2; exit 1; }
+  base=$(basename "$f" | tr -c 'A-Za-z0-9._\n-' '-')
+  key="${PREFIX}/${day}/$(digest "$f")-${base}"
+  s3 --output /dev/null --upload-file "$f" \
+    --header "Content-Type: $(content_type "$f")" \
+    --header "Cache-Control: public, max-age=31536000, immutable" \
+    "${ENDPOINT}/${key}"
+  echo "${R2_PUBLIC_BASE}/${key}"
+done
