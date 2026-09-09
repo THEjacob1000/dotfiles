@@ -1,4 +1,4 @@
-# Resolve direnv once at shell startup, not on every prompt.
+# Load after mise so direnv's environment wins inside project shells.
 set -g __direnv_bin (command -s direnv)
 
 function __direnv_export_eval --on-event fish_prompt

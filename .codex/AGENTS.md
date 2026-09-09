@@ -16,6 +16,28 @@ everything else renders into both.
   lint/format. Always defer to what the current repo is actually configured with.
 - Prefer absolute paths over `cd`-prefixed shell commands.
 
+## Code navigation: ripwire before grep and whole-file reads
+`ripwire` (on PATH, MCP server `ripwire`) is a deterministic call-graph map of a
+repo, 0.3s cold, offline. It answers "what matters here", "who calls X", "what
+did I break", "which tests run" for a fraction of the tokens a grep-and-read
+sweep costs, and less context is measurably more accurate, not just cheaper.
+Reach for it first; open a file only once the map has named it.
+- Orient on a task: `ripwire . --for="<task in words>" --token-budget=2000`.
+  Paste symbol and file names from the ask verbatim.
+- One symbol: `--callers=SYM`; "is it safe to change" needs `--impact=SYM` plus
+  `--uses=SYM`. An exact literal: `--grep='text' --grep-context=2`.
+- A stack trace or build error: `--from-trace=FILE` (`-` for stdin). Paste it,
+  don't paraphrase it.
+- Before writing a new fn/class/helper: `--exemplar="<what you're writing>"`.
+- Before calling work done: `--quality-delta`, then `--test-gate` (or
+  `--affected=F1,F2`) for the tests that actually cover the change.
+- About to fan out N agents: `--pack-task="<task>" --partition=N` gives each
+  lane its slice, so N agents stop re-deriving the same orientation.
+- Unsure which verb: `--help-task="<task>"` names one command or abstains. The
+  `ripwire-router` skill is the full moment-to-verb map.
+- Counts are floors and a zero means "none found", never "none exists". Ripwire
+  narrows the read; it does not replace reading the lines you then edit.
+
 ## VCS: jj (Jujutsu)
 - Use jj exclusively in any repo with a `.jj/` directory (most do, including
   colocated jj+git repos). Only fall back to git in a plain-git repo with no
@@ -273,5 +295,7 @@ The `handoff` script (`harness/bin/handoff`) carries state-of-work between
 sessions/engines and, when the vault is wired, pushes it into memory for free.
 
 A local `jj` MCP server is also configured, prefer it for jj operations. Context7
-is available; use it only when a task needs it.
+is available; use it only when a task needs it. The `ripwire` MCP entry exposes
+only its audit verbs (analyze, quality_delta, flags, doc_drift); everything else
+is the CLI.
 <!-- numen:sync:end -->
