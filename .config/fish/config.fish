@@ -1,3 +1,7 @@
+# The following lines were added by Docker Desktop to add commands to your PATH.
+export PATH="$PATH:/Users/jacob/.docker/bin"
+# End of Docker Desktop section.
+
 # Only run interactively
 if not status is-interactive
     exit
@@ -74,6 +78,9 @@ alias py="python3"
 alias tf="terraform"
 alias cf-tf="cf-terraforming"
 alias bazel bazelisk
+
+# loke built from source, for when the mise-managed one is not what you want
+alias loke-debug="$HOME/Documents/Developer/loke-cli/loke"
 
 # Git SSH commit signing: configured once via:
 #   git config --global gpg.format ssh

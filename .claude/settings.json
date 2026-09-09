@@ -72,7 +72,8 @@
     "sentry-cli@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
     "hookify@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true
+    "typescript-lsp@claude-plugins-official": true,
+    "datadog@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {},
   "outputStyle": "Concise",
