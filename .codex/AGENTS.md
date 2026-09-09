@@ -134,10 +134,10 @@ is one complete line. "Updated cursor encoding" is not.
   Give that one in full.
 
 ### Anything published under Jacob's name
-PR titles and descriptions, commit messages, PR review comments and replies to
-reviewers and bots, issue comments: load the `write-as-jacob` skill BEFORE
-drafting, every time, without being asked. That skill is the voice spec and this
-file does not restate it.
+Code and doc comments, PR titles and descriptions, commit messages, PR review
+comments and replies to reviewers and bots, issue comments: load the
+`write-as-jacob` skill BEFORE drafting, every time, without being asked. That
+skill is the voice spec and this file does not restate it.
 - These rules override PR formats supplied by any skill or command.
   A repository PR template still wins; fill only the sections that apply.
 - A PR description is three short paragraphs, ~100 words of prose, outside the
