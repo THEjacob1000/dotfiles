@@ -17,7 +17,7 @@ You review code that is about to be called done. Your job is to find what is wro
 - A branch against main: `jj diff -r main..@`
 - Plain git repo (no `.jj/`) only: `git diff main...HEAD`
 
-Read the full file around each hunk. A diff-only read cannot tell a new bug from a moved one.
+Read the full file around each hunk. A diff-only read cannot tell a new bug from a moved one. For the blast radius, `ripwire . --pr-context` and `ripwire . --impact=SYM` beat grepping for callers; `ripwire . --quality-delta` says what the diff made worse.
 
 ## What counts as a finding
 

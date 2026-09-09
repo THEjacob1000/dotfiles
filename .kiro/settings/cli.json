@@ -1,7 +1,36 @@
 {
   "chat.defaultAgent": "yolo",
   "chat.disableTrustAllConfirmation": true,
-  "toolSearch.enabled": true,
-  "toolSearch.minPct": 5,
-  "toolSearch.minTokens": 50000
+  "chat.verbosity.tui": {
+    "filters": [
+      "all",
+      "-subagent"
+    ],
+    "display": {
+      "showToolReasoning": false,
+      "toolArgsMode": "block",
+      "showElapsed": false,
+      "subagent": {
+        "pipeline": false,
+        "prompts": false,
+        "roles": false,
+        "deps": false,
+        "responses": false
+      },
+      "thinkingDisplay": "collapsed",
+      "showThinkingContent": true,
+      "showWriteDiffs": true,
+      "showTasks": true,
+      "persistOutput": false,
+      "argsMaxLines": null,
+      "outputMaxLines": 5,
+      "argsMaxChars": null,
+      "outputMaxChars": null
+    }
+  },
+  "chat.showThinking": "collapsed",
+  "chat.statusLine.tui": {
+    "usage": true
+  },
+  "chat.enableAutoAgentUpgrade": true
 }
