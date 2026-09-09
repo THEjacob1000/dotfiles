@@ -40,7 +40,7 @@ alias jst="jj st"
 alias jsto="jj squash --into"
 alias jnt="jj git fetch; and jj new 'trunk()'"
 alias jmm="jj new @ 'trunk()'; and jj commit -m 'Merge in master'"
-alias jcp="jj commit; and jj git push --allow-new"
+alias jcp="jj commit; and jj git push --all"
 
 # ---------------------------------------------------------
 # Helper: list local bookmark names
