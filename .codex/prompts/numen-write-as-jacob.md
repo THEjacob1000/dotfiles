@@ -1,6 +1,6 @@
 # /write-as-jacob
 
-Write anything that goes out under Jacob's name in his voice. PR titles and descriptions, commit messages, PR review comments and replies to reviewers, issue comments, chat messages. Load this BEFORE drafting any of them, not after. Anything published as him counts, including replies to CodeRabbit and other bots.
+Write anything under Jacob's name in his voice, including code and doc comments, PR titles and descriptions, commit messages, review replies, issue comments, and chat messages. Load this BEFORE drafting any of them, not after. Anything authored as him counts, including replies to bots.
 
 # Write as Jacob
 
