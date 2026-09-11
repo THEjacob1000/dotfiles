@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Every agent reaches ripwire through this front, so the compact legend is a guarantee
+# rather than a flag each skill has to remember: full legends cost 3-5 KB of identical
+# prose per call, re-read on every later turn.
+set -euo pipefail
+
+real="${RIPWIRE_REAL:-$HOME/.local/share/ripwire/bin/ripwire}"
+if [ ! -x "$real" ]; then
+  echo "ripwire: no binary at $real (run: mise run install-ripwire)" >&2
+  exit 127
+fi
+
+[ $# -eq 0 ] && exec "$real"
+
+for arg in "$@"; do
+  case "$arg" in
+    --legend|--legend=*|--json|--mcp|--mcp-*|--help|-h|--version|--help-task|--help-task=*|\
+    --situ|--situ=*|--recall|--recall=*|--report|--report=*|--mermaid|--mermaid=*|--html|--html=*|\
+    --plan-lanes|--plan-lanes=*|--sarif|--sarif=*|--eval*|\
+    --replace-symbol-body=*|--insert-before-symbol=*|--insert-after-symbol=*|--edit-plan=*|\
+    --note-add=*|--quality-baseline|--quality-ack|--quality-ack=*|--index-out=*|--export=*)
+      exec "$real" "$@" ;;
+  esac
+done
+
+out="$(mktemp)"
+err="$(mktemp)"
+trap 'rm -f "$out" "$err"' EXIT
+set +e
+"$real" "$@" --legend=compact >"$out" 2>"$err"
+rc=$?
+set -e
+if [ "$rc" -ne 0 ] && grep -q -- '--legend=compact applies to the XML verbs only' "$err"; then
+  # A consumed pipe cannot be replayed, so a piped prose verb must name its legend itself.
+  if [ -t 0 ] || [ /dev/stdin -ef /dev/null ]; then
+    rm -f "$out" "$err"
+    exec "$real" "$@"
+  fi
+  echo "ripwire: this verb takes no legend; rerun with --legend=full when piping stdin" >&2
+fi
+cat "$out"
+cat "$err" >&2
+exit "$rc"

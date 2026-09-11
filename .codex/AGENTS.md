@@ -16,16 +16,23 @@ everything else renders into both.
   lint/format. Always defer to what the current repo is actually configured with.
 - Prefer absolute paths over `cd`-prefixed shell commands.
 
-## Code navigation: ripwire before grep and whole-file reads
-`ripwire` (on PATH, MCP server `ripwire`) is a deterministic call-graph map of a
-repo, 0.3s cold, offline. It answers "what matters here", "who calls X", "what
-did I break", "which tests run" for a fraction of the tokens a grep-and-read
-sweep costs, and less context is measurably more accurate, not just cheaper.
-Reach for it first; open a file only once the map has named it.
-- Orient on a task: `ripwire . --for="<task in words>" --token-budget=2000`.
+## Code navigation: ripwire for graph questions, rg for literals
+`ripwire` (CLI on PATH, run it through Bash) is a deterministic call-graph map
+of a repo, 0.3s cold, offline. Use it for the questions grep answers badly: what
+matters for this task, who calls X, what breaks if X changes, which tests cover
+it. Every byte it returns is re-read on every later turn, so payload size beats
+call count. Open a file only once the map has named it.
+- The `ripwire` on PATH is numen's front: it adds `--legend=compact` to every
+  XML verb, since the default legend is 3-5 KB of schema prose per call. Pass
+  `--legend=full` only when an attribute's meaning is unclear.
+- Batch independent queries into one Bash call. A turn costs the whole context;
+  a second command in the same turn costs only its bytes.
+- Orient on a task: `ripwire . --for="<task in words>" --token-budget=1200`.
   Paste symbol and file names from the ask verbatim.
 - One symbol: `--callers=SYM`; "is it safe to change" needs `--impact=SYM` plus
-  `--uses=SYM`. An exact literal: `--grep='text' --grep-context=2`.
+  `--uses=SYM`. Narrow flat verbs with `--limit=N`, never `--token-budget` (it
+  gates them to empty output and the turn is wasted).
+- An exact literal is `rg -n 'text'`, not ripwire.
 - A stack trace or build error: `--from-trace=FILE` (`-` for stdin). Paste it,
   don't paraphrase it.
 - Before writing a new fn/class/helper: `--exemplar="<what you're writing>"`.
