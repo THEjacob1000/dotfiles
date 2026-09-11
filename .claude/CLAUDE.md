@@ -29,8 +29,9 @@ Reach for it first; open a file only once the map has named it.
 - A stack trace or build error: `--from-trace=FILE` (`-` for stdin). Paste it,
   don't paraphrase it.
 - Before writing a new fn/class/helper: `--exemplar="<what you're writing>"`.
-- Before calling work done: `--quality-delta`, then `--test-gate` (or
-  `--affected=F1,F2`) for the tests that actually cover the change.
+- Before calling work done: `--quality-delta`, then `--test-gate` for the tests
+  that actually cover the change. `--situ` reads the working tree itself; never
+  hand-join a file list into `--affected`.
 - About to fan out N agents: `--pack-task="<task>" --partition=N` gives each
   lane its slice, so N agents stop re-deriving the same orientation.
 - Unsure which verb: `--help-task="<task>"` names one command or abstains. The
