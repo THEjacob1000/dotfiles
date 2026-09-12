@@ -41,6 +41,7 @@ vercel = "latest"
 yq = "latest"
 "github:rabbitmq/rabbitmqadmin-ng" = "latest"
 "http:loke" = { version = "latest", url = 'https://tools-nix-cache.s3.ap-southeast-4.amazonaws.com/downloads/loke-cli/{{ version }}/loke-{{ os(macos="darwin") }}-{{ arch(x64="amd64") }}.tar.gz', version_list_url = "https://tools-nix-cache.s3.ap-southeast-4.amazonaws.com/downloads/loke-cli/latest" }
+pnpm = "11"
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"]

@@ -1,0 +1,30 @@
+# Global bacon prefs. Per-project jobs go in <repo>/bacon.toml.
+# Docs: https://dystroy.org/bacon/config/
+
+summary = false
+wrap = false
+reverse = true
+
+[exports.locations]
+auto = false
+exporter = "locations"
+path = ".bacon-locations"
+line_format = "{kind} {path}:{line}:{column} {message}"
+
+[keybindings]
+esc = "back"
+q = "quit"
+ctrl-c = "quit"
+ctrl-q = "quit"
+shift-r = "rerun"
+g = "scroll-to-top"
+shift-g = "scroll-to-bottom"
+j = "scroll-lines(1)"
+k = "scroll-lines(-1)"
+ctrl-d = "scroll-pages(1)"
+ctrl-u = "scroll-pages(-1)"
+c = "job:clippy-all"
+t = "job:nextest"
+shift-t = "job:test"
+r = "job:run"
+d = "job:doc-open"
