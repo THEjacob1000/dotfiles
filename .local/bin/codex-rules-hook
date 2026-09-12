@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+# codex-rules-hook — Codex hook that injects a path-scoped rule the first time a
+# session patches a file the rule claims. Codex has no native path-scoped
+# instruction layer, so the hook is the equivalent of Claude's `~/.claude/rules/`:
+# `numen sync` projects the same rule files to `$CODEX_HOME/numen-rules/` and
+# registers this script in `hooks.json` for two events. On `PreToolUse` it reads
+# the patch and injects; on `PostCompact` it clears the session's once-only
+# markers, because compaction drops the context it already injected.
+#
+# stdin is the hook payload; stdout is `{"hookSpecificOutput":{"additionalContext":...}}`.
+# A hook must never block Codex, so every failure exits 0; the ones that mean the
+# payload was not what this script understands say so on stderr first.
+set -uo pipefail
+
+command -v jq >/dev/null 2>&1 || exit 0
+
+payload="$(cat)" || exit 0
+session="$(printf '%s' "$payload" | jq -r '.session_id // empty' 2>/dev/null | tr -dc 'A-Za-z0-9_-')"
+
+# Codex's own `tmp/` is Codex's to sweep; the markers are this script's state.
+markers="${XDG_STATE_HOME:-$HOME/.local/state}/numen/codex-rules"
+mkdir -p "$markers" || exit 0
+find "$markers" -maxdepth 1 -type f -mtime +1 -delete 2>/dev/null
+
+event="$(printf '%s' "$payload" | jq -r '.hook_event_name // empty' 2>/dev/null)"
+if [[ "$event" == "PostCompact" ]]; then
+  # An unidentified session clears every marker rather than none: re-injecting a
+  # rule costs a few hundred tokens, losing it after a compaction costs the rule.
+  scope="${session:+$session-}*"
+  find "$markers" -maxdepth 1 -type f -name "$scope" -delete 2>/dev/null
+  exit 0
+fi
+[[ -z "$session" ]] && session="no-session"
+
+shape="$(printf '%s' "$payload" | jq -r '.tool_input.command | type' 2>/dev/null)"
+case "$shape" in
+  string) ;;
+  null|"") exit 0 ;;
+  *)
+    echo "codex-rules-hook: tool_input.command is $shape, expected string" >&2
+    exit 0
+    ;;
+esac
+patch="$(printf '%s' "$payload" | jq -r '.tool_input.command')" || exit 0
+
+mapfile -t touched < <(printf '%s\n' "$patch" | sed -n 's/^\*\*\* \(Add\|Update\) File: //p')
+[[ ${#touched[@]} -eq 0 ]] && exit 0
+
+rules="${CODEX_HOME:-$HOME/.codex}/numen-rules"
+[[ -d "$rules" ]] || exit 0
+
+# Only the list items under `paths:` in the leading frontmatter block. A `---` in
+# the body must not reopen it, and no other key's list may contribute a glob.
+globs_of() {
+  awk '
+    NR == 1 { if ($0 != "---") exit; next }
+    $0 == "---" { exit }
+    /^paths:[[:space:]]*$/ { in_paths = 1; next }
+    /^[^[:space:]]/ { in_paths = 0 }
+    in_paths && match($0, /^[[:space:]]+-[[:space:]]*/) {
+      glob = substr($0, RSTART + RLENGTH)
+      sub(/[[:space:]]+$/, "", glob)
+      if (glob ~ /^".*"$/ || glob ~ /^'"'"'.*'"'"'$/) glob = substr(glob, 2, length(glob) - 2)
+      if (glob != "") print glob
+    }
+  ' "$1"
+}
+
+body_of() {
+  awk 'NR == 1 && $0 == "---" { fm = 1; next } fm && $0 == "---" { fm = 0; next } !fm' "$1" |
+    sed '/./,$!d'
+}
+
+context=""
+fired=()
+for rule in "$rules"/*.md; do
+  [[ -f "$rule" ]] || continue
+  name="$(basename "$rule" .md)"
+  [[ -e "$markers/$session-$name" ]] && continue
+
+  # `[[ == ]]` lets `*` cross a `/`, so `**/*.rs` matches any depth — but it
+  # still needs the slash, so a rule that must catch repo-root files lists a
+  # bare `*.rs` glob too.
+  matched=""
+  while IFS= read -r glob; do
+    for path in "${touched[@]}"; do
+      # shellcheck disable=SC2053
+      if [[ $path == $glob ]]; then
+        matched=1
+        break 2
+      fi
+    done
+  done < <(globs_of "$rule")
+  [[ -z "$matched" ]] && continue
+
+  context+="Rule numen-rules/$name.md applies to the files in this patch."$'\n\n'"$(body_of "$rule")"$'\n\n'
+  fired+=("$name")
+done
+
+[[ -z "$context" ]] && exit 0
+jq -n --arg c "$context" '{hookSpecificOutput: {additionalContext: $c}}' || exit 0
+# Only now: a rule whose marker cannot be written injects again next patch,
+# which is noise. A rule marked before a failed emit would be lost silently.
+for name in "${fired[@]}"; do
+  : >"$markers/$session-$name" 2>/dev/null
+done
+exit 0

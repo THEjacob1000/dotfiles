@@ -1,9 +1,6 @@
 {
   "permissions": {
     "deny": [
-      "Bash(git push:*)",
-      "Bash(jj git push:*)",
-      "Bash(gh pr create:*)",
       "Bash(gh pr merge:*)",
       "Bash(git remote add:*)",
       "Bash(git remote set-url:*)"
