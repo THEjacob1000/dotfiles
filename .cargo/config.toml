@@ -3,3 +3,6 @@ jobs = 6
 
 [env]
 RUST_TEST_THREADS = "6"
+
+[alias]
+clip = "clippy --all-targets --all-features -- -D warnings"
