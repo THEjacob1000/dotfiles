@@ -1,6 +1,6 @@
 # ~/.config/fish/conf.d/jj_aliases.fish
 #
-# Completions for jj bookmark aliases (jb, jbm, jbd, jbl, jbr, jbs, jbt, jbf, jbc).
+# Completions for jj bookmark aliases (jb, jbm, jbd, jbl, jbr, jbt, jbf, jbc).
 # Must live in conf.d/ (not completions/) because completions/ files are keyed
 # to a single command name — this file covers many commands at once.
 
@@ -14,7 +14,6 @@ alias jbm="jj bookmark move"
 alias jbd="jj bookmark d"
 alias jbl="jj bookmark list"
 alias jbr="jj bookmark rename"
-alias jbs="jj bookmark set"
 alias jbt="jj bookmark track --remote=origin"
 alias jbf="jj bookmark forget"
 alias jc="jj commit"
@@ -91,13 +90,6 @@ complete -c jbd -f -a "(__jj_bookmarks)"
 # ---------------------------------------------------------
 complete -c jbr -f -a "(__jj_bookmarks)"
 complete -c jbr -l overwrite-existing -d 'Allow renaming even if the new name already exists'
-
-# ---------------------------------------------------------
-# jbs = jj bookmark set
-# ---------------------------------------------------------
-complete -c jbs -f -a "(__jj_bookmarks)"
-complete -c jbs -s r -l revision        -d 'Target revision' -r
-complete -c jbs -s B -l allow-backwards -d 'Allow moving bookmark backwards or sideways'
 
 # ---------------------------------------------------------
 # jbt = jj bookmark track --remote=origin
@@ -177,6 +169,10 @@ function jdf
         echo "$rev: $first_line"
         jj --quiet desc "$rev" --message "$first_line"
     end
+end
+
+function jbs
+    jj diff $argv --stat | tail -1
 end
 
 # ---------------------------------------------------------
