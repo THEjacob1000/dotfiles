@@ -13,7 +13,10 @@ term = xterm-256color
 
 scrollback-limit = 10000000
 confirm-close-surface = false
-copy-on-select = clipboard
+copy-on-select = true
+keybind = copy=copy_to_clipboard:plain
+keybind = ctrl+insert=copy_to_clipboard:plain
+keybind = ctrl+shift+c=copy_to_clipboard:plain
 
 # Guake used Alt+Enter for multiline; VTE couldn't encode shift+enter, ghostty can.
 keybind = shift+enter=text:\x1b\r

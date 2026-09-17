@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/google/styleguide",
+  "revision": "60d2ac7d89ad526937a52571e5e439e01f0af673",
+  "license": "CC-BY-3.0",
+  "selection": "Root LICENSE and go/{guide,decisions,best-practices,index}.md copied byte-for-byte; sections are heading-aware excerpts with local links rewritten to pinned upstream URLs.",
+  "sha256": {
+    "LICENSE": "e6bc9e9c474700b708f568bac9e5a8a9bcb2b1dad53442f5ba449fcb848b8e76",
+    "best-practices.md": "e44180b492c3585b4a20bd44e7cb277a55a9f264ad352f33f287b639e9e75b56",
+    "decisions.md": "3a0b54ef41aca49f8bf0a4d4ce2d0b4662721b52197256d121b6cc95616f4850",
+    "guide.md": "f12051c22045953c3688a85f9eba94f7cf61b6a769762671cdbf1ca4d2b3aa1b",
+    "index.md": "95f228a13481ffefab9da3303446484e2b22c6cffa34a273169c844ad33a3435"
+  }
+}
