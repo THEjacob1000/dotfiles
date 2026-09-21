@@ -2,6 +2,8 @@
 
 Read the rules relevant to the current change. Paths are relative to this index.
 
+Baseline: [macros](../rust-api-guidelines/src/macros.md). Read the relevant sections alongside the Microsoft rules below.
+
 - [M-EXAMPLE-OVER-PROC: Prefer 'macros by example' over proc macros](../microsoft/src/guidelines/macros/M-EXAMPLE-OVER-PROC.md)
 - [M-MACRO-HELPERS: Third party items come from hidden `_private` module](../microsoft/src/guidelines/macros/M-MACRO-HELPERS.md)
 - [M-MACRO-LAST-RESORT: Macros are a last resort](../microsoft/src/guidelines/macros/M-MACRO-LAST-RESORT.md)

@@ -2,6 +2,8 @@
 
 Read the rules relevant to the current change. Paths are relative to this index.
 
+Baseline: [predictability](../rust-api-guidelines/src/predictability.md), [flexibility](../rust-api-guidelines/src/flexibility.md), [future proofing](../rust-api-guidelines/src/future-proofing.md), [interoperability](../rust-api-guidelines/src/interoperability.md). Read the relevant sections alongside the Microsoft rules below.
+
 - [M-ASYNC-FN: Functions are `async` over returning a Future](../microsoft/src/guidelines/libs/ux/M-ASYNC-FN.md)
 - [M-AVOID-WRAPPERS: Avoid smart pointers and wrappers in APIs](../microsoft/src/guidelines/libs/ux/M-AVOID-WRAPPERS.md)
 - [M-BALANCED-MODULES: Modules are balanced in size and scope](../microsoft/src/guidelines/libs/ux/M-BALANCED-MODULES.md)

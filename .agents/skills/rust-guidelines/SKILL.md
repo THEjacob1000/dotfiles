@@ -1,19 +1,20 @@
 ---
 name: rust-guidelines
-description: Write, refactor, or review Rust using a pinned Microsoft guideline library. Load only the rules relevant to the API, correctness, or performance decision at hand.
+description: Write, refactor, or review Rust using pinned Rust community guidelines and Microsoft additions. Load only the rules relevant to the API, correctness, or performance decision at hand.
 generated-by: numen-sync
 ---
 
 # Rust guidelines
 
-Use Microsoft's Pragmatic Rust Guidelines as the default Rust design reference. User instructions and the target repository's constraints take precedence. Apply guidance to the requested change; it is not a mandate to restructure existing code.
+Use the Rust community guidelines as the baseline and Microsoft's Pragmatic Rust Guidelines as additions and explicit overrides. Silence in Microsoft is not an exemption from the baseline. User instructions, the target repository's constraints, and the local invariant policy below take precedence over both. Rust language safety requirements cannot be overridden by a design preference. Apply guidance to the requested change; it is not a mandate to restructure existing code.
 
 ## Load only what the task needs
 
-Resolve links relative to this skill's installed directory, not the working directory. Pick the relevant topic below, read its short index, then read only the individual rules that bear on the decision. Start with one topic and a few rules; expand when a concrete question requires it. Don't read the entire reference tree or every linked rule. Reuse guidance already in context.
+Resolve links relative to this skill's installed directory, not the working directory. Pick the relevant topic below, read its short index, then read the relevant baseline sections and Microsoft rules together. Read only the sections that bear on the decision. Start with one topic and a few rules; expand when a concrete question requires it. Don't read the entire reference tree or every linked rule. Reuse guidance already in context.
 
 | Task | Index |
 | --- | --- |
+| Baseline source map, formatting, design patterns, known `C-*` rules | [Upstream sources](references/topics/upstream.md) |
 | Naming, standard conventions, static checks, logging | [Universal](references/topics/universal.md) |
 | Public APIs, error types, builders, generics, service ownership | [API design](references/topics/libs-ux.md) |
 | Checked types, validation, test boundaries, global state | [Resilience](references/topics/libs-resilience.md) |
@@ -28,7 +29,7 @@ Resolve links relative to this skill's installed directory, not the working dire
 | Rustdoc and public examples | [Documentation](references/topics/docs.md) |
 | Agent-facing APIs and meaningful tests | [AI](references/topics/ai.md) |
 
-For a known `M-*` rule, locate its file directly under `references/microsoft/src/guidelines/`. Upstream cross-references use website anchors; resolve their `M-*` IDs to individual local files. `C-*` references point to the external Rust API Guidelines. Screenshots are not vendored; the linked upstream website supplies them if needed. These are design guidelines, not a substitute for the pinned dependency's API documentation, especially for cancellation and unsafe contracts.
+For a known `M-*` rule, locate its file directly under `references/microsoft/src/guidelines/`. Upstream cross-references use website anchors; resolve their `M-*` IDs to individual local files. `C-*` references resolve through the local [API checklist](references/rust-api-guidelines/src/checklist.md). Its reference definitions map each ID to a chapter and anchor; open that local chapter and find the ID. For upstream website links, use the [source map](references/topics/upstream.md) instead of fetching a baseline already vendored. Treat `.html` chapter links as `.md` when reading the source. Screenshots are not vendored; the linked upstream website supplies them if needed. These are design guidelines, not a substitute for the pinned dependency's API documentation, especially for cancellation and unsafe contracts.
 
 ## Local invariant policy
 
@@ -39,4 +40,4 @@ For a known `M-*` rule, locate its file directly under `references/microsoft/src
 
 Use the repository's verification commands. In review, cite applicable rule IDs with the concrete consequence; a stylistic preference alone does not establish a correctness defect.
 
-The upstream revision, file hashes, and license are in [upstream.json](references/microsoft/upstream.json) and [LICENSE.md](references/microsoft/LICENSE.md). Read them only when auditing or updating the vendored source.
+Each source directory has an `upstream.json` recording its repository, pinned revision, selection, file hashes, and license, alongside the original license files. The [source map](references/topics/upstream.md) links the manifests, including [Microsoft](references/microsoft/upstream.json). Read them only when auditing or updating the vendored source.

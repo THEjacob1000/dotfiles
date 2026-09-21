@@ -22,6 +22,13 @@ local files_command = ("{ rg --files --hidden --glob '!.git' --glob '!.jj'; "
 return {
   {
     "folke/snacks.nvim",
+    init = function()
+      vim.filetype.add({
+        pattern = {
+          ["/home/jacob/Documents/Developer/parser%-ts%-files/.*"] = { "bigfile", { priority = 1000 } },
+        },
+      })
+    end,
     opts = {
       explorer = { enabled = true },
       picker = {

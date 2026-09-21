@@ -2,6 +2,10 @@
 
 Read the rules relevant to the current change. Paths are relative to this index.
 
+Baseline: [naming](../rust-api-guidelines/src/naming.md), [debuggability](../rust-api-guidelines/src/debuggability.md). Read the relevant sections alongside the Microsoft rules below.
+
+For formatting and idioms, select a chapter through the [upstream source map](upstream.md).
+
 - [M-DOCUMENTED-MAGIC: Magic values are documented](../microsoft/src/guidelines/universal/M-DOCUMENTED-MAGIC.md)
 - [M-LINT-OVERRIDE-EXPECT: Lint overrides should use `#[expect]`](../microsoft/src/guidelines/universal/M-LINT-OVERRIDE-EXPECT.md)
 - [M-LOG-STRUCTURED: Use structured logging with message templates](../microsoft/src/guidelines/universal/M-LOG-STRUCTURED.md)
