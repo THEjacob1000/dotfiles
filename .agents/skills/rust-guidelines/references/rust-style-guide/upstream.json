@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/rust-lang/rust",
+  "revision": "1303417c416e1595173d9689e7394c31e136ae95",
+  "license": "MIT OR Apache-2.0",
+  "selection": "LICENSE-APACHE, LICENSE-MIT, and src/doc/style-guide/src/*.md, copied byte-for-byte; website scaffolding omitted",
+  "sha256": {
+    "LICENSE-APACHE": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+    "LICENSE-MIT": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1",
+    "src/doc/style-guide/src/README.md": "387967fffd06320a1f4004c46740125baab3d5c0986340890f89e0f833a54566",
+    "src/doc/style-guide/src/SUMMARY.md": "9a1cc19ecec6e94b6c95293bd10f1c0bbfbdaaffaa4581f322af617ea8d49774",
+    "src/doc/style-guide/src/advice.md": "7ad729d9d75eb48a72c6066cde4447138f3b7a6786979a2e504804724dba43a4",
+    "src/doc/style-guide/src/cargo.md": "cdb5c4010ccaad7e1c2599b11a0764a7132383ff3cda47b8cbb0e49459ba07ba",
+    "src/doc/style-guide/src/editions.md": "8ab37dc141036aebd478f541194cad92a86846953ec7212521b2a8e1942ed2ed",
+    "src/doc/style-guide/src/expressions.md": "2777292a47906dac38ea67d5aecbb4e6fb7368ca299dae9413f8c55863d287a2",
+    "src/doc/style-guide/src/items.md": "57cbd21d469fa742349399bf27cf500c4cb9831ffc7ba43a1a164d7cd437bc04",
+    "src/doc/style-guide/src/nightly.md": "e82d3b08dc80468e93f13de44466b59d0bc2f843f734ed82a8f3249170476763",
+    "src/doc/style-guide/src/principles.md": "01c469c253c383a0fff47d234405204cd69cd4f51d5fa8d50ff903533e3ef80a",
+    "src/doc/style-guide/src/statements.md": "3a183212f7ba75ddda447cc5de106673d068dd1415b9ad8cba71a6a5d112681d",
+    "src/doc/style-guide/src/types.md": "9862fd758e364c31dceb3e96392f305c8f8384ffbd5f006099d67fab3b5f30f5"
+  }
+}

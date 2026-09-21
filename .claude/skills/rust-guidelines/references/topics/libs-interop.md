@@ -2,6 +2,8 @@
 
 Read the rules relevant to the current change. Paths are relative to this index.
 
+Baseline: [interoperability](../rust-api-guidelines/src/interoperability.md), [flexibility](../rust-api-guidelines/src/flexibility.md). Read the relevant sections alongside the Microsoft rules below.
+
 - [M-DONT-LEAK-TYPES: Don't leak external types](../microsoft/src/guidelines/libs/interop/M-DONT-LEAK-TYPES.md)
 - [M-ESCAPE-HATCHES: Native escape hatches](../microsoft/src/guidelines/libs/interop/M-ESCAPE-HATCHES.md)
 - [M-FOREIGN-REEXPORTS: Items come from their original crate](../microsoft/src/guidelines/libs/interop/M-FOREIGN-REEXPORTS.md)

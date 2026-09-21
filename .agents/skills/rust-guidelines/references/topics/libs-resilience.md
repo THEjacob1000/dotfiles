@@ -2,6 +2,8 @@
 
 Read the rules relevant to the current change. Paths are relative to this index.
 
+Baseline: [type safety](../rust-api-guidelines/src/type-safety.md), [dependability](../rust-api-guidelines/src/dependability.md). Read the relevant sections alongside the Microsoft rules below.
+
 - [M-AVOID-STATICS: Avoid statics](../microsoft/src/guidelines/libs/resilience/M-AVOID-STATICS.md)
 - [M-BUILD-RESULT: Builders validate in final `.build()`](../microsoft/src/guidelines/libs/resilience/M-BUILD-RESULT.md)
 - [M-INTEGRATION-TESTS: Integration tests live under `tests/`](../microsoft/src/guidelines/libs/resilience/M-INTEGRATION-TESTS.md)

@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/rust-lang/reference",
+  "revision": "4245282b97496585e73862b966d639cbb553bd6c",
+  "license": "MIT OR Apache-2.0",
+  "selection": "LICENSE-APACHE, LICENSE-MIT, and src/{behavior-considered-undefined,behavior-not-considered-unsafe,unsafety,unsafe-keyword}.md, copied byte-for-byte; other Reference chapters remain available from the pinned repository",
+  "sha256": {
+    "LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+    "LICENSE-MIT": "0621878e61f0d0fda054bcbe02df75192c28bde1ecc8289cbd86aeba2dd72720",
+    "src/behavior-considered-undefined.md": "6bdda92c3e29102519f0ce11d9be0ba3650d5673426c9b377272f27d1663b1ba",
+    "src/behavior-not-considered-unsafe.md": "e053ce624c44f14e1f83b793e5bf82bf45c4e4975dd56bb30fb593929f57fc2f",
+    "src/unsafe-keyword.md": "376c811498b91d3ff8403df1742c3d97963309bc1028cf23922ddde0dfe56502",
+    "src/unsafety.md": "474a7f561213ab92d073e022f957e1714f461c476101319cad381b5dc3514fb8"
+  }
+}

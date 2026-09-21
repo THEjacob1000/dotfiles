@@ -2,6 +2,8 @@
 
 Read the rules relevant to the current change. Paths are relative to this index.
 
+Baseline: [predictability](../rust-api-guidelines/src/predictability.md). Read the relevant sections alongside the Microsoft rules below.
+
 - [M-DESIGN-FOR-AI: Design with AI use in mind](../microsoft/src/guidelines/ai/M-DESIGN-FOR-AI.md)
 - [M-NO-META-DESIGN-DOCUMENTATION: Avoid meta design documentation](../microsoft/src/guidelines/ai/M-NO-META-DESIGN-DOCUMENTATION.md)
 - [M-RUST-SHAPED: Rust code solves Rust problems](../microsoft/src/guidelines/ai/M-RUST-SHAPED.md)

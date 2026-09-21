@@ -44,11 +44,10 @@
     [
       {
         "id": "506058b9-7233-40a6-be8d-d221d1ea6f2f",
-        "type": "jj-root-dir",
+        "type": "custom-command",
         "color": "ansi256:108",
-        "metadata": {
-          "hide": "no-jj"
-        }
+        "commandPath": "python3 ~/.claude/statusline/jj.py root",
+        "timeout": 2500
       },
       {
         "id": "l2-sep-1",
@@ -93,11 +92,10 @@
       },
       {
         "id": "4812377a-4d3c-4ff0-aa82-7147d4a4638b",
-        "type": "jj-description",
+        "type": "custom-command",
         "color": "ansi256:245",
-        "metadata": {
-          "hide": "no-jj"
-        }
+        "commandPath": "python3 ~/.claude/statusline/jj.py desc",
+        "timeout": 2500
       }
     ],
     [

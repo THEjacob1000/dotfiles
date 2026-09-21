@@ -2,6 +2,8 @@
 
 Read the rules relevant to the current change. Paths are relative to this index.
 
+Baseline: [flexibility](../rust-api-guidelines/src/flexibility.md). Read the relevant sections alongside the Microsoft rules below.
+
 - [M-ASYNC-STACK-SIZE: Hot `async` functions reduce stack size](../microsoft/src/guidelines/performance/M-ASYNC-STACK-SIZE.md)
 - [M-AVOID-INDIRECTION: Nested type hierarchies should avoid needless indirection](../microsoft/src/guidelines/performance/M-AVOID-INDIRECTION.md)
 - [M-BOX-DST: Use boxed slices and strings for immutable owned sequences](../microsoft/src/guidelines/performance/M-BOX-DST.md)
