@@ -57,7 +57,7 @@
       {
         "id": "861ebc95-5ee5-4e3d-9829-6e9d0fa3808a",
         "type": "custom-command",
-        "commandPath": "jj root >/dev/null 2>&1 && jj --color=always log --no-graph -r @ -T 'change_id.shortest(8)' 2>/dev/null || true",
+        "commandPath": "jj --ignore-working-copy root >/dev/null 2>&1 && jj --ignore-working-copy --color=always log --no-graph -r @ -T 'change_id.shortest(8)' 2>/dev/null || true",
         "preserveColors": true,
         "timeout": 1000
       },
@@ -70,7 +70,7 @@
         "id": "8dad271d-3a41-44a9-8896-af61e4244ba9",
         "type": "custom-command",
         "color": "ansi256:72",
-        "commandPath": "jj root >/dev/null 2>&1 && b=$(jj log --no-graph -r 'heads(::@ & bookmarks())' -T bookmarks 2>/dev/null) && [ -n \"$b\" ] && printf '\\357\\204\\246 %s' \"$b\" || true",
+        "commandPath": "jj --ignore-working-copy root >/dev/null 2>&1 && b=$(jj --ignore-working-copy log --no-graph -r 'heads(::@ & bookmarks())' -T bookmarks 2>/dev/null) && [ -n \"$b\" ] && printf '\\357\\204\\246 %s' \"$b\" || true",
         "timeout": 1000
       },
       {
@@ -81,7 +81,7 @@
       {
         "id": "d7ddf379-56b7-4a21-bba6-056858ab0dfa",
         "type": "custom-command",
-        "commandPath": "jj root >/dev/null 2>&1 && { stat=$(jj diff --stat 2>/dev/null); line=$(printf \"%s\\n\" \"$stat\" | tail -1); ins=$(printf \"%s\" \"$line\" | grep -oE \"[0-9]+ insertion\" | grep -oE \"[0-9]+\"); del=$(printf \"%s\" \"$line\" | grep -oE \"[0-9]+ deletion\" | grep -oE \"[0-9]+\"); printf \"\\033[38;5;245m(\\033[38;5;71m+%s\\033[38;5;245m,\\033[38;5;131m-%s\\033[38;5;245m)\\033[0m\" \"${ins:-0}\" \"${del:-0}\"; } || true",
+        "commandPath": "jj --ignore-working-copy root >/dev/null 2>&1 && { stat=$(jj --ignore-working-copy diff --stat 2>/dev/null); line=$(printf \"%s\\n\" \"$stat\" | tail -1); ins=$(printf \"%s\" \"$line\" | grep -oE \"[0-9]+ insertion\" | grep -oE \"[0-9]+\"); del=$(printf \"%s\" \"$line\" | grep -oE \"[0-9]+ deletion\" | grep -oE \"[0-9]+\"); printf \"\\033[38;5;245m(\\033[38;5;71m+%s\\033[38;5;245m,\\033[38;5;131m-%s\\033[38;5;245m)\\033[0m\" \"${ins:-0}\" \"${del:-0}\"; } || true",
         "preserveColors": true,
         "timeout": 1000
       },

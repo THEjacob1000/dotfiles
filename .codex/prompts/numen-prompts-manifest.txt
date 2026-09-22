@@ -24,4 +24,5 @@ numen-ripwire-router.md
 numen-ripwire-security-scan.md
 numen-ripwire-write-tests.md
 numen-rust-guidelines.md
+numen-rust-hardening.md
 numen-write-as-jacob.md
