@@ -40,7 +40,6 @@ uv = "latest"
 vercel = "latest"
 yq = "latest"
 "github:rabbitmq/rabbitmqadmin-ng" = "latest"
-pnpm = "11"
 "http:loke" = { version = "latest", url = "https://tools.tailnet-redacted.ts.net:8443/downloads/loke-cli/{{ version }}/loke-darwin-arm64.tar.gz", version_list_url = "https://tools.tailnet-redacted.ts.net:8443/downloads/loke-cli/latest" }
 
 [settings]
