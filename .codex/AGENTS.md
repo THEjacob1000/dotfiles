@@ -232,6 +232,8 @@ for a short synchronous read whose answer decides the very next action. If a cal
 could outlast a sentence or two, background it instead.
 
 ### Delegation → Codex model tiers
+When running inside OMP, use its configured model roles: Fable at medium for orchestration and planning, Astra through Codex at medium for slow work, Opus for tasks, and Luna at medium for advisor, smol and commit. Leave the task model unset to use the configured agent tier, or select a role such as `@slow`, `@task` or `@smol`. The Codex CLI tier table below does not select OMP models.
+
 GPT-5.6 splits into three durable tiers (the number is the generation; the name is
 the tier, advancing on its own cadence). Pick by how much judgment the work needs,
 the same capable-for-thinking / cheap-for-grunt split as above:
