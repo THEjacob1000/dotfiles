@@ -1,28 +1,24 @@
 #!/usr/bin/env python3
-"""Partition a workspace into hardening lanes, leaves first.
+"""Schedule hardening in dependency stages with parallel lanes inside each stage.
 
-`cargo metadata` gives the workspace members and their intra-workspace
-dependency edges. Kahn's algorithm with a name tiebreak turns that into a
-deterministic leaves-first order: a crate never appears before something it
-depends on. Fixing a leaf first means the crates above it are repaired against
-an API that has already stopped moving.
+Finish every lane in a stage before starting the next stage. Workspace path
+normal, build and dev dependencies all impose this ordering. Pathless dependencies
+matching member names also impose ordering because Cargo patches can resolve them locally.
+Dependency cycles are grouped into one lane, so their crates are edited serially.
 
---lanes N walks that order and fills N lanes to an even weight, so the deepest
-crate still lands in the earliest lane with room. Weight is the diagnostic
-count from `gate.py --json` when --gate-json is given, and the source-file
-count otherwise.
+--lanes N caps concurrent agents within a stage. Weight is the diagnostic count
+from gate.py --json with --gate-json, and the source-file count otherwise.
+A crate above --split-share is split by src directory; its root unit owns the
+remaining files, including its manifest, tests and build script. Units with
+intersecting ownership paths always stay together in a single lane.
 
-A crate holding more than --split-share of the total weight is split into one
-sub-lane per top-level directory under its src/, which stops a god crate from
-serialising a wave that was meant to be parallel.
-
-The table is the brief the orchestrator pastes into each task prompt: one row
-per lane, naming the paths that lane owns and nothing else.
+Root workspace configuration and lockfiles remain orchestrator-owned unless
+explicitly assigned. Agents must stay within the listed paths.
 
 Examples:
     python3 lanes.py --lanes 6
-    python3 gate.py --json > /tmp/gate.json && python3 lanes.py --lanes 6 --gate-json /tmp/gate.json
-    python3 lanes.py --json
+    python3 lanes.py --lanes 6 --gate-json /tmp/gate.json
+    python3 lanes.py --json --manifest-path /repo/Cargo.toml
 """
 
 from __future__ import annotations
@@ -33,6 +29,7 @@ import shutil
 import subprocess
 import sys
 from dataclasses import dataclass, field
+from graphlib import TopologicalSorter
 from pathlib import Path
 
 
@@ -62,8 +59,11 @@ def read_crates(manifest: Path | None) -> tuple[Path, dict[str, Crate]]:
         raise CargoUnavailable(done.stderr.strip() or "cargo metadata failed")
     data = json.loads(done.stdout)
     root = Path(data.get("workspace_root", "."))
-    packages = data.get("packages", [])
-    names = {package["name"] for package in packages}
+    members = set(data["workspace_members"])
+    packages = [package for package in data["packages"] if package["id"] in members]
+    paths = {
+        Path(package["manifest_path"]).parent.resolve(): package["name"] for package in packages
+    }
     crates: dict[str, Crate] = {}
     for package in packages:
         directory = Path(package["manifest_path"]).parent
@@ -71,30 +71,55 @@ def read_crates(manifest: Path | None) -> tuple[Path, dict[str, Crate]]:
             name=package["name"],
             directory=directory,
             depends_on={
-                dependency["name"]
+                name
                 for dependency in package.get("dependencies", [])
-                if dependency["name"] in names and dependency["name"] != package["name"]
+                for name in [
+                    paths.get(Path(dependency["path"]).resolve())
+                    if dependency.get("path")
+                    else dependency["name"]
+                ]
+                if name in paths.values() and name != package["name"]
             },
         )
     return root, crates
 
 
-def leaves_first(crates: dict[str, Crate]) -> list[str]:
-    """Kahn's algorithm over the dependency edges, name-tiebroken."""
-    remaining = {name: set(crate.depends_on) & set(crates) for name, crate in crates.items()}
-    order: list[str] = []
-    while remaining:
-        ready = sorted(name for name, deps in remaining.items() if not deps)
-        if not ready:
-            # A dependency cycle (dev-dependencies make these legal). Take the
-            # least-blocked crate so the order stays total and deterministic.
-            ready = [min(remaining, key=lambda name: (len(remaining[name]), name))]
-        for name in ready:
-            order.append(name)
-            del remaining[name]
-        for deps in remaining.values():
-            deps.difference_update(ready)
-    return order
+def dependency_stages(crates: dict[str, Crate]) -> list[list[list[str]]]:
+    reachable = {}
+    for name in crates:
+        visited = set()
+        pending = [name]
+        while pending:
+            current = pending.pop()
+            if current not in visited:
+                visited.add(current)
+                pending.extend(crates[current].depends_on & crates.keys() - visited)
+        reachable[name] = visited
+    components: dict[str, list[str]] = {}
+    owner = {}
+    for name in sorted(crates):
+        if name not in owner:
+            members = sorted(other for other in reachable[name] if name in reachable[other])
+            components[name] = members
+            owner.update(dict.fromkeys(members, name))
+    graph = TopologicalSorter(
+        {
+            name: {
+                owner[dep]
+                for member in members
+                for dep in crates[member].depends_on
+                if dep in owner and owner[dep] != name
+            }
+            for name, members in components.items()
+        }
+    )
+    graph.prepare()
+    stages = []
+    while graph.is_active():
+        ready = sorted(graph.get_ready())
+        stages.append([components[name] for name in ready])
+        graph.done(*ready)
+    return stages
 
 
 def source_weight(directory: Path) -> int:
@@ -129,7 +154,12 @@ def split_unit(crate: Crate, root: Path, weight: int) -> list[Unit]:
     )
     if not modules:
         return [Unit(crate.name, [relative(crate.directory, root)], weight)]
-    files = [child for child in source.glob("*.rs")] if source.is_dir() else []
+    files = sorted(child for child in source.iterdir() if not child.is_dir())
+    files += sorted(
+        child
+        for child in crate.directory.iterdir()
+        if child != source and child.name not in {"target", ".git", ".jj", "Cargo.lock"}
+    )
     units = [
         Unit(
             f"{crate.name}:{module.name}",
@@ -140,7 +170,7 @@ def split_unit(crate: Crate, root: Path, weight: int) -> list[Unit]:
     ]
     units.append(
         Unit(
-            f"{crate.name}:root",
+            f"{crate.name}:.",
             [relative(path, root) for path in sorted(files)],
             max(1, weight // (len(modules) + 1)),
         )
@@ -155,6 +185,19 @@ def relative(path: Path, root: Path) -> str:
         return path.as_posix()
 
 
+def owned_paths(directory: Path, boundaries: set[Path]) -> list[Path]:
+    if directory in boundaries:
+        return []
+    if any(boundary.is_relative_to(directory) for boundary in boundaries):
+        return [
+            path
+            for child in sorted(directory.iterdir())
+            if child.name not in {"target", ".git", ".jj", "Cargo.lock"}
+            for path in owned_paths(child, boundaries)
+        ]
+    return [directory]
+
+
 def build_units(
     root: Path,
     crates: dict[str, Crate],
@@ -167,41 +210,90 @@ def build_units(
     for name in order:
         crate = crates[name]
         weight = max(weights.get(name, 0), 1)
-        if total and weight / total > split_share:
-            units.extend(split_unit(crate, root, weight))
-        else:
-            units.append(Unit(name, [relative(crate.directory, root)], weight))
+        pieces = (
+            split_unit(crate, root, weight)
+            if total and weight / total > split_share
+            else [Unit(name, [relative(crate.directory, root)], weight)]
+        )
+        boundaries = {other.directory for other in crates.values() if other != crate}
+        for piece in pieces:
+            piece.paths = [
+                relative(owned, root)
+                for path in piece.paths
+                for owned in owned_paths(root / path, boundaries)
+            ]
+            if piece.paths:
+                units.append(piece)
     return units
 
 
-def partition(units: list[Unit], lanes: int) -> list[list[Unit]]:
-    """Fills lanes to an even weight, keeping the leaves-first order."""
-    if lanes <= 1:
-        return [list(units)]
-    buckets: list[list[Unit]] = [[] for _ in range(lanes)]
-    loads = [0] * lanes
-    total = sum(unit.weight for unit in units) or 1
-    target = total / lanes
-    cursor = 0
+def overlaps(left: Unit, right: Unit) -> bool:
+    return any(
+        Path(a).is_relative_to(b) or Path(b).is_relative_to(a)
+        for a in left.paths
+        for b in right.paths
+    )
+
+
+def partition(units: list[Unit], lanes: int, components: list[list[str]]) -> list[list[Unit]]:
+    owner = {
+        name: index for index, group in enumerate(components) if len(group) > 1 for name in group
+    }
+    groups: list[list[Unit]] = []
     for unit in units:
-        while cursor < lanes - 1 and loads[cursor] >= target:
-            cursor += 1
-        buckets[cursor].append(unit)
-        loads[cursor] += unit.weight
+        joined = [unit]
+        separate = []
+        for group in groups:
+            if any(
+                overlaps(unit, other)
+                or (
+                    unit.label.split(":")[0] in owner
+                    and owner.get(other.label.split(":")[0]) == owner[unit.label.split(":")[0]]
+                )
+                for other in group
+            ):
+                joined.extend(group)
+            else:
+                separate.append(group)
+        groups = [*separate, joined]
+    buckets: list[list[Unit]] = [[] for _ in range(min(lanes, len(groups)))]
+    for group in sorted(groups, key=lambda group: -sum(unit.weight for unit in group)):
+        bucket = min(buckets, key=lambda bucket: sum(unit.weight for unit in bucket))
+        bucket.extend(group)
     return buckets
 
 
-def render(buckets: list[list[Unit]], order: list[str], weighting: str) -> str:
-    out = [f"leaves-first order ({weighting} weighting):", "  " + " -> ".join(order), ""]
-    width = max(len("lane"), len(str(len(buckets))))
-    out.append(f"{'lane'.ljust(width)}  {'weight':>6}  paths")
-    out.append("-" * 72)
-    for number, bucket in enumerate(buckets, start=1):
-        if not bucket:
-            continue
-        weight = sum(unit.weight for unit in bucket)
-        paths = ", ".join(path for unit in bucket for path in unit.paths)
-        out.append(f"{str(number).ljust(width)}  {weight:>6}  {paths}")
+def schedule(units: list[Unit], dependencies: list[list[list[str]]], lanes: int) -> list[dict]:
+    stages = []
+    for number, components in enumerate(dependencies, start=1):
+        names = {name for component in components for name in component}
+        stage_units = [unit for unit in units if unit.label.split(":")[0] in names]
+        buckets = partition(stage_units, lanes, components)
+        stages.append(
+            {
+                "stage": number,
+                "lanes": [
+                    {
+                        "lane": lane,
+                        "weight": sum(unit.weight for unit in bucket),
+                        "units": [vars(unit) for unit in bucket],
+                    }
+                    for lane, bucket in enumerate(buckets, start=1)
+                ],
+            }
+        )
+
+    return stages
+
+
+def render(stages: list[dict], order: list[str], weighting: str) -> str:
+    out = [f"dependency order ({weighting} weighting):", "  " + " -> ".join(order)]
+    for stage in stages:
+        out.append(f"\nstage {stage['stage']} (finish before the next stage):")
+        out.append("lane  weight  paths")
+        for lane in stage["lanes"]:
+            paths = ", ".join(path for unit in lane["units"] for path in unit["paths"])
+            out.append(f"{lane['lane']:>4}  {lane['weight']:>6}  {paths}")
     return "\n".join(out)
 
 
@@ -223,6 +315,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", help="machine-readable output")
     args = parser.parse_args(argv)
 
+    if args.lanes < 1 or not 0 < args.split_share <= 1:
+        parser.error("--lanes must be positive and --split-share must be in (0, 1]")
     try:
         root, crates = read_crates(args.manifest_path)
     except (CargoUnavailable, json.JSONDecodeError) as error:
@@ -232,42 +326,30 @@ def main(argv: list[str] | None = None) -> int:
         print("lanes.py: no workspace members", file=sys.stderr)
         return 2
 
-    order = leaves_first(crates)
-    if args.gate_json:
-        weights = gate_weights(args.gate_json)
-        weighting = "diagnostic"
-    else:
-        weights = {name: source_weight(crate.directory) for name, crate in crates.items()}
-        weighting = "source-file"
-
+    try:
+        dependencies = dependency_stages(crates)
+        weights = (
+            gate_weights(args.gate_json)
+            if args.gate_json
+            else {name: source_weight(crate.directory) for name, crate in crates.items()}
+        )
+    except (OSError, ValueError, TypeError, AttributeError) as error:
+        print(f"lanes.py: invalid gate weights: {error}", file=sys.stderr)
+        return 2
+    weighting = "diagnostic" if args.gate_json else "source-file"
+    order = [name for stage in dependencies for component in stage for name in component]
     units = build_units(root, crates, order, weights, args.split_share)
-    buckets = partition(units, max(1, args.lanes))
+    stages = schedule(units, dependencies, args.lanes)
 
     if args.json:
         print(
             json.dumps(
-                {
-                    "root": str(root),
-                    "weighting": weighting,
-                    "order": order,
-                    "lanes": [
-                        {
-                            "lane": number,
-                            "weight": sum(unit.weight for unit in bucket),
-                            "units": [
-                                {"label": unit.label, "paths": unit.paths, "weight": unit.weight}
-                                for unit in bucket
-                            ],
-                        }
-                        for number, bucket in enumerate(buckets, start=1)
-                        if bucket
-                    ],
-                },
+                {"root": str(root), "weighting": weighting, "order": order, "stages": stages},
                 indent=2,
             )
         )
     else:
-        print(render(buckets, order, weighting))
+        print(render(stages, order, weighting))
     return 0
 
 

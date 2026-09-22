@@ -1,27 +1,20 @@
 #!/usr/bin/env python3
 """Find the hardening work clippy will not name for you.
 
-The gate's lint set catches mechanical defects. This catches the design ones
-the Rust guidelines push into the type system, which no lint can flag because
-each is legal code that happens to throw away an invariant.
+The gate catches compiler and lint diagnostics. These seven heuristics locate
+code worth reviewing against rust-guidelines; a hit is not proof of a defect.
 
-Seven categories:
+    unwrap_expect   .unwrap() / .expect(...) outside recognised test code.
+    numeric_cast    casts to numeric, character or boolean types.
+    pub_field       public fields whose invariants may need encapsulation.
+    primitive_id    repeated primitive identifier parameters across signatures.
+    bool_param      boolean parameters whose call sites may be ambiguous.
+    nested_option   Option<Option<T>> with potentially different absence states.
+    stringly_enum   string-literal match arms that may represent a closed domain.
 
-    unwrap_expect   .unwrap() / .expect(...) outside test code. Each one is a
-                    panic path the caller cannot see in the signature.
-    numeric_cast    an `as` cast between numeric types. Silently truncates or
-                    wraps; try_into plus a real error, or a checked type.
-    pub_field       a `pub` struct field. A public field is a promise that no
-                    invariant holds over it, and it cannot be taken back.
-    primitive_id    the same `name: String` or `name: u64` parameter in more
-                    than one signature. Two call sites means the newtype is
-                    already owed, and argument transposition is a live bug.
-    bool_param      a `bool` function parameter. Unreadable at the call site
-                    and unextendable; an enum with two named variants is free.
-    nested_option   Option<Option<T>>. Two absences that mean different things
-                    and nothing says which is which.
-    stringly_enum   a match on string literals. The compiler cannot tell you
-                    when a case goes missing.
+Review the surrounding code before changing it. Comments, literals, macros and
+complex attributes can produce false positives or hide hits; this is not a Rust
+parser. Unreadable source files fail the scan instead of silently disappearing.
 
 Test code is excluded: unwrap is correct in a test, and a test module is not
 public API. Files under tests/ and benches/ are skipped whole, as is any file
@@ -60,11 +53,9 @@ CATEGORIES = (
     "stringly_enum",
 )
 
-SKIP_DIRS = {"target", ".git", ".jj", "node_modules", "tests", "benches", "examples"}
+SKIP_DIRS = {"target", ".git", ".jj", "node_modules", "tests", "benches"}
 TEST_STEM = re.compile(r"^(?:tests?|.*_tests?)$")
-NUMERIC = (
-    "u8|u16|u32|u64|u128|usize|i8|i16|i32|i64|i128|isize|f32|f64|char|bool"
-)
+NUMERIC = "u8|u16|u32|u64|u128|usize|i8|i16|i32|i64|i128|isize|f32|f64|char|bool"
 
 UNWRAP = re.compile(r"\.(unwrap|expect)\s*\(")
 CAST = re.compile(rf"\bas\s+(?:{NUMERIC})\b")
@@ -76,7 +67,7 @@ PARAM = re.compile(r"^(?:mut\s+)?(?P<name>[a-z_][A-Za-z0-9_]*)\s*:\s*(?P<type>.+
 ID_TYPE = re.compile(r"^&?(?:mut\s+)?(?:str|String|u8|u16|u32|u64|u128|usize|i32|i64)$")
 BOOL_TYPE = re.compile(r"^(?:&(?:mut\s+)?)?bool$")
 LINE_COMMENT = re.compile(r"//.*$")
-CFG_TEST = re.compile(r"#\[cfg\((?:.*\b)?test\b")
+CFG_TEST = re.compile(r"#\s*\[\s*cfg\s*\(\s*test\s*\)\s*\]")
 
 
 @dataclass(frozen=True)
@@ -113,7 +104,7 @@ def crate_of(path: Path, root: Path) -> str:
 
 
 def rust_files(root: Path) -> list[Path]:
-    """Lists tracked .rs files, through rg when it is available."""
+    """Lists Rust sources, respecting rg's ignore rules when available."""
     if shutil.which("rg"):
         done = subprocess.run(
             ["rg", "--files", "--glob", "*.rs", str(root)],
@@ -152,8 +143,12 @@ def test_lines(lines: list[str]) -> set[int]:
         if open_at is None and CFG_TEST.search(raw):
             armed = True
         if armed:
+            inside.add(number)
             opens = line.count("{")
             closes = line.count("}")
+            if open_at is None and not opens and ";" in line:
+                armed = False
+                continue
             if open_at is None and opens:
                 open_at = number
                 depth = 0
@@ -173,8 +168,8 @@ def scan_file(path: Path, root: Path, wanted: set[str]) -> Scan:
     """Scans one file. Returns direct hits plus the primitive-id index."""
     try:
         source = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
-        return [], {}
+    except (OSError, UnicodeDecodeError) as error:
+        raise OSError(f"cannot read {path}: {error}") from error
     lines = source.splitlines()
     excluded = test_lines(lines)
     crate = crate_of(path, root)
@@ -334,9 +329,7 @@ def main(argv: list[str] | None = None) -> int:
         help="restrict to one category; repeatable",
     )
     parser.add_argument("--json", action="store_true", help="machine-readable output")
-    parser.add_argument(
-        "--limit", type=int, default=8, help="lines shown per category, 0 for all"
-    )
+    parser.add_argument("--limit", type=int, default=8, help="lines shown per category, 0 for all")
     args = parser.parse_args(argv)
 
     root = args.root.resolve()
@@ -344,7 +337,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"candidates.py: not a directory: {root}", file=sys.stderr)
         return 2
     wanted = set(args.category) if args.category else set(CATEGORIES)
-    hits = collect(root, wanted)
+    try:
+        hits = collect(root, wanted)
+    except OSError as error:
+        print(f"candidates.py: {error}", file=sys.stderr)
+        return 2
 
     if args.json:
         counts: dict[str, dict[str, int]] = defaultdict(dict)

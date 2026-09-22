@@ -21,7 +21,8 @@ Exit status: 0 green, 1 red, 2 when cargo itself could not be run.
 Examples:
     python3 gate.py                       # whole workspace, human table
     python3 gate.py -p my-crate --json    # one lane, machine output
-    python3 gate.py --jobs 6 --skip test  # static checks only
+    python3 gate.py --output baseline.json  # human summary and JSON, one run
+    python3 gate.py --baseline baseline.json --output wave.json
 """
 
 from __future__ import annotations
@@ -43,6 +44,11 @@ WORKSPACE = "(workspace)"
 SHOWN_PER_CODE = 6
 
 FMT_DIFF = re.compile(r"^Diff in (?P<file>.+?) at line (?P<line>\d+):")
+TEST_TOTAL = re.compile(
+    r"^test result: (?:ok|FAILED)\. (\d+) passed; (\d+) failed; "
+    r"(\d+) ignored; (\d+) measured; (\d+) filtered out(?:;.*)?$"
+)
+TOTAL_FIELDS = ("passed", "failed", "ignored", "measured", "filtered_out")
 TEST_FAIL = re.compile(r"^\s{4}(?P<name>[\w:$<>{}#.\- ]+)$")
 
 
@@ -83,6 +89,7 @@ class StepResult:
     diagnostics: list[Diagnostic] = field(default_factory=list)
     failures: list[str] = field(default_factory=list)
     stderr_tail: str = ""
+    totals: dict[str, int] | None = None
 
     @property
     def red(self) -> bool:
@@ -119,18 +126,26 @@ def read_workspace(manifest: Path | None) -> Workspace:
         command += ["--manifest-path", str(manifest)]
     if shutil.which("cargo") is None:
         raise CargoUnavailable("cargo is not on PATH")
-    done = subprocess.run(command, capture_output=True, text=True, check=False)
+    try:
+        done = subprocess.run(command, capture_output=True, text=True, check=False)
+    except OSError as error:
+        raise CargoUnavailable(str(error)) from error
     if done.returncode != 0:
         raise CargoUnavailable(done.stderr.strip() or "cargo metadata failed")
     try:
         data = json.loads(done.stdout)
     except json.JSONDecodeError as error:
         raise CargoUnavailable(f"cargo metadata emitted no JSON: {error}") from error
-    crates = {
-        package["name"]: Path(package["manifest_path"]).parent
-        for package in data.get("packages", [])
-    }
-    return Workspace(root=Path(data.get("workspace_root", ".")), crates=crates)
+    try:
+        members = set(data["workspace_members"])
+        crates = {
+            package["name"]: Path(package["manifest_path"]).parent
+            for package in data["packages"]
+            if package["id"] in members
+        }
+        return Workspace(root=Path(data["workspace_root"]), crates=crates)
+    except (KeyError, TypeError) as error:
+        raise CargoUnavailable(f"invalid cargo metadata: {error}") from error
 
 
 def run(
@@ -141,7 +156,12 @@ def run(
     merged = dict(os.environ)
     if env:
         merged.update(env)
-    return subprocess.run(command, cwd=cwd, env=merged, capture_output=True, text=True, check=False)
+    try:
+        return subprocess.run(
+            command, cwd=cwd, env=merged, capture_output=True, text=True, check=False
+        )
+    except OSError as error:
+        return subprocess.CompletedProcess(command, 127, "", str(error))
 
 
 def scope(package: str | None) -> list[str]:
@@ -230,10 +250,12 @@ def step_clippy(workspace: Workspace, package: str | None, count: int | None) ->
 
 def step_doc(workspace: Workspace, package: str | None, count: int | None) -> StepResult:
     result = StepResult("doc", ran=True)
-    command = (
-        ["cargo", "doc", "--no-deps", "--message-format=json"] + scope(package) + jobs(count)
+    command = ["cargo", "doc", "--no-deps", "--message-format=json"] + scope(package) + jobs(count)
+    done = run(
+        command,
+        workspace.root,
+        env={"RUSTDOCFLAGS": os.environ.get("RUSTDOCFLAGS", "") + " -D warnings"},
     )
-    done = run(command, workspace.root, env={"RUSTDOCFLAGS": "-D warnings"})
     result.status = done.returncode
     result.stderr_tail = tail(done.stderr)
     result.diagnostics = parse_json_diagnostics(done.stdout, workspace)
@@ -271,6 +293,18 @@ def step_test(workspace: Workspace, package: str | None, count: int | None) -> S
     result.status = done.returncode
     result.stderr_tail = tail(done.stderr)
     result.failures = parse_test_failures(done.stdout)
+    summaries = [
+        line.strip() for line in done.stdout.splitlines() if line.startswith("test result:")
+    ]
+    matches = [TEST_TOTAL.fullmatch(line) for line in summaries]
+    if matches and all(matches):
+        totals = dict.fromkeys(TOTAL_FIELDS, 0)
+        totals["suites"] = len(matches)
+        for match in matches:
+            if match is not None:
+                for key, value in zip(TOTAL_FIELDS, match.groups(), strict=True):
+                    totals[key] += int(value)
+        result.totals = totals
     return result
 
 
@@ -340,9 +374,43 @@ def render(results: dict[str, StepResult], table: dict[str, dict[str, int]], gre
             out.append(f"## {name} failed with no parsed diagnostics (exit {result.status})")
             out.append(result.stderr_tail or "(no stderr)")
 
+    test = results.get("test")
+    if test and test.totals is not None:
+        out.append("")
+        out.append("Tests: " + "; ".join(f"{value} {key}" for key, value in test.totals.items()))
     out.append("")
     out.append("GREEN" if green else "RED")
     return "\n".join(out)
+
+
+def baseline_errors(
+    path: Path, workspace: Workspace, package: str | None, test: StepResult | None
+) -> list[str]:
+    try:
+        baseline = json.loads(path.read_text())
+        if baseline["workspace_root"] != str(workspace.root) or baseline["package"] != package:
+            return ["baseline scope does not match this workspace/package"]
+        previous = baseline["steps"]["test"]["totals"]
+        if (
+            not isinstance(previous, dict)
+            or any(
+                type(previous.get(key)) is not int or previous[key] < 0
+                for key in (*TOTAL_FIELDS, "suites")
+            )
+            or previous["suites"] == 0
+        ):
+            return ["baseline has no reliable test totals"]
+        if baseline["steps"]["test"]["status"] != 0 and previous["failed"] == 0:
+            return ["baseline test command failed without complete failure summaries"]
+        if test is None or test.totals is None:
+            return ["cannot compare baseline without current test totals"]
+        if test.totals["ignored"] > previous["ignored"]:
+            return [f"ignored tests increased: {previous['ignored']} -> {test.totals['ignored']}"]
+        if test.totals["passed"] < previous["passed"]:
+            return [f"passing tests decreased: {previous['passed']} -> {test.totals['passed']}"]
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        return [f"cannot read baseline: {error}"]
+    return []
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -353,6 +421,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("-p", "--package", help="scope every step to one crate")
     parser.add_argument("--json", action="store_true", help="machine-readable output")
+    parser.add_argument("--output", type=Path, help="write JSON artifact from this run")
+    parser.add_argument("--baseline", type=Path, help="reject a lower passing-test count")
     parser.add_argument("--jobs", type=int, help="cargo -j value")
     parser.add_argument("--manifest-path", type=Path, help="workspace Cargo.toml")
     parser.add_argument(
@@ -363,6 +433,8 @@ def main(argv: list[str] | None = None) -> int:
         help="drop a step; repeatable",
     )
     args = parser.parse_args(argv)
+    if args.jobs is not None and args.jobs < 1:
+        parser.error("--jobs must be positive")
 
     try:
         workspace = read_workspace(args.manifest_path)
@@ -383,30 +455,50 @@ def main(argv: list[str] | None = None) -> int:
             results[name] = step_test(workspace, args.package, args.jobs)
 
     table = per_crate(results, workspace, args.package)
-    green = not any(result.red for result in results.values())
-
+    errors = []
+    if args.skip:
+        errors.append("incomplete gate: skipped " + ", ".join(args.skip))
+    test = results.get("test")
+    if test is not None:
+        if test.totals is None:
+            errors.append("test output has no complete, recognised libtest summaries")
+        elif test.totals["failed"]:
+            errors.append(f"test summaries report {test.totals['failed']} failures")
+    if args.baseline:
+        errors.extend(baseline_errors(args.baseline, workspace, args.package, test))
+    green = not errors and not any(result.red for result in results.values())
+    report = {
+        "green": green,
+        "complete": not args.skip,
+        "workspace_root": str(workspace.root),
+        "package": args.package,
+        "lints": LINTS,
+        "errors": errors,
+        "crates": {crate: table[crate] for crate in sorted(table)},
+        "steps": {
+            name: {
+                "ran": result.ran,
+                "status": result.status,
+                "diagnostics": [d.as_dict() for d in result.diagnostics],
+                "failures": result.failures,
+                "stderr_tail": result.stderr_tail,
+                "totals": result.totals,
+            }
+            for name, result in results.items()
+        },
+    }
+    encoded = json.dumps(report, indent=2)
+    if args.output:
+        try:
+            args.output.write_text(encoded + "\n")
+        except OSError as error:
+            print(f"gate.py: cannot write report: {error}", file=sys.stderr)
+            return 2
     if args.json:
-        print(
-            json.dumps(
-                {
-                    "green": green,
-                    "package": args.package,
-                    "lints": LINTS,
-                    "crates": {crate: table[crate] for crate in sorted(table)},
-                    "steps": {
-                        name: {
-                            "ran": result.ran,
-                            "status": result.status,
-                            "diagnostics": [d.as_dict() for d in result.diagnostics],
-                            "failures": result.failures,
-                        }
-                        for name, result in results.items()
-                    },
-                },
-                indent=2,
-            )
-        )
+        print(encoded)
     else:
+        if errors:
+            print("\n".join(errors))
         print(render(results, table, green))
     return 0 if green else 1
 
