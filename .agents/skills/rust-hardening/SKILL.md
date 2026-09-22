@@ -1,61 +1,58 @@
 ---
 name: rust-hardening
-description: Pedantically enforce the Rust guidelines over a whole repository in waves. Use when dropped into a badly written Rust project and asked to harden it, clean it up, or make it match the rust skill everywhere. Fans out fix agents that run no checks, then verifies once in a singleton and iterates on the results.
+description: Enforce rust-guidelines across a Rust repository in dependency stages. Use for whole-repository hardening or cleanup, not a routine change. Parallel fix agents write without running checks; one verifier runs the gate and reports failures for the next wave.
 generated-by: numen-sync
 ---
 
 # Rust hardening
 
-Enforce `rust-guidelines` over an entire repository. The fix agents write; they never verify. One singleton verifies; it never fixes. That split is the whole method: parallel agents running cargo fight over the target directory and each one reports a red another lane caused.
+Load `rust-guidelines` and the target repository's instructions. Apply the actual guidelines to its code, not just the patterns a scanner recognises. Fix agents write and never verify; one verifier runs all checks and never fixes. Respect the repository's design/review gates before changing trust boundaries.
 
-Three scripts live beside this file, stdlib-only Python 3 so they run in any repo with no environment to set up. `<skill>` below is this skill's installed directory, not the working directory. Run them with `python3`, they ship non-executable. Every one takes `--help` with the full detail; read that when you need a flag rather than expecting it here.
+Three stdlib-only Python scripts live beside this file and run with `python3`, without installing dependencies. Set `skill` to this skill's installed directory, not the target repository. Read each script's `--help` for optional flags. Honour the repository's cargo lock, job and memory limits when running the gate.
 
-Serialise cargo behind a lock if the repo's own conventions say to. Nothing in wave 1 runs cargo at all, so the only contention is wave 2 against whatever else is on the box.
+## Baseline
 
-## Wave 0, baseline
-
-```sh
-python3 <skill>/gate.py --json > /tmp/gate-0.json; python3 <skill>/gate.py | tail -40
-python3 <skill>/candidates.py --json > /tmp/cand-0.json; python3 <skill>/candidates.py | head -30
-python3 <skill>/lanes.py --lanes N --gate-json /tmp/gate-0.json
-```
-
-Record the totals. They are the only measure of whether a wave achieved anything, and the final report quotes the real ones.
-
-Pick N from the lane table, not from a hunch: one agent per lane, and a lane is a leaf-first slice of the dependency order so the crates above it are repaired against an API that has stopped moving.
-
-## Wave 1, fan out
-
-One task agent per lane, all dispatched in the same message so they run concurrently. Each lane prompt carries its row from the lane table verbatim and these rules:
-
-- Load `rust-guidelines` first. Fix this lane to it, and convert every candidate in the lane to a checked type, or justify it in a one-line comment saying what the ceiling is.
-- Forbidden: running cargo, running tests, running any check or build. Another lane owns the target directory and a red you see is probably theirs.
-- Forbidden: touching any file outside the lane's paths, and any shared manifest (`Cargo.toml`, `Cargo.lock`, `rustfmt.toml`, `clippy.toml`, CI config).
-- Forbidden: `jj` or `git` writes of any kind. The orchestrator commits.
-- Report what changed and what was left, in one line per file.
-
-The first wave's job is code that looks perfect against the guidelines. It will not compile everywhere, and that is expected: a newtype introduced in a leaf breaks its callers by design.
-
-## Wave 2, verify
-
-One agent, alone, nothing else running:
+Create a unique report directory and run from the target workspace root. The gate runs each step once, prints a summary, and saves the same run as JSON even when checks fail:
 
 ```sh
-python3 <skill>/gate.py --json > /tmp/gate-1.json; python3 <skill>/gate.py
+run_dir=$(mktemp -d /tmp/rust-hardening.XXXXXX)
+python3 "$skill/gate.py" --output "$run_dir/gate-0.json"
+python3 "$skill/candidates.py" --json > "$run_dir/candidates-0.json"
+python3 "$skill/lanes.py" --lanes 4 --gate-json "$run_dir/gate-0.json" --json > "$run_dir/lanes.json"
 ```
 
-`gate.py` runs fmt, clippy, doc and tests to completion regardless of failures, so one round gives the whole picture rather than the first thing that broke. It reports, it does not fix.
+A red baseline is expected; inspect the gate exit status and report before continuing. An invocation or metadata error is a blocker, not a clean baseline. Record actual test totals and diagnostic counts. If test compilation prevents totals, record them as unavailable, review the source diff for test preservation, and use the first run with completed test summaries as the comparison baseline for later waves. Never turn missing counts into zero.
 
-## Wave 3, converge
+Choose the lane count for available agents and repository constraints. Candidate hits are review prompts, not proof of defects: inspect each hit against `rust-guidelines`, fix real violations, and record false positives or justified exceptions in the report. Do not introduce a newtype or a code comment solely to make a scanner count disappear. A zero count is not proof that an area meets the guidelines.
 
-Group the red by lane from the JSON, fan out again with the same rules, verify again. Three rounds at most. If diagnostics survive three rounds, stop and hand back the list; a fourth round is the same agents re-deriving the same wrong fix.
+## Fix stages
 
-Then `code-reviewer` per lane, and commit per crate, scoped by jj fileset to the paths that lane owned. The orchestrator commits, never the lanes.
+Read `stages` from the lane plan. Complete stages sequentially; only lanes within the same stage may run concurrently. Dependencies finish before their dependents, and crates in a dependency cycle stay together in one lane. Do not dispatch all stages at once.
 
-## Done means
+Give each fix agent its exact lane paths, relevant diagnostics and these rules:
 
-- Zero diagnostics under the gate's lint set: `clippy::pedantic`, `clippy::nursery`, `-D warnings`, plus rustfmt and rustdoc clean.
-- Every candidate from `candidates.py` resolved into the type system, or justified in one line naming the ceiling.
-- Tests green, with the same count as the baseline or more. Fewer tests passing is a regression however clean the clippy output is.
+- Load `rust-guidelines` and inspect the relevant rules and callers before changing an API. Review the lane beyond the scanner's seven categories.
+- Run no cargo, tests, builds or verification commands. Report what changed and any unresolved work.
+- Edit only owned paths. Never edit shared workspace manifests, lockfiles, lint/formatter configuration or CI settings. Send necessary cross-lane or shared-file changes to the orchestrator instead.
+- Make no VCS writes. The orchestrator reviews and commits each logical change with scoped paths.
 
-Forbidden throughout, in every wave, including the last one to go green: `#[allow(...)]`, `#![allow(...)]`, edits to `clippy.toml` / `rustfmt.toml` / lint attributes in a manifest, `#[ignore]`, `.skip`, deleting a test, and weakening an assertion. Every one of those turns a real defect into a silent one. Fix the root cause or report the blocker.
+The orchestrator coordinates caller updates and permitted shared-file changes. Do not hide a required fix behind an agent's ownership restriction. When a stage finishes, pass its API changes to the next stage before dispatching it.
+
+## Verify and converge
+
+After all fix agents have finished, one verifier runs the whole gate once. Substitute the current wave number for `1`; use `--baseline` only with a report containing completed test summaries:
+
+```sh
+python3 "$skill/gate.py" --baseline "$run_dir/gate-0.json" --output "$run_dir/gate-1.json"
+python3 "$skill/candidates.py" --json > "$run_dir/candidates-1.json"
+```
+
+The gate runs rustfmt, clippy with `clippy::pedantic`, `clippy::nursery` and `-D warnings`, rustdoc with warnings denied, and tests despite failures in earlier steps. Partial runs are diagnostic only. Group failures by their source paths, update the lane plan if dependencies changed, then repeat the staged fixes and single verification. At most three fix/verify rounds; after that report remaining defects and stop rather than declaring success.
+
+Before completion, run an independent code review and resolve its findings. Any review-driven edit needs the applicable checks again. Commit only reviewed, verified logical changes, scoped to owned paths; do not push without explicit authorization.
+
+## Completion
+
+All four gate steps must complete successfully. Passing-test totals must not fall below the recorded baseline, and tests must not be removed, ignored or weakened. Report any unavailable initial totals honestly. Review every remaining candidate and record why it is acceptable; scanner output does not replace guideline review. Report the actual before/after test and diagnostic counts, remaining exceptions and local commits.
+
+Never disable lint rules, add allow attributes, suppress diagnostics, alter lint/formatter policy, ignore or delete tests, or weaken assertions to make the gate pass. Fix the cause or report the blocker.
