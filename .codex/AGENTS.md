@@ -176,25 +176,25 @@ skill is the voice spec and this file does not restate it.
 - Reviewing a PR and leaving inline comments: the `pr-review-inline` skill.
 
 ## Delegation
-Reserve the orchestrator's own context for planning, decisions, and synthesis.
-Delegate token-heavy work (bulk search, file inventory, mechanical refactors,
-running test suites, log scanning, deep analysis) to subagents, run in parallel
-when the work is independent. Pick a capable model for judgment-heavy work
-(implementation, debugging, architecture, review) and a cheaper model for grunt
-work. After any nontrivial change, run a code review before considering the work
-done.
+The main thread is an orchestrator, not an implementation agent. Its context is
+for planning, decisions, and synthesis, and it does very little itself. The
+default for any unit of work is to delegate it: implementation, search, file
+inventory, refactors, test runs, log scanning, analysis, review. Run independent
+units in parallel. Pick a capable model for judgment-heavy work (implementation,
+debugging, architecture, review) and a cheaper model for grunt work. After any
+nontrivial change, run a code review before considering the work done.
 
-Delegation protects context; it is not a reflex. Size the response to the prompt,
-not to the topic's importance. Do it inline when:
+The one exception is cost. Do a unit inline only when spawning an agent, writing
+its brief, and reading its report would cost more tokens than just doing it:
 - The prompt is a **question**: "is X done?", "can we start Y?", "what's the state
-  of Z?". Answering means reading a doc or two and saying so. Spawning an agent to
-  answer a question you could answer in three tool calls is a loss, and a status
+  of Z?". Answering means reading a doc or two and saying so, and a status
   question about a big subsystem is still just a question.
-- The whole job is a handful of greps, a few file reads, or a single-file edit.
+- The whole job is a couple of greps, a file read, or a one-line edit.
 - You already have the answer in context.
 
-Never spawn an agent whose output you would only relay. If a fresh agent would need
-a long brief just to start, writing the brief was the expensive part. Do the work.
+When in doubt, delegate. Never spawn an agent whose output you would only relay,
+but a brief that takes a paragraph is not a reason to do the work yourself; it is
+the plan you would have needed anyway.
 
 Reviews converge: at most two re-review rounds on the same change. If findings
 survive that, list them and hand back rather than looping. Shut an agent down once
