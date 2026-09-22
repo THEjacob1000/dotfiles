@@ -9,12 +9,20 @@ still nightly-only.
 
 Every diagnostic is attributed to a workspace crate by matching its primary
 span against the longest workspace manifest directory from `cargo metadata`.
-Anything that matches nothing lands under (workspace).
+A message with no primary span is a summary line, not a defect, and is dropped;
+the same diagnostic reported once per target is counted once.
 
-The clippy wire is pedantic + nursery with warnings denied. Restriction lints
+The clippy wire is pedantic + nursery at warn level, never denied: a denied lint
+in a leaf crate aborts that crate's build and leaves every dependent crate
+unlinted, so the scan would silently stop at the first offender. Red is decided
+by the parsed diagnostics and by cargo's exit status. Restriction lints
 (unwrap_used, expect_used, as_conversions, panic) are deliberately absent: they
 are correct inside tests and clippy cannot scope a command-line lint level to
 non-test targets. candidates.py owns those, and excludes test code itself.
+
+rustdoc runs with warnings denied, appended to `build.rustdocflags` from the
+workspace `.cargo/config.toml` so a repository's own rustdoc lints survive. Only
+that file is read, not a parent directory's config or CARGO_HOME.
 
 Exit status: 0 green, 1 red, 2 when cargo itself could not be run.
 
@@ -34,16 +42,17 @@ import re
 import shutil
 import subprocess
 import sys
+import tomllib
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 
-LINTS = ["-W", "clippy::pedantic", "-W", "clippy::nursery", "-D", "warnings"]
+LINTS = ["-W", "clippy::pedantic", "-W", "clippy::nursery"]
 STEPS = ("fmt", "clippy", "doc", "test")
 WORKSPACE = "(workspace)"
 SHOWN_PER_CODE = 6
 
-FMT_DIFF = re.compile(r"^Diff in (?P<file>.+?) at line (?P<line>\d+):")
+FMT_DIFF = re.compile(r"^Diff in (?P<file>.+?)(?: at line |:)(?P<line>\d+):")
 TEST_TOTAL = re.compile(
     r"^test result: (?:ok|FAILED)\. (\d+) passed; (\d+) failed; "
     r"(\d+) ignored; (\d+) measured; (\d+) filtered out(?:;.*)?$"
@@ -175,6 +184,7 @@ def jobs(count: int | None) -> list[str]:
 def parse_json_diagnostics(stdout: str, workspace: Workspace) -> list[Diagnostic]:
     """Pulls compiler-message events out of a --message-format=json stream."""
     found: list[Diagnostic] = []
+    seen: set[tuple[str, int, str, str]] = set()
     for raw in stdout.splitlines():
         line = raw.strip()
         if not line.startswith("{"):
@@ -193,15 +203,22 @@ def parse_json_diagnostics(stdout: str, workspace: Workspace) -> list[Diagnostic
             (span for span in message.get("spans", []) if span.get("is_primary")),
             None,
         )
-        file = primary["file_name"] if primary else ""
-        number = int(primary["line_start"]) if primary else 0
+        if primary is None:
+            continue
+        file = str(primary["file_name"])
+        number = int(primary["line_start"])
+        text = str(message.get("message", "")).splitlines()[0]
+        key = (file, number, str(code), text)
+        if key in seen:
+            continue
+        seen.add(key)
         found.append(
             Diagnostic(
-                crate=workspace.attribute(file) if file else WORKSPACE,
+                crate=workspace.attribute(file),
                 code=str(code),
-                file=file or "(no span)",
+                file=file,
                 line=number,
-                message=str(message.get("message", "")).splitlines()[0],
+                message=text,
             )
         )
     return found
@@ -214,7 +231,7 @@ def step_fmt(workspace: Workspace, package: str | None) -> StepResult:
     command += ["--", "--check"]
     done = run(command, workspace.root)
     result.status = done.returncode
-    result.stderr_tail = tail(done.stderr)
+    result.stderr_tail = tail(done.stderr) or tail(done.stdout)
     for line in done.stdout.splitlines():
         match = FMT_DIFF.match(line)
         if match:
@@ -248,13 +265,32 @@ def step_clippy(workspace: Workspace, package: str | None, count: int | None) ->
     return result
 
 
+def rustdoc_flags(root: Path) -> str:
+    """Denies warnings on top of `build.rustdocflags`, which RUSTDOCFLAGS would replace."""
+    configured: list[str] = []
+    path = root / ".cargo" / "config.toml"
+    if path.is_file():
+        try:
+            value = (tomllib.loads(path.read_text(encoding="utf-8")).get("build") or {}).get(
+                "rustdocflags"
+            )
+        except (OSError, tomllib.TOMLDecodeError, AttributeError):
+            value = None
+        if isinstance(value, str):
+            configured = value.split()
+        elif isinstance(value, list):
+            configured = [str(item) for item in value]
+    parts = [*configured, os.environ.get("RUSTDOCFLAGS", ""), "-D warnings"]
+    return " ".join(part for part in parts if part.strip())
+
+
 def step_doc(workspace: Workspace, package: str | None, count: int | None) -> StepResult:
     result = StepResult("doc", ran=True)
     command = ["cargo", "doc", "--no-deps", "--message-format=json"] + scope(package) + jobs(count)
     done = run(
         command,
         workspace.root,
-        env={"RUSTDOCFLAGS": os.environ.get("RUSTDOCFLAGS", "") + " -D warnings"},
+        env={"RUSTDOCFLAGS": rustdoc_flags(workspace.root)},
     )
     result.status = done.returncode
     result.stderr_tail = tail(done.stderr)
@@ -400,10 +436,19 @@ def baseline_errors(
             or previous["suites"] == 0
         ):
             return ["baseline has no reliable test totals"]
-        if baseline["steps"]["test"]["status"] != 0 and previous["failed"] == 0:
-            return ["baseline test command failed without complete failure summaries"]
+        expected = 1 if package else len(workspace.crates)
+        if baseline["steps"]["test"]["status"] != 0 and (
+            previous["failed"] == 0 or previous["suites"] < expected
+        ):
+            return [
+                "baseline test command failed without a complete run: "
+                f"{previous['suites']} suites for {expected} crates, "
+                f"{previous['failed']} reported failures"
+            ]
         if test is None or test.totals is None:
             return ["cannot compare baseline without current test totals"]
+        if test.totals["suites"] < previous["suites"]:
+            return [f"test suites decreased: {previous['suites']} -> {test.totals['suites']}"]
         if test.totals["ignored"] > previous["ignored"]:
             return [f"ignored tests increased: {previous['ignored']} -> {test.totals['ignored']}"]
         if test.totals["passed"] < previous["passed"]:

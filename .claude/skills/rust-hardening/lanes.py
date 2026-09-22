@@ -9,11 +9,15 @@ Dependency cycles are grouped into one lane, so their crates are edited serially
 --lanes N caps concurrent agents within a stage. Weight is the diagnostic count
 from gate.py --json with --gate-json, and the source-file count otherwise.
 A crate above --split-share is split by src directory; its root unit owns the
-remaining files, including its manifest, tests and build script. Units with
-intersecting ownership paths always stay together in a single lane.
+remaining files, including its tests and build script. Every unit of a split
+crate carries the same `crate` name and `intra_crate: true`: they edit one
+compilation unit with no ordering between them, so the orchestrator gives them
+to one agent or runs them one after another. Units with intersecting ownership
+paths always stay together in a single lane.
 
-Root workspace configuration and lockfiles remain orchestrator-owned unless
-explicitly assigned. Agents must stay within the listed paths.
+Manifests, lockfiles, lint and formatter configuration, the toolchain file and
+CI settings are never assigned to a unit; they stay orchestrator-owned. Agents
+must stay within the listed paths.
 
 Examples:
     python3 lanes.py --lanes 6
@@ -32,9 +36,33 @@ from dataclasses import dataclass, field
 from graphlib import TopologicalSorter
 from pathlib import Path
 
+ORCHESTRATOR_OWNED = {
+    "target",
+    ".git",
+    ".jj",
+    ".cargo",
+    ".github",
+    ".gitlab-ci.yml",
+    ".circleci",
+    ".travis.yml",
+    "azure-pipelines.yml",
+    "Cargo.lock",
+    "Cargo.toml",
+    "rustfmt.toml",
+    ".rustfmt.toml",
+    "clippy.toml",
+    ".clippy.toml",
+    "deny.toml",
+}
+
 
 class CargoUnavailable(RuntimeError):
     """cargo is missing, or could not read the workspace manifest."""
+
+
+def reserved(name: str) -> bool:
+    """Files the orchestrator keeps: a fix agent may not edit build or CI policy."""
+    return name in ORCHESTRATOR_OWNED or name.startswith("rust-toolchain")
 
 
 @dataclass
@@ -58,29 +86,32 @@ def read_crates(manifest: Path | None) -> tuple[Path, dict[str, Crate]]:
     if done.returncode != 0:
         raise CargoUnavailable(done.stderr.strip() or "cargo metadata failed")
     data = json.loads(done.stdout)
-    root = Path(data.get("workspace_root", "."))
-    members = set(data["workspace_members"])
-    packages = [package for package in data["packages"] if package["id"] in members]
-    paths = {
-        Path(package["manifest_path"]).parent.resolve(): package["name"] for package in packages
-    }
-    crates: dict[str, Crate] = {}
-    for package in packages:
-        directory = Path(package["manifest_path"]).parent
-        crates[package["name"]] = Crate(
-            name=package["name"],
-            directory=directory,
-            depends_on={
-                name
-                for dependency in package.get("dependencies", [])
-                for name in [
-                    paths.get(Path(dependency["path"]).resolve())
-                    if dependency.get("path")
-                    else dependency["name"]
-                ]
-                if name in paths.values() and name != package["name"]
-            },
-        )
+    try:
+        root = Path(data.get("workspace_root", "."))
+        members = set(data["workspace_members"])
+        packages = [package for package in data["packages"] if package["id"] in members]
+        paths = {
+            Path(package["manifest_path"]).parent.resolve(): package["name"] for package in packages
+        }
+        crates: dict[str, Crate] = {}
+        for package in packages:
+            directory = Path(package["manifest_path"]).parent
+            crates[package["name"]] = Crate(
+                name=package["name"],
+                directory=directory,
+                depends_on={
+                    name
+                    for dependency in package.get("dependencies", [])
+                    for name in [
+                        paths.get(Path(dependency["path"]).resolve())
+                        if dependency.get("path")
+                        else dependency["name"]
+                    ]
+                    if name in paths.values() and name != package["name"]
+                },
+            )
+    except (KeyError, TypeError, AttributeError) as error:
+        raise CargoUnavailable(f"invalid cargo metadata: {error}") from error
     return root, crates
 
 
@@ -142,8 +173,10 @@ class Unit:
     """One indivisible piece of work: a crate, or one module of a big crate."""
 
     label: str
+    crate: str
     paths: list[str]
     weight: int
+    intra_crate: bool = False
 
 
 def split_unit(crate: Crate, root: Path, weight: int) -> list[Unit]:
@@ -153,26 +186,29 @@ def split_unit(crate: Crate, root: Path, weight: int) -> list[Unit]:
         sorted(child for child in source.iterdir() if child.is_dir()) if source.is_dir() else []
     )
     if not modules:
-        return [Unit(crate.name, [relative(crate.directory, root)], weight)]
+        return [Unit(crate.name, crate.name, [relative(crate.directory, root)], weight)]
     files = sorted(child for child in source.iterdir() if not child.is_dir())
     files += sorted(
-        child
-        for child in crate.directory.iterdir()
-        if child != source and child.name not in {"target", ".git", ".jj", "Cargo.lock"}
+        child for child in crate.directory.iterdir() if child != source and not reserved(child.name)
     )
+    share = max(1, weight // (len(modules) + 1))
     units = [
         Unit(
             f"{crate.name}:{module.name}",
+            crate.name,
             [relative(module, root)],
-            max(1, weight // (len(modules) + 1)),
+            share,
+            intra_crate=True,
         )
         for module in modules
     ]
     units.append(
         Unit(
             f"{crate.name}:.",
+            crate.name,
             [relative(path, root) for path in sorted(files)],
-            max(1, weight // (len(modules) + 1)),
+            share,
+            intra_crate=True,
         )
     )
     return units
@@ -186,13 +222,22 @@ def relative(path: Path, root: Path) -> str:
 
 
 def owned_paths(directory: Path, boundaries: set[Path]) -> list[Path]:
-    if directory in boundaries:
+    """Ownership for one path: the whole directory, or the children left after exclusions."""
+    if directory in boundaries or reserved(directory.name):
         return []
-    if any(boundary.is_relative_to(directory) for boundary in boundaries):
+    if not directory.is_dir():
+        return [directory]
+    try:
+        children = sorted(directory.iterdir())
+    except OSError:
+        return []
+    if any(boundary.is_relative_to(directory) for boundary in boundaries) or any(
+        reserved(child.name) for child in children
+    ):
         return [
             path
-            for child in sorted(directory.iterdir())
-            if child.name not in {"target", ".git", ".jj", "Cargo.lock"}
+            for child in children
+            if not reserved(child.name)
             for path in owned_paths(child, boundaries)
         ]
     return [directory]
@@ -213,7 +258,7 @@ def build_units(
         pieces = (
             split_unit(crate, root, weight)
             if total and weight / total > split_share
-            else [Unit(name, [relative(crate.directory, root)], weight)]
+            else [Unit(name, name, [relative(crate.directory, root)], weight)]
         )
         boundaries = {other.directory for other in crates.values() if other != crate}
         for piece in pieces:
@@ -246,10 +291,8 @@ def partition(units: list[Unit], lanes: int, components: list[list[str]]) -> lis
         for group in groups:
             if any(
                 overlaps(unit, other)
-                or (
-                    unit.label.split(":")[0] in owner
-                    and owner.get(other.label.split(":")[0]) == owner[unit.label.split(":")[0]]
-                )
+                or (unit.intra_crate and other.crate == unit.crate)
+                or (unit.crate in owner and owner.get(other.crate) == owner[unit.crate])
                 for other in group
             ):
                 joined.extend(group)
@@ -267,7 +310,7 @@ def schedule(units: list[Unit], dependencies: list[list[list[str]]], lanes: int)
     stages = []
     for number, components in enumerate(dependencies, start=1):
         names = {name for component in components for name in component}
-        stage_units = [unit for unit in units if unit.label.split(":")[0] in names]
+        stage_units = [unit for unit in units if unit.crate in names]
         buckets = partition(stage_units, lanes, components)
         stages.append(
             {
@@ -336,6 +379,11 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, ValueError, TypeError, AttributeError) as error:
         print(f"lanes.py: invalid gate weights: {error}", file=sys.stderr)
         return 2
+    if args.gate_json and not set(weights) & set(crates):
+        print(
+            "lanes.py: gate report names no crate in this workspace; weights are uniform",
+            file=sys.stderr,
+        )
     weighting = "diagnostic" if args.gate_json else "source-file"
     order = [name for stage in dependencies for component in stage for name in component]
     units = build_units(root, crates, order, weights, args.split_share)

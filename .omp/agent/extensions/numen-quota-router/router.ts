@@ -1,4 +1,3 @@
-// generated-by: numen-sync
 /**
  * Quota-aware subagent routing, driven from OMP's `subagent_route` gate.
  *
@@ -180,17 +179,20 @@ interface CandidatePool {
  */
 function candidatePool(request: SubagentRoutingRequest): CandidatePool | undefined {
 	const { sourcePatterns, patterns, role } = request;
-	if (sourcePatterns.length === 0 || patterns.length === 0) return undefined;
+	const primary = patterns[0];
+	if (sourcePatterns.length === 0 || primary === undefined) return undefined;
 	if (sourcePatterns.length > 1) return { selectors: patterns, pinned: false };
 	const pool = role !== undefined ? config.pools[role] : undefined;
 	if (pool && pool.length > 0) {
-		const suffix = aliasThinkingSuffix(sourcePatterns[0]) ?? selectorParts(patterns[0]!).level;
+		const suffix = aliasThinkingSuffix(sourcePatterns[0]) ?? selectorParts(primary).level;
 		const selectors = pool.map(selector => withThinkingLevel(selector, suffix));
 		return { selectors, pinned: false };
 	}
 	const chains = settings.get("retry.fallbackChains");
-	const chain = (role !== undefined ? chains?.[role] : undefined) ?? chains?.default ?? [];
-	return { selectors: [...patterns, ...chain], pinned: true };
+	const { base, level } = selectorParts(primary);
+	const chain =
+		chains?.[primary] ?? chains?.[base] ?? (role !== undefined ? chains?.[role] : undefined) ?? chains?.default ?? [];
+	return { selectors: [...patterns, ...chain.map(selector => withThinkingLevel(selector, level))], pinned: true };
 }
 
 function pickAccount(health: ModelUsageHealth): ModelUsageAccountHealth | undefined {
