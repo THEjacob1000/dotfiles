@@ -43,7 +43,7 @@ case "$shape" in
 esac
 patch="$(printf '%s' "$payload" | jq -r '.tool_input.command')" || exit 0
 
-mapfile -t touched < <(printf '%s\n' "$patch" | sed -n 's/^\*\*\* \(Add\|Update\) File: //p')
+mapfile -t touched < <(printf '%s\n' "$patch" | sed -nE 's/^\*\*\* (Add|Update) File: //p')
 [[ ${#touched[@]} -eq 0 ]] && exit 0
 
 rules="${CODEX_HOME:-$HOME/.codex}/numen-rules"
