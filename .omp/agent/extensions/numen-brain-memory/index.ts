@@ -1,3 +1,4 @@
+// generated-by: numen-sync
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { isAbsolute, join } from "node:path";
