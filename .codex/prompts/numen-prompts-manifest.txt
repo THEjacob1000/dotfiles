@@ -1,3 +1,5 @@
+numen-code-golf.md
+numen-code-refinement.md
 numen-coderabbit-resolve.md
 numen-coverage-target.md
 numen-deep-interview.md
@@ -24,5 +26,4 @@ numen-ripwire-router.md
 numen-ripwire-security-scan.md
 numen-ripwire-write-tests.md
 numen-rust-guidelines.md
-numen-rust-hardening.md
 numen-write-as-jacob.md

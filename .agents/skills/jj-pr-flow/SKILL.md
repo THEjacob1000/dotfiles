@@ -9,10 +9,10 @@ generated-by: numen-sync
 Detect: `.jj/` exists means a jj repo (never use mutating git commands). No `.jj/` means a plain git repo, use git normally.
 
 ## Committing
-1. `jj st` and `jj diff` to see the working copy.
-2. Run the repo's lint + typecheck + tests. Fix failures first, committing is blocked until green.
-3. `jj describe -m "<type>: <summary>"` (conventional commits: feat/fix/chore/refactor/docs/test), then `jj new` to start the next change. One `-m`, subject line only, never a body, and the summary names the real change (see **write-as-jacob**).
-4. Bookmark naming: `feat/`, `fix/`, `chore/`, `refactor/` prefixes (`jj bookmark create feat/<name> -r @-`).
+1. Finish file-changing tasks with a local commit and a new working-copy change, without waiting for a separate commit request. Respect an explicit request not to commit; don't create an empty commit.
+2. Inspect `jj st` and the task's diff. Run applicable lint, typecheck and tests and fix failures introduced by the task. Disclose known pre-existing failures and unrelated findings, but don't treat them as a reason to leave completed, verified work uncommitted locally or claim the whole gate passed.
+3. Load `write-as-jacob`, then use `jj commit -m "<type>: <summary>" <owned-paths...>` to commit the task and open the next working-copy change. This is the scoped equivalent of `jj describe` followed by `jj new`. One `-m`, subject line only, naming the actual change. Never sweep unrelated changes into the commit; if a file has mixed ownership, separate the task's hunks first. Unrelated work may remain in the new working copy.
+4. Do not create or move branches/bookmarks unless explicitly asked. When requested, use `feat/`, `fix/`, `chore/`, or `refactor/` prefixes. Local completion never authorizes a push, PR or merge.
 
 ## Reviewing a branch / PR locally
 - Full branch diff: `jj diff -r main..@` (or `jj diff --from main --to @`). Per-commit: `jj log -r main..@` then `jj diff -r <change-id>`.
