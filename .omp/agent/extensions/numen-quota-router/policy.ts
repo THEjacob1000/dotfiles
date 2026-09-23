@@ -1,18 +1,8 @@
 // generated-by: numen-sync
 /**
- * Quota-aware subagent routing: the pure decision.
- *
- * Given a role's candidate models with their observed allowance state and the
- * dispatches already in flight, pick the model a new subagent should run on.
- * Nothing here performs I/O or consults a clock; the caller supplies `now`, the
- * usage snapshots and the shared dispatch counts, which is what makes every
- * branch reproducible under test.
- *
- * The objective is useful work per allowance consumed, not an equal task split:
- * a candidate is scored by how far ahead of its own reset pace it is, healthy
- * candidates with comparable headroom alternate by recent dispatch count so
- * every subscription stays productive, and a candidate stops receiving new
- * work before its allowance crosses the reserve margin.
+ * Pure quota-aware subagent routing from provider account state and configured
+ * preference order. The host exposes only state, remaining allowance, and
+ * reset time; the policy makes no claims about in-flight cost or report age.
  */
 
 export const ROUTING_POLICY_VERSION = 1;
@@ -21,26 +11,11 @@ export type RoutingHealthState = "healthy" | "reserve" | "depleted" | "unknown";
 
 export type RoutingReservePolicy = "confirm" | "auto" | "fail-closed";
 
-/** One quota window bounding a candidate, as reported by its provider. */
-export interface RoutingWindowSnapshot {
-	id: string;
-	label: string;
-	/** Fraction of the window's allowance still available (0..1). */
-	remainingFraction: number;
-	resetsAt?: number;
-	durationMs?: number;
-}
-
 /** Provider-reported allowance state for one candidate. */
 export interface RoutingHealthSnapshot {
 	state: RoutingHealthState;
-	/** Minimum remaining fraction across windows, when the report was quantitative. */
 	remainingFraction?: number;
-	/** Earliest reset that would lift a depleted verdict. */
 	resetsAt?: number;
-	/** When the underlying report was fetched. Absent when no report existed. */
-	fetchedAt?: number;
-	windows: RoutingWindowSnapshot[];
 }
 
 export interface RoutingCandidate {
@@ -55,13 +30,6 @@ export interface RoutingCandidate {
 	/** Why this candidate could not be authenticated, when resolution failed before credential lookup. */
 	unavailableReason?: string;
 	health: RoutingHealthSnapshot;
-	/** Dispatches currently running against this provider's allowance, across every session. */
-	inflight: number;
-	/**
-	 * Estimated fraction of the provider's allowance one running dispatch will
-	 * still consume. An estimate: external clients move the same quota.
-	 */
-	inflightCostFraction: number;
 	/** Dispatches recently sent to this provider; drives the fair tie-break. */
 	recentDispatches: number;
 }
@@ -79,8 +47,6 @@ export interface RoutingPolicyInput {
 	/** Remaining fraction at or below which a candidate stops taking new work. */
 	reserveFraction: number;
 	reservePolicy: RoutingReservePolicy;
-	/** Reports older than this count as no evidence. */
-	staleAfterMs: number;
 	/** Discount applied to a candidate's headroom per preference rank (0..1). */
 	preferenceWeight: number;
 	/** Relative headroom difference under which candidates are comparable (0..1). */
@@ -97,17 +63,11 @@ export interface RoutingCandidateAssessment {
 	modelId: string;
 	preference: number;
 	authenticated: boolean;
-	/** State after subtracting in-flight load and applying staleness. */
 	effectiveState: RoutingHealthState;
 	reportedState: RoutingHealthState;
-	/** Minimum remaining fraction after in-flight load, when known. */
 	effectiveRemaining?: number;
-	/** Headroom above the reserve per unit of window time left; higher spends more sustainably. */
+	/** Headroom above the reserve; higher spends more sustainably. */
 	slack?: number;
-	inflight: number;
-	fetchedAt?: number;
-	stale: boolean;
-	windows: RoutingWindowSnapshot[];
 	resetsAt?: number;
 	/** Why this candidate ranks where it does. */
 	note: string;
@@ -138,8 +98,6 @@ export interface RoutingBlocked {
 
 export type RoutingDecision = RoutingSelected | RoutingBlocked;
 
-const MIN_TIME_LEFT_FRACTION = 0.05;
-
 function formatPercent(fraction: number): string {
 	return `${Math.round(fraction * 100)}%`;
 }
@@ -155,29 +113,15 @@ function formatResetAt(resetsAt: number | undefined, now: number): string {
 	return `resets in ${Math.round(hours / 24)}d`;
 }
 
-function formatAge(fetchedAt: number | undefined, now: number): string {
-	if (fetchedAt === undefined) return "no report";
-	const ageMinutes = Math.max(0, Math.round((now - fetchedAt) / 60_000));
-	return ageMinutes < 1 ? "report <1m old" : `report ${ageMinutes}m old`;
-}
-
-function describeWindows(assessment: RoutingCandidateAssessment, input: RoutingPolicyInput): string {
-	if (assessment.windows.length === 0) {
-		return assessment.effectiveRemaining === undefined
-			? assessment.reportedState
-			: `${formatPercent(assessment.effectiveRemaining)} left`;
+function describeAllowance(assessment: RoutingCandidateAssessment, input: RoutingPolicyInput): string {
+	if (assessment.effectiveRemaining === undefined) {
+		return `${assessment.reportedState} (${formatResetAt(assessment.resetsAt, input.now)})`;
 	}
-	const load = assessment.inflight > 0 ? `, ${assessment.inflight} in flight` : "";
-	return (
-		assessment.windows
-			.map(window => `${window.label} ${formatPercent(window.remainingFraction)} (${formatResetAt(window.resetsAt, input.now)})`)
-			.join(", ") + load
-	);
+	return `${formatPercent(assessment.effectiveRemaining)} left (${formatResetAt(assessment.resetsAt, input.now)})`;
 }
 
 function assess(candidate: RoutingCandidate, input: RoutingPolicyInput): RoutingCandidateAssessment {
 	const { health } = candidate;
-	const stale = health.fetchedAt !== undefined && input.now - health.fetchedAt > input.staleAfterMs;
 	const base: RoutingCandidateAssessment = {
 		selector: candidate.selector,
 		provider: candidate.provider,
@@ -186,10 +130,6 @@ function assess(candidate: RoutingCandidate, input: RoutingPolicyInput): Routing
 		authenticated: candidate.authenticated,
 		effectiveState: "unknown",
 		reportedState: health.state,
-		inflight: candidate.inflight,
-		fetchedAt: health.fetchedAt,
-		stale,
-		windows: health.windows,
 		resetsAt: health.resetsAt,
 		note: "",
 	};
@@ -201,50 +141,33 @@ function assess(candidate: RoutingCandidate, input: RoutingPolicyInput): Routing
 		};
 	}
 	if (health.state === "depleted") {
-		return { ...base, effectiveState: "depleted", note: `exhausted (${formatResetAt(health.resetsAt, input.now)})` };
-	}
-	if (health.state === "unknown" || stale) {
 		return {
 			...base,
-			effectiveState: "unknown",
-			note: stale ? `usage report stale (${formatAge(health.fetchedAt, input.now)})` : "no reliable usage report",
+			effectiveState: "depleted",
+			note: `exhausted (${formatResetAt(health.resetsAt, input.now)})`,
 		};
 	}
-	const load = candidate.inflight * candidate.inflightCostFraction;
-	const windows = health.windows.length > 0
-		? health.windows
-		: health.remainingFraction !== undefined
-			? [{ id: "total", label: "allowance", remainingFraction: health.remainingFraction }]
-			: [];
-	if (windows.length === 0) {
-		return { ...base, effectiveState: "unknown", note: "usage report carries no quantitative window" };
+	if (health.state === "unknown") {
+		return { ...base, note: "no reliable usage report" };
 	}
-	let effectiveRemaining = Number.POSITIVE_INFINITY;
-	let slack = Number.POSITIVE_INFINITY;
-	let bindingReset: number | undefined;
-	for (const window of windows) {
-		const remaining = Math.max(0, window.remainingFraction - load);
-		if (remaining < effectiveRemaining) {
-			effectiveRemaining = remaining;
-			bindingReset = window.resetsAt;
-		}
-		const timeLeftFraction =
-			window.resetsAt !== undefined && window.durationMs !== undefined && window.durationMs > 0
-				? Math.min(1, Math.max(0, (window.resetsAt - input.now) / window.durationMs))
-				: 1;
-		const windowSlack = (remaining - input.reserveFraction) / Math.max(timeLeftFraction, MIN_TIME_LEFT_FRACTION);
-		if (windowSlack < slack) slack = windowSlack;
+	const remaining = health.remainingFraction;
+	if (remaining === undefined) {
+		return {
+			...base,
+			effectiveState: health.state,
+			note: `${health.state} (${formatResetAt(health.resetsAt, input.now)})`,
+		};
 	}
+	const effectiveRemaining = Math.max(0, remaining);
 	const inReserve = effectiveRemaining <= input.reserveFraction;
 	return {
 		...base,
 		effectiveState: inReserve ? "reserve" : "healthy",
 		effectiveRemaining,
-		slack,
-		resetsAt: bindingReset ?? health.resetsAt,
+		slack: effectiveRemaining - input.reserveFraction,
 		note: inReserve
-			? `inside ${formatPercent(input.reserveFraction)} reserve (${formatPercent(effectiveRemaining)} left${load > 0 ? " after in-flight load" : ""}, ${formatResetAt(bindingReset, input.now)})`
-			: `${formatPercent(effectiveRemaining)} left${load > 0 ? " after in-flight load" : ""} (${formatResetAt(bindingReset, input.now)})`,
+			? `inside ${formatPercent(input.reserveFraction)} reserve (${formatPercent(effectiveRemaining)} left, ${formatResetAt(health.resetsAt, input.now)})`
+			: `${formatPercent(effectiveRemaining)} left (${formatResetAt(health.resetsAt, input.now)})`,
 	};
 }
 
@@ -276,13 +199,91 @@ function rankHealthy(
 function eligiblePatterns(
 	selected: RoutingCandidateAssessment,
 	ordered: RoutingCandidateAssessment[],
+	strictFallbackOrder: boolean,
+	includeReserve: boolean,
 ): string[] {
 	const patterns = [selected.selector];
 	for (const assessment of ordered) {
-		if (assessment.selector === selected.selector || assessment.effectiveState === "depleted") continue;
+		if (
+			assessment.selector === selected.selector ||
+			assessment.effectiveState === "depleted" ||
+			(!includeReserve && assessment.effectiveState === "reserve") ||
+			(strictFallbackOrder && assessment.preference < selected.preference)
+		) {
+			continue;
+		}
 		if (!patterns.includes(assessment.selector)) patterns.push(assessment.selector);
 	}
 	return patterns;
+}
+
+function selectionPatterns(
+	selected: RoutingCandidateAssessment,
+	strictFallbackOrder: boolean,
+	orderedByPreference: RoutingCandidateAssessment[],
+	balancedOrder: RoutingCandidateAssessment[],
+	includeReserve: boolean,
+): string[] {
+	return eligiblePatterns(
+		selected,
+		strictFallbackOrder ? orderedByPreference : balancedOrder,
+		strictFallbackOrder,
+		includeReserve,
+	);
+}
+
+function firstUsableCandidate(
+	ordered: RoutingCandidateAssessment[],
+): { assessment: RoutingCandidateAssessment; confidence: RoutingConfidence } | undefined {
+	const assessment = ordered.find(
+		candidate => candidate.effectiveState === "healthy" || candidate.effectiveState === "unknown",
+	);
+	if (!assessment) return undefined;
+	return {
+		assessment,
+		confidence: assessment.effectiveState === "healthy" ? "high" : "low",
+	};
+}
+
+function firstReserveFallback(
+	ordered: RoutingCandidateAssessment[],
+	pin: RoutingCandidateAssessment,
+): RoutingCandidateAssessment | undefined {
+	return ordered.find(assessment => assessment.selector !== pin.selector && assessment.effectiveState === "reserve");
+}
+
+interface PinnedChoice {
+	assessment: RoutingCandidateAssessment;
+	confidence: RoutingConfidence;
+	why: string;
+}
+
+function choosePinned(
+	ordered: RoutingCandidateAssessment[],
+	reservePolicy: RoutingReservePolicy,
+): PinnedChoice | undefined {
+	const [pin] = ordered;
+	if (!pin) return undefined;
+	const permitted = firstUsableCandidate(ordered);
+	if (permitted) {
+		let why: string;
+		if (permitted.assessment.selector !== pin.selector) {
+			why = `pinned ${pin.selector} ${pin.note}; first usable configured fallback ${permitted.assessment.selector} is ${permitted.assessment.effectiveState}`;
+		} else if (permitted.assessment.effectiveState === "healthy") {
+			why = "explicit pin, allowance healthy";
+		} else {
+			why = `explicit pin kept, ${pin.note}`;
+		}
+		return { ...permitted, why };
+	}
+	if (reservePolicy !== "auto") return undefined;
+	const reserve = firstReserveFallback(ordered, pin);
+	if (!reserve) return undefined;
+	return {
+		assessment: reserve,
+		confidence: "high",
+		why: `pinned ${pin.selector} ${pin.note}; reservePolicy auto spends first configured fallback in reserve`,
+	};
 }
 
 function earliestReset(assessments: RoutingCandidateAssessment[], now: number): number | undefined {
@@ -302,13 +303,12 @@ function explain(
 		.filter(assessment => assessment.selector !== selected.selector)
 		.map(assessment => `${assessment.selector}: ${assessment.note}`);
 	const scope = input.role ? `role ${input.role}` : `agent ${input.agent}`;
-	const detail = `${selected.selector}: ${describeWindows(selected, input)}, ${formatAge(selected.fetchedAt, input.now)}`;
+	const detail = `${selected.selector}: ${describeAllowance(selected, input)}`;
 	return [`${selected.selector} selected for ${scope}: ${why}`, detail, ...others].join("; ");
 }
 
 /** Decide which candidate a new subagent runs on. Pure; see the module doc for the objective. */
 export function decideRoute(input: RoutingPolicyInput): RoutingDecision {
-
 	const bySelector = new Map(input.candidates.map(candidate => [candidate.selector, candidate]));
 	const assessments = input.candidates.map(candidate => assess(candidate, input));
 	const orderedByPreference = [...assessments].sort((a, b) => a.preference - b.preference);
@@ -327,62 +327,63 @@ export function decideRoute(input: RoutingPolicyInput): RoutingDecision {
 		chosen: RoutingCandidateAssessment,
 		why: string,
 		confidence: RoutingConfidence,
+		strictFallbackOrder = false,
 	): RoutingSelected => ({
 		kind: "selected",
 		selector: chosen.selector,
 		provider: chosen.provider,
 		modelId: chosen.modelId,
-		patterns: eligiblePatterns(chosen, chain),
+		patterns: selectionPatterns(
+			chosen,
+			strictFallbackOrder,
+			orderedByPreference,
+			chain,
+			input.reservePolicy === "auto",
+		),
 		reason: explain(chosen, assessments, input, why),
 		confidence,
 		assessments,
 	});
 
-	if (input.pinned) {
-		const pin = orderedByPreference[0]!;
-		if (pin.effectiveState === "healthy") return select(pin, "explicit pin, allowance healthy", "high");
-		if (pin.effectiveState === "unknown") return select(pin, `explicit pin kept, ${pin.note}`, "low");
-		// The pin is inside reserve or exhausted: only the fallbacks the policy
-		// explicitly listed after it may take its place.
-		const permitted = chain.find(
-			assessment => assessment.selector !== pin.selector && assessment.effectiveState === "healthy",
-		);
-		if (permitted) {
-			return select(permitted, `pinned ${pin.selector} ${pin.note}; permitted fallback is healthy`, "high");
-		}
-		const permittedUnknown = unknown.find(assessment => assessment.selector !== pin.selector);
-		if (permittedUnknown) {
-			return select(permittedUnknown, `pinned ${pin.selector} ${pin.note}; permitted fallback has ${permittedUnknown.note}`, "low");
-		}
+	const pinnedChoice = input.pinned ? choosePinned(orderedByPreference, input.reservePolicy) : undefined;
+	if (pinnedChoice) {
+		return select(pinnedChoice.assessment, pinnedChoice.why, pinnedChoice.confidence, true);
 	}
 
 	if (!input.pinned) {
-		if (healthy.length > 0) {
-			const chosen = healthy[0]!;
-			const runnerUp = healthy[1];
+		const [healthyChoice, runnerUp] = healthy;
+		if (healthyChoice) {
 			const why =
 				runnerUp === undefined
 					? healthy.length === assessments.length
 						? "most sustainable headroom"
 						: "only candidate with healthy allowance"
-					: `headroom ${chosen.slack !== undefined ? chosen.slack.toFixed(2) : "?"} vs ${runnerUp.slack !== undefined ? runnerUp.slack.toFixed(2) : "?"} for ${runnerUp.selector}` +
-						(Math.abs((chosen.slack ?? 0) - (runnerUp.slack ?? 0)) <=
-						input.tieTolerance * Math.max(Math.abs(chosen.slack ?? 0), Math.abs(runnerUp.slack ?? 0))
+					: `headroom ${healthyChoice.slack !== undefined ? healthyChoice.slack.toFixed(2) : "?"} vs ${runnerUp.slack !== undefined ? runnerUp.slack.toFixed(2) : "?"} for ${runnerUp.selector}` +
+						(Math.abs((healthyChoice.slack ?? 0) - (runnerUp.slack ?? 0)) <=
+						input.tieTolerance * Math.max(Math.abs(healthyChoice.slack ?? 0), Math.abs(runnerUp.slack ?? 0))
 							? " (comparable; alternating by recent dispatches)"
 							: "");
-			return select(chosen, why, "high");
+			return select(healthyChoice, why, "high");
 		}
-		if (unknown.length > 0) {
-			const chosen = unknown[0]!;
-			return select(chosen, `no candidate has a reliable healthy report; configured preference kept (${chosen.note})`, "low");
+		const [unknownChoice] = unknown;
+		if (unknownChoice) {
+			return select(
+				unknownChoice,
+				`no candidate has a reliable healthy report; configured preference kept (${unknownChoice.note})`,
+				"low",
+			);
 		}
 	}
 
 	if (reserve.length > 0) {
 		const listing = reserve.map(assessment => `${assessment.selector} ${assessment.note}`).join("; ");
-		if (input.reservePolicy === "auto") {
-			const chosen = reserve[0]!;
-			return select(chosen, `every eligible candidate is inside the reserve; policy spends the largest remainder (${listing})`, "high");
+		const [reserveChoice] = reserve;
+		if (input.reservePolicy === "auto" && reserveChoice) {
+			return select(
+				reserveChoice,
+				`every eligible candidate is inside the reserve; policy spends the largest remainder (${listing})`,
+				"high",
+			);
 		}
 		return {
 			kind: "blocked",

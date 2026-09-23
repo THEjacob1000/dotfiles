@@ -1,21 +1,18 @@
+// generated-by: numen-sync
 /**
- * Quota-aware subagent routing, driven from OMP's `subagent_route` gate.
+ * Quota-aware subagent routing at OMP's supported pre-spawn hook.
  *
- * Inputs are what the gate hands over: the expanded patterns the static
- * resolver produced and the pre-expansion selectors behind them. The router
- * turns those into a candidate pool, asks the auth layer for each candidate's
- * allowance state, folds in the cross-process in-flight ledger, and returns
- * the patterns the child should spawn with: selected model first, then the
- * eligible fallbacks so a runtime provider failure still lands somewhere
- * with headroom. A refusal names each candidate's state.
+ * The router evaluates the expanded model patterns once, records the
+ * dispatch-time decision, and returns the selected model plus ordered runtime
+ * fallbacks. It does not claim child lifecycle or completion visibility.
  */
-import type { AuthStorage, ModelUsageAccountHealth, ModelUsageHealth } from "@oh-my-pi/pi-ai";
-import type { Api, Model } from "@oh-my-pi/pi-ai";
-import type { ExtensionContext, ModelRegistry } from "@oh-my-pi/pi-coding-agent";
-import { isAuthenticated, kNoAuth, settings } from "@oh-my-pi/pi-coding-agent";
-import { getAgentDir, logger } from "@oh-my-pi/pi-utils";
-import { splitThinkingSuffix, splitUpstreamRouting } from "@oh-my-pi/pi-tui/overlays/model-selector";
+
 import * as path from "node:path";
+import type { Api, AuthStorage, Model, ModelUsageAccountHealth, ModelUsageHealth } from "@oh-my-pi/pi-ai";
+import type { ExtensionContext } from "@oh-my-pi/pi-coding-agent";
+import { isAuthenticated, kNoAuth, settings } from "@oh-my-pi/pi-coding-agent";
+import { splitThinkingSuffix, splitUpstreamRouting } from "@oh-my-pi/pi-tui/overlays/model-selector";
+import { getAgentDir, logger } from "@oh-my-pi/pi-utils";
 import { config, routingEnabled } from "./config";
 import {
 	decideRoute,
@@ -26,21 +23,16 @@ import {
 	type RoutingConfidence,
 	type RoutingHealthSnapshot,
 } from "./policy";
-import { RoutingStore, type RoutingCompletion, type RoutingCostEstimate } from "./store";
+import { RoutingStore } from "./store";
 
 export interface SubagentRoutingRequest {
 	ctx: ExtensionContext;
 	sessionId?: string;
-	parentAgentId?: string;
-	/** Reserved child agent id; keys the ledger reservation. */
 	id: string;
 	agent: string;
 	role?: string;
 	/** Expanded patterns from the static resolver, in configured order. */
 	patterns: string[];
-	/** Pre-expansion selectors behind `patterns`; empty when the child inherits the session model. */
-	sourcePatterns: string[];
-	effort?: string;
 	now?: number;
 	/** Ledger override for tests; production shares one file under the agent dir. */
 	store?: RoutingStore;
@@ -61,8 +53,6 @@ export interface SubagentRoutingOutcome {
 	patterns: string[];
 	/** Undefined when routing did not apply (disabled, inherited model, no candidates). */
 	summary?: SubagentRoutingSummary;
-	/** Release the ledger reservation. Idempotent. */
-	release: (completion: RoutingCompletion) => void;
 }
 
 /** Routing refused to dispatch; the message names each candidate's state and the operator's choices. */
@@ -85,9 +75,6 @@ export class SubagentRoutingError extends Error {
 	}
 }
 
-const NOOP_RELEASE = (): void => {};
-const NEVER_ABORTED = new AbortController().signal;
-
 let sharedStore: Promise<RoutingStore> | undefined;
 
 /** The one ledger every OMP process on this machine shares. */
@@ -108,7 +95,11 @@ interface ResolvedCandidate {
 function selectorParts(pattern: string) {
 	const routing = splitUpstreamRouting(pattern);
 	const thinking = splitThinkingSuffix(routing?.base ?? pattern);
-	return { base: thinking.base, level: thinking.level, upstream: routing?.upstream };
+	return {
+		base: thinking.base,
+		level: thinking.level,
+		upstream: routing?.upstream,
+	};
 }
 
 /** `provider/id` plus the thinking and upstream routing suffixes the selector carried, if any. */
@@ -118,12 +109,25 @@ function selectorFor(model: Model<Api>, pattern: string): string {
 	return level ? `${routed}:${level}` : routed;
 }
 
-function resolveCandidates(selectors: readonly string[], ctx: ExtensionContext): ResolvedCandidate[] {
+function isExactQualifiedMatch(pattern: string, model: Model<Api>): boolean {
+	const base = selectorParts(pattern).base;
+	const slash = base.indexOf("/");
+	if (slash <= 0) return true;
+	return model.provider.toLowerCase() === base.slice(0, slash).toLowerCase() && model.id === base.slice(slash + 1);
+}
+
+function resolveCandidates(
+	selectors: readonly string[],
+	ctx: ExtensionContext,
+	strictFallbacks: boolean,
+): ResolvedCandidate[] {
 	const disabledProviders = new Set(settings.get("disabledProviders"));
 	const candidates: ResolvedCandidate[] = [];
 	const seen = new Set<string>();
-	for (const pattern of selectors) {
-		const model = ctx.models.resolve(pattern);
+	for (const [index, pattern] of selectors.entries()) {
+		const matched = ctx.models.resolve(pattern);
+		const model =
+			strictFallbacks && index > 0 && matched && !isExactQualifiedMatch(pattern, matched) ? undefined : matched;
 		const selector = model ? selectorFor(model, pattern) : pattern;
 		if (seen.has(selector)) continue;
 		seen.add(selector);
@@ -150,12 +154,6 @@ function resolveCandidates(selectors: readonly string[], ctx: ExtensionContext):
 	return candidates;
 }
 
-/** The alias's own `:level` suffix (`@task:high`), which the pool entries inherit when they carry none. */
-function aliasThinkingSuffix(sourcePattern: string | undefined): string | undefined {
-	if (!sourcePattern?.startsWith("@")) return undefined;
-	return splitThinkingSuffix(sourcePattern).level;
-}
-
 function withThinkingLevel(selector: string, level: string | undefined) {
 	if (!level) return selector;
 	const parts = selectorParts(selector);
@@ -170,29 +168,32 @@ interface CandidatePool {
 }
 
 /**
- * Turn the static selection into the set the router may choose from.
+ * Turn the supported hook's ordered attempt list into routing candidates.
  *
- * - Several pre-expansion selectors: the caller listed a pool.
- * - One role alias whose role has a `pools` entry: that pool.
- * - Anything else is a pin. Only the retry-fallback chain the policy already
- *   grants that role (or `default`) may stand in for it.
+ * - A role with an explicit `pools` entry is quota-balanced within that pool.
+ * - Every other list remains pinned to its first model; configured retry
+ *   fallbacks are appended after the caller's own authoritative order.
  */
 function candidatePool(request: SubagentRoutingRequest): CandidatePool | undefined {
-	const { sourcePatterns, patterns, role } = request;
+	const { patterns, role } = request;
 	const primary = patterns[0];
-	if (sourcePatterns.length === 0 || primary === undefined) return undefined;
-	if (sourcePatterns.length > 1) return { selectors: patterns, pinned: false };
+	if (primary === undefined) return undefined;
 	const pool = role !== undefined ? config.pools[role] : undefined;
 	if (pool && pool.length > 0) {
-		const suffix = aliasThinkingSuffix(sourcePatterns[0]) ?? selectorParts(primary).level;
-		const selectors = pool.map(selector => withThinkingLevel(selector, suffix));
-		return { selectors, pinned: false };
+		const suffix = selectorParts(primary).level;
+		return {
+			selectors: pool.map(selector => withThinkingLevel(selector, suffix)),
+			pinned: false,
+		};
 	}
 	const chains = settings.get("retry.fallbackChains");
 	const { base, level } = selectorParts(primary);
 	const chain =
 		chains?.[primary] ?? chains?.[base] ?? (role !== undefined ? chains?.[role] : undefined) ?? chains?.default ?? [];
-	return { selectors: [...patterns, ...chain.map(selector => withThinkingLevel(selector, level))], pinned: true };
+	return {
+		selectors: [...patterns, ...chain.map(selector => withThinkingLevel(selector, level))],
+		pinned: true,
+	};
 }
 
 function pickAccount(health: ModelUsageHealth): ModelUsageAccountHealth | undefined {
@@ -213,8 +214,7 @@ async function healthOf(
 	model: Model<Api>,
 	reserveFraction: number,
 	sessionId: string | undefined,
-	signal: AbortSignal,
-) {
+): Promise<RoutingHealthSnapshot> {
 	let health: ModelUsageHealth;
 	try {
 		health = await authStorage.getModelUsageHealth(model.provider, {
@@ -222,7 +222,6 @@ async function healthOf(
 			baseUrl: model.baseUrl,
 			reserveFraction,
 			sessionId,
-			signal,
 		});
 	} catch (error) {
 		logger.debug("numen-quota-router: usage lookup failed; candidate is unknown", {
@@ -230,96 +229,61 @@ async function healthOf(
 			model: model.id,
 			error: error instanceof Error ? error.message : "unknown error",
 		});
-		return {
-			health: { state: "unknown", windows: [] } satisfies RoutingHealthSnapshot,
-			credentialId: undefined,
-		};
+		return { state: "unknown" };
 	}
 	const account = pickAccount(health);
 	return {
-		health: {
-			state: account?.state ?? health.state,
-			remainingFraction: account?.remainingFraction,
-			resetsAt: account?.resetsAt,
-			fetchedAt: account?.fetchedAt,
-			windows: account?.windows ?? [],
-		},
-		credentialId: account?.credentialId,
+		state: account?.state ?? health.state,
+		remainingFraction: account?.remainingFraction,
+		resetsAt: account?.resetsAt,
 	};
 }
 
 /**
- * Route one fresh subagent. Returns the patterns to spawn with and a release
- * closure for the ledger; throws {@link SubagentRoutingError} when the policy
- * requires an explicit choice or every candidate is exhausted.
+ * Route one fresh subagent and persist its dispatch-time decision; throws
+ * {@link SubagentRoutingError} when policy refuses the spawn.
  */
 export async function routeSubagentModel(request: SubagentRoutingRequest): Promise<SubagentRoutingOutcome> {
-	const passthrough: SubagentRoutingOutcome = { patterns: request.patterns, release: NOOP_RELEASE };
+	const passthrough: SubagentRoutingOutcome = { patterns: request.patterns };
 	if (!routingEnabled()) return passthrough;
 	const pool = candidatePool(request);
 	if (!pool) return passthrough;
-	const resolved = resolveCandidates(pool.selectors, request.ctx);
+	const resolved = resolveCandidates(pool.selectors, request.ctx, pool.pinned);
 
 	const now = request.now ?? Date.now();
 	const reserveFraction = Math.max(0, Math.min(1, config.reservePct / 100));
 	const store = request.store ?? (await routingStore());
-	const modelRegistry: ModelRegistry = request.ctx.modelRegistry;
+	const modelRegistry = request.ctx.modelRegistry;
 	const authStorage = modelRegistry.authStorage;
-	const signal = request.ctx.signal ?? NEVER_ABORTED;
 	const evaluated = await Promise.all(
 		resolved.map(async candidate => {
 			if (!candidate.model) {
 				return {
 					...candidate,
 					authenticated: false,
-					health: { state: "unknown" as const, windows: [] },
-					credentialId: undefined,
+					health: { state: "unknown" as const },
 				};
 			}
-			const key = await modelRegistry.getApiKey(candidate.model, request.sessionId, { signal });
+			const key = await modelRegistry.getApiKey(candidate.model, request.sessionId);
 			const authenticated = key === kNoAuth || isAuthenticated(key);
-			const result = authenticated
-				? await healthOf(authStorage, candidate.model, reserveFraction, request.sessionId, signal)
-				: {
-						health: { state: "unknown" as const, windows: [] },
-						credentialId: undefined,
-					};
-			return { ...candidate, authenticated, ...result };
+			const health = authenticated
+				? await healthOf(authStorage, candidate.model, reserveFraction, request.sessionId)
+				: { state: "unknown" as const };
+			return { ...candidate, authenticated, health };
 		}),
 	);
-	for (const candidate of evaluated) {
-		if (candidate.health.fetchedAt !== undefined && candidate.health.windows.length > 0 && candidate.credentialId !== undefined) {
-			store.recordSnapshot(candidate.provider, candidate.credentialId, candidate.health.fetchedAt, candidate.health.windows);
-		}
-	}
-	if (signal.aborted) return passthrough;
 
-	const defaultCostFraction = Math.max(0, config.inflightEstimatePct) / 100;
-	const outcome = store.transact(now, view => {
-		const costByCredential = new Map<string, RoutingCostEstimate>();
-		const costBySelector = new Map<string, RoutingCostEstimate>();
-		const candidates: RoutingCandidate[] = evaluated.map(candidate => {
-			const provider = candidate.provider;
-			const costKey = `${provider}:${candidate.credentialId ?? "none"}`;
-			let cost = costByCredential.get(costKey);
-			if (!cost) {
-				cost = view.estimateDispatchCost(provider, candidate.credentialId, defaultCostFraction);
-				costByCredential.set(costKey, cost);
-			}
-			costBySelector.set(candidate.selector, cost);
-			return {
-				selector: candidate.selector,
-				provider,
-				modelId: candidate.modelId,
-				preference: candidate.preference,
-				authenticated: candidate.authenticated,
-				unavailableReason: candidate.unavailableReason,
-				health: candidate.health,
-				inflight: view.inflight(provider),
-				inflightCostFraction: cost.fraction,
-				recentDispatches: view.recentDispatches(provider, now),
-			};
-		});
+	const outcome = store.transact(view => {
+		const candidates: RoutingCandidate[] = evaluated.map(candidate => ({
+			selector: candidate.selector,
+			provider: candidate.provider,
+			modelId: candidate.modelId,
+			preference: candidate.preference,
+			authenticated: candidate.authenticated,
+			unavailableReason: candidate.unavailableReason,
+			health: candidate.health,
+			recentDispatches: view.recentDispatches(candidate.provider, now),
+		}));
 		const decision = decideRoute({
 			now,
 			agent: request.agent,
@@ -327,35 +291,35 @@ export async function routeSubagentModel(request: SubagentRoutingRequest): Promi
 			pinned: pool.pinned,
 			reserveFraction,
 			reservePolicy: config.reservePolicy,
-			staleAfterMs: config.staleReportMs,
 			preferenceWeight: config.preferenceWeight,
 			tieTolerance: config.tieTolerance,
 			candidates,
 		});
 		if (decision.kind === "blocked") return decision;
-		view.reserve({
+		view.recordDecision({
 			id: request.id,
 			sessionId: request.sessionId,
-			parentAgentId: request.parentAgentId,
 			agent: request.agent,
 			role: request.role,
 			provider: decision.provider,
 			modelId: decision.modelId,
 			selector: decision.selector,
-			effort: request.effort,
 			pinned: pool.pinned,
 			policyVersion: ROUTING_POLICY_VERSION,
 			confidence: decision.confidence,
 			reason: decision.reason,
 			assessments: decision.assessments,
-			costEstimateSource: costBySelector.get(decision.selector)?.source ?? "default",
 			startedAt: now,
 		});
 		return decision;
 	});
 
 	if (outcome.kind === "blocked") {
-		logger.warn("numen-quota-router: blocked", { agent: request.agent, role: request.role, outcome: outcome.outcome });
+		logger.warn("numen-quota-router: blocked", {
+			agent: request.agent,
+			role: request.role,
+			outcome: outcome.outcome,
+		});
 		throw new SubagentRoutingError(outcome.outcome, outcome.reason, outcome.earliestResetAt, outcome.assessments);
 	}
 	logger.info("numen-quota-router: routed", {
@@ -367,7 +331,6 @@ export async function routeSubagentModel(request: SubagentRoutingRequest): Promi
 		pinned: pool.pinned,
 		reason: outcome.reason,
 	});
-	let released = false;
 	return {
 		patterns: outcome.patterns,
 		summary: {
@@ -376,18 +339,6 @@ export async function routeSubagentModel(request: SubagentRoutingRequest): Promi
 			fallbacks: outcome.patterns.slice(1),
 			pinned: pool.pinned,
 			confidence: outcome.confidence,
-		},
-		release: completion => {
-			if (released) return;
-			released = true;
-			try {
-				store.complete(request.id, completion);
-			} catch (error) {
-				logger.warn("numen-quota-router: ledger release failed", {
-					id: request.id,
-					error: error instanceof Error ? error.message : "unknown error",
-				});
-			}
 		},
 	};
 }
