@@ -24,6 +24,12 @@ rustdoc runs with warnings denied, appended to `build.rustdocflags` from the
 workspace `.cargo/config.toml` so a repository's own rustdoc lints survive. Only
 that file is read, not a parent directory's config or CARGO_HOME.
 
+A baseline must have reliable totals and package-qualified test identities from a
+complete run. The comparison rejects newly ignored identities and baseline
+failures that disappear. Passing tests and suites may retire; their identities
+and the net passing count are reported for human review, alongside newly added
+tests.
+
 Exit status: 0 green, 1 red, 2 when cargo itself could not be run.
 
 Examples:
@@ -59,6 +65,9 @@ TEST_TOTAL = re.compile(
 )
 TOTAL_FIELDS = ("passed", "failed", "ignored", "measured", "filtered_out")
 TEST_FAIL = re.compile(r"^\s{4}(?P<name>[\w:$<>{}#.\- ]+)$")
+TEST_SUITE = re.compile(r"^\s+Running (?:unittests )?.+? \((?P<executable>.+)\)$")
+DOC_SUITE = re.compile(r"^\s+Doc-tests (?P<target>\S+)\s*$")
+TEST_CASE = re.compile(r"^test (?P<name>.+) \.\.\. (?P<status>ok|FAILED|ignored)(?:, .*)?$")
 
 
 class CargoUnavailable(RuntimeError):
@@ -99,10 +108,14 @@ class StepResult:
     failures: list[str] = field(default_factory=list)
     stderr_tail: str = ""
     totals: dict[str, int] | None = None
+    tests: dict[str, list[str]] | None = None
+    errors: list[str] = field(default_factory=list)
 
     @property
     def red(self) -> bool:
-        return self.ran and (self.status != 0 or bool(self.diagnostics) or bool(self.failures))
+        return self.ran and (
+            self.status != 0 or bool(self.diagnostics) or bool(self.failures) or bool(self.errors)
+        )
 
 
 @dataclass
@@ -161,15 +174,25 @@ def run(
     command: list[str],
     cwd: Path,
     env: dict[str, str] | None = None,
+    *,
+    merge_stderr: bool = False,
 ) -> subprocess.CompletedProcess[str]:
     merged = dict(os.environ)
     if env:
         merged.update(env)
     try:
         return subprocess.run(
-            command, cwd=cwd, env=merged, capture_output=True, text=True, check=False
+            command,
+            cwd=cwd,
+            env=merged,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT if merge_stderr else subprocess.PIPE,
+            text=True,
+            check=False,
         )
     except OSError as error:
+        if merge_stderr:
+            return subprocess.CompletedProcess(command, 127, str(error), "")
         return subprocess.CompletedProcess(command, 127, "", str(error))
 
 
@@ -322,13 +345,76 @@ def parse_test_failures(stdout: str) -> list[str]:
     return names
 
 
+def package_name(package_id: str) -> str:
+    """Reads the package name from current and legacy cargo package IDs."""
+    fragment = package_id.rsplit("#", 1)[-1]
+    if "@" in fragment:
+        return fragment.rsplit("@", 1)[0]
+    return Path(package_id.split("#", 1)[0]).name if "#" in package_id else package_id.split()[0]
+
+
+def executable_key(path: str, root: Path) -> str:
+    executable = Path(path)
+    return str(executable if executable.is_absolute() else root / executable)
+
+
+def parse_test_identities(output: str, root: Path) -> dict[str, list[str]]:
+    """Qualifies libtest case names with their cargo package and target."""
+    found = {"passed": [], "failed": [], "ignored": []}
+    executables: dict[str, str] = {}
+    doc_targets: dict[str, str] = {}
+    suite: str | None = None
+    statuses = {"ok": "passed", "FAILED": "failed", "ignored": "ignored"}
+    for line in output.splitlines():
+        if line.startswith("{"):
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if event.get("reason") != "compiler-artifact":
+                continue
+            target = event.get("target") or {}
+            kinds = target.get("kind") or []
+            name = target.get("name")
+            package_id = event.get("package_id")
+            if not kinds or not isinstance(name, str) or not isinstance(package_id, str):
+                continue
+            package = package_name(package_id)
+            doc_targets[name] = package
+            if isinstance(event.get("executable"), str):
+                executables[executable_key(event["executable"], root)] = (
+                    f"{package}:{kinds[0]}:{name}"
+                )
+            continue
+        if match := TEST_SUITE.fullmatch(line):
+            suite = executables.get(executable_key(match.group("executable"), root))
+            continue
+        if match := DOC_SUITE.fullmatch(line):
+            target = match.group("target")
+            suite = f"{doc_targets[target]}:doc" if target in doc_targets else None
+            continue
+        if suite is not None and (match := TEST_CASE.fullmatch(line)):
+            found[statuses[match.group("status")]].append(f"{suite} {match.group('name')}")
+    return {status: sorted(set(names)) for status, names in found.items()}
+
+
+def identity_counts_match(tests: dict[str, list[str]], totals: dict[str, int]) -> bool:
+    return all(len(tests[status]) == totals[status] for status in ("passed", "failed", "ignored"))
+
+
 def step_test(workspace: Workspace, package: str | None, count: int | None) -> StepResult:
     result = StepResult("test", ran=True)
-    command = ["cargo", "test"] + scope(package) + ["--no-fail-fast"] + jobs(count)
-    done = run(command, workspace.root)
+    command = (
+        ["cargo", "test"]
+        + scope(package)
+        + ["--no-fail-fast", "--message-format=json"]
+        + jobs(count)
+    )
+    done = run(command, workspace.root, merge_stderr=True)
     result.status = done.returncode
-    result.stderr_tail = tail(done.stderr)
+    result.stderr_tail = tail(done.stdout)
     result.failures = parse_test_failures(done.stdout)
+    result.tests = parse_test_identities(done.stdout, workspace.root)
     summaries = [
         line.strip() for line in done.stdout.splitlines() if line.startswith("test result:")
     ]
@@ -341,6 +427,8 @@ def step_test(workspace: Workspace, package: str | None, count: int | None) -> S
                 for key, value in zip(TOTAL_FIELDS, match.groups(), strict=True):
                     totals[key] += int(value)
         result.totals = totals
+        if not identity_counts_match(result.tests, totals):
+            result.errors.append("test identities do not match totals")
     return result
 
 
@@ -369,7 +457,12 @@ def per_crate(
     return dict(table)
 
 
-def render(results: dict[str, StepResult], table: dict[str, dict[str, int]], green: bool) -> str:
+def render(
+    results: dict[str, StepResult],
+    table: dict[str, dict[str, int]],
+    green: bool,
+    baseline: BaselineComparison | None = None,
+) -> str:
     out: list[str] = []
     width = max([len(name) for name in table] + [len("crate")]) if table else len("crate")
     out.append(f"{'crate'.ljust(width)}  {'fmt':>5} {'clippy':>7} {'doc':>5} {'test':>5}")
@@ -411,6 +504,11 @@ def render(results: dict[str, StepResult], table: dict[str, dict[str, int]], gre
             out.append(result.stderr_tail or "(no stderr)")
 
     test = results.get("test")
+    if baseline is not None and baseline.compared and test is not None and test.totals is not None:
+        out.append("")
+        out.append(f"## retired tests ({len(baseline.retired)})")
+        out.extend(f"  {name}" for name in baseline.retired)
+        out.append(f"passed {baseline.previous_passed} -> {test.totals['passed']}")
     if test and test.totals is not None:
         out.append("")
         out.append("Tests: " + "; ".join(f"{value} {key}" for key, value in test.totals.items()))
@@ -419,14 +517,31 @@ def render(results: dict[str, StepResult], table: dict[str, dict[str, int]], gre
     return "\n".join(out)
 
 
-def baseline_errors(
+@dataclass
+class BaselineComparison:
+    """Errors and visible test-set changes against one baseline."""
+
+    errors: list[str] = field(default_factory=list)
+    retired: list[str] = field(default_factory=list)
+    added: list[str] = field(default_factory=list)
+    previous_passed: int = 0
+    compared: bool = False
+
+    def changes(self) -> dict[str, list[str]]:
+        return {"retired": self.retired, "added": self.added}
+
+
+def baseline_comparison(
     path: Path, workspace: Workspace, package: str | None, test: StepResult | None
-) -> list[str]:
+) -> BaselineComparison:
+    comparison = BaselineComparison()
     try:
         baseline = json.loads(path.read_text())
         if baseline["workspace_root"] != str(workspace.root) or baseline["package"] != package:
-            return ["baseline scope does not match this workspace/package"]
-        previous = baseline["steps"]["test"]["totals"]
+            comparison.errors.append("baseline scope does not match this workspace/package")
+            return comparison
+        step = baseline["steps"]["test"]
+        previous = step["totals"]
         if (
             not isinstance(previous, dict)
             or any(
@@ -435,27 +550,50 @@ def baseline_errors(
             )
             or previous["suites"] == 0
         ):
-            return ["baseline has no reliable test totals"]
+            comparison.errors.append("baseline has no reliable test totals")
+            return comparison
+        comparison.previous_passed = previous["passed"]
         expected = 1 if package else len(workspace.crates)
-        if baseline["steps"]["test"]["status"] != 0 and (
-            previous["failed"] == 0 or previous["suites"] < expected
-        ):
-            return [
+        if step["status"] != 0 and (previous["failed"] == 0 or previous["suites"] < expected):
+            comparison.errors.append(
                 "baseline test command failed without a complete run: "
                 f"{previous['suites']} suites for {expected} crates, "
                 f"{previous['failed']} reported failures"
-            ]
+            )
+            return comparison
+        identities = step.get("tests")
+        if not isinstance(identities, dict) or any(
+            not isinstance(identities.get(status), list)
+            or any(not isinstance(name, str) for name in identities[status])
+            for status in ("passed", "failed", "ignored")
+        ):
+            comparison.errors.append("baseline has no test identities; retake it")
+            return comparison
+        if not identity_counts_match(identities, previous):
+            comparison.errors.append("baseline test identities do not match its totals; retake it")
+            return comparison
         if test is None or test.totals is None:
-            return ["cannot compare baseline without current test totals"]
-        if test.totals["suites"] < previous["suites"]:
-            return [f"test suites decreased: {previous['suites']} -> {test.totals['suites']}"]
-        if test.totals["ignored"] > previous["ignored"]:
-            return [f"ignored tests increased: {previous['ignored']} -> {test.totals['ignored']}"]
-        if test.totals["passed"] < previous["passed"]:
-            return [f"passing tests decreased: {previous['passed']} -> {test.totals['passed']}"]
+            comparison.errors.append("cannot compare baseline without current test totals")
+            return comparison
+        if test.tests is None:
+            comparison.errors.append("cannot compare baseline without current test identities")
+            return comparison
+        previous_ids = set().union(*(identities[status] for status in identities))
+        current_ids = set().union(*(test.tests[status] for status in test.tests))
+        comparison.retired = sorted(set(identities["passed"]) - current_ids)
+        comparison.added = sorted(current_ids - previous_ids)
+        comparison.compared = True
+        comparison.errors.extend(
+            f"newly ignored test: {name}"
+            for name in sorted(set(test.tests["ignored"]) - set(identities["ignored"]))
+        )
+        comparison.errors.extend(
+            f"failing test removed: {name}"
+            for name in sorted(set(identities["failed"]) - current_ids)
+        )
     except (OSError, ValueError, KeyError, TypeError) as error:
-        return [f"cannot read baseline: {error}"]
-    return []
+        comparison.errors.append(f"cannot read baseline: {error}")
+    return comparison
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -467,7 +605,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("-p", "--package", help="scope every step to one crate")
     parser.add_argument("--json", action="store_true", help="machine-readable output")
     parser.add_argument("--output", type=Path, help="write JSON artifact from this run")
-    parser.add_argument("--baseline", type=Path, help="reject a lower passing-test count")
+    parser.add_argument(
+        "--baseline",
+        type=Path,
+        help="reject newly ignored or removed failing tests; report test-set changes",
+    )
     parser.add_argument("--jobs", type=int, help="cargo -j value")
     parser.add_argument("--manifest-path", type=Path, help="workspace Cargo.toml")
     parser.add_argument(
@@ -500,17 +642,20 @@ def main(argv: list[str] | None = None) -> int:
             results[name] = step_test(workspace, args.package, args.jobs)
 
     table = per_crate(results, workspace, args.package)
-    errors = []
+    errors: list[str] = []
     if args.skip:
         errors.append("incomplete gate: skipped " + ", ".join(args.skip))
     test = results.get("test")
     if test is not None:
+        errors.extend(test.errors)
         if test.totals is None:
             errors.append("test output has no complete, recognised libtest summaries")
         elif test.totals["failed"]:
             errors.append(f"test summaries report {test.totals['failed']} failures")
+    baseline = None
     if args.baseline:
-        errors.extend(baseline_errors(args.baseline, workspace, args.package, test))
+        baseline = baseline_comparison(args.baseline, workspace, args.package, test)
+        errors.extend(baseline.errors)
     green = not errors and not any(result.red for result in results.values())
     report = {
         "green": green,
@@ -528,10 +673,14 @@ def main(argv: list[str] | None = None) -> int:
                 "failures": result.failures,
                 "stderr_tail": result.stderr_tail,
                 "totals": result.totals,
+                "errors": result.errors,
+                **({"tests": result.tests} if name == "test" else {}),
             }
             for name, result in results.items()
         },
     }
+    if baseline is not None:
+        report["tests_changed"] = baseline.changes()
     encoded = json.dumps(report, indent=2)
     if args.output:
         try:
@@ -544,7 +693,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         if errors:
             print("\n".join(errors))
-        print(render(results, table, green))
+        print(render(results, table, green, baseline))
     return 0 if green else 1
 
 
