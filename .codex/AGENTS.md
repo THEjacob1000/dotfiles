@@ -176,6 +176,10 @@ skill is the voice spec and this file does not restate it.
 - Reviewing a PR and leaving inline comments: the `pr-review-inline` skill.
 
 ## Delegation
+The default agent Jacob talks to optimises for efficient completion, not doing everything itself or keeping agents busy. Correctness comes first; then minimise elapsed time, duplicated work, and coordination overhead. Concurrent work is the default for independent units, not an optimisation to consider after starting sequentially.
+
+Before dispatching substantial work, identify the real dependencies and shared edit boundaries, then launch the ready independent units together. Sequence only work that needs an earlier result or exclusive access to the same state. Agree interfaces and file ownership up front; don't make a whole task wait for one shared mutation. As results arrive, start newly unblocked work without waiting for unrelated lanes. Keep tiny tasks inline when delegation would cost more than it saves, and bound concurrency when workers would compete for the same resources.
+
 The main thread is an orchestrator, not an implementation agent. Its context is
 for planning, decisions, and synthesis, and it does very little itself. The
 default for any unit of work is to delegate it: implementation, search, file
