@@ -50,14 +50,15 @@ call count. Open a file only once the map has named it.
 - Use jj exclusively in any repo with a `.jj/` directory (most do, including
   colocated jj+git repos). Only fall back to git in a plain-git repo with no
   `.jj/`. Never `git diff/show/log` in a jj repo, use `jj diff` / `jj log`.
-- Branches/bookmarks: `feat/`, `fix/`, `chore/`, `refactor/`. Conventional commits.
+- Never create a branch or bookmark unless explicitly asked. When requested, use `feat/`, `fix/`, `chore/`, or `refactor/` prefixes.
 - One logical step = one local commit with a conventional message. Subject line
   only, never a body, and it names the actual change ("fix: null-check geocode
   response", not "chore: implemented PR feedback"). Merge commits keep the
   standard `Merge branch 'x' into y`, not a conventional prefix.
+- Finishing a task that changes files includes committing the completed work locally and running `jj new` on top before replying. Do this without waiting for a separate commit request; `jj commit` performs both steps. Don't commit an empty change, and respect an explicit request to leave work uncommitted.
 - In a shared working copy, scope commits to the files you touched (e.g. jj
   filesets). A bare commit sweeps every pending change, including other agents'.
-- Run lint + typecheck + tests before committing.
+- Run the applicable lint, typecheck and tests before committing; fix failures introduced by the task. Report known pre-existing failures or unrelated check findings without claiming a green gate, but don't use them to leave completed, verified work uncommitted locally. Local commits don't authorize a push or merge.
 
 ## Hard boundaries (never violate without explicit user approval in the current turn)
 - Never run `jj git push`, `git push`, or any command that writes to a remote.
@@ -96,41 +97,14 @@ call count. Open a file only once the map has named it.
   the code does, never narrate the diff ("now uses X"), never a block comment
   above a function. A comment a dev would skip should not have been written.
 ### Less code is the best code
-Code that was never written cannot break, cannot drift out of date, and nobody has
-to decode it at 3am. If it doesn't have to be implemented, don't implement it.
-Before building anything, walk this and stop at the first rung that holds:
 
-1. Does this need to exist at all? A speculative need is not a need. Skip it and
-   say so in one line.
-2. Does the standard library do it? Use it.
-3. Does a native platform feature cover it? `<input type="date">` over a picker
-   library, CSS over JS, a DB constraint over application code.
-4. Does an already-installed dependency solve it? Use that. Never add a new
-   dependency for what a few lines can do.
-5. Can it be one line? Make it one line.
-6. Only then, the minimum code that works.
+`code-golf` is always on for coding work, including implementation, fixes, refactoring, review and tests. Load its entrypoint once before the first coding task in a session, without waiting for an explicit invocation; reread only if it changes. Keep that policy active for subsequent coding tasks. Load detailed references only when a concrete decision needs them, never the whole handbook by default.
 
-The ladder is a reflex, not a research project. If two rungs both work, take the
-higher one and move on. The first correct solution is the right one.
+Do the minimum work that delivers the full requested result cleanly, safely and readably. Minimum effort is not minimum understanding or a smaller result than requested. Reuse existing code and native capabilities before adding machinery. No speculative abstractions, configuration, dependencies, scaffolding or cleanup outside the task. Keep real ownership, security, lifecycle and required swappability boundaries.
 
-- Nothing Jacob didn't ask for: no interface with one implementation, no factory
-  for one product, no config option for a value that never changes, no scaffolding
-  "for later". Later can scaffold for itself.
-- Deletion beats addition, boring beats clever. Shortest working diff, fewest files.
-- Two options the same size? Take the one that is correct on the edge cases.
-  Writing less code never means picking the flimsier algorithm.
-- Asked for something big? Build the small version and question it in the same
-  breath: "did X, Y covers it, want the full thing?" Never stall on a question you
-  could have defaulted.
-- A deliberate shortcut with a known ceiling (a global lock, an O(n^2) scan, a
-  naive heuristic) is the case where a one-line comment earns its place. Name the
-  ceiling and the upgrade path, not the shortcut.
-- Never simplify away input validation at a trust boundary, error handling that
-  prevents data loss, a security control, accessibility basics, or anything
-  explicitly asked for. Hardware is never the ideal on paper either: a real clock
-  drifts and a real sensor reads off, so leave the calibration knob in.
-- If Jacob wants the full version after you flagged the small one, build it and
-  don't re-argue.
+Readability is a hard constraint: longer clear code beats shorter dense code. Never simplify away validation, error handling that prevents data loss, security, accessibility, required compatibility or explicit requirements. Verify the actual changed behavior and keep meaningful regression evidence; don't manufacture permanent tests, docs or frameworks to make a small task look thorough.
+
+A routine coding request does not trigger a repository audit or sweep. Use `code-refinement` for explicitly requested broader guideline enforcement and cleanup; it selects the languages and uses code-golf within the same task. Stop when the requested result is correct, readable, safe and verified.
 
 ## Working style
 - Bias to autonomy: when a sensible default exists, proceed and report rather than

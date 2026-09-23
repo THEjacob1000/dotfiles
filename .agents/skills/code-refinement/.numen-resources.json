@@ -1,0 +1,7 @@
+[
+  "references/routing.md",
+  "references/rust-tools.md",
+  "rust/candidates.py",
+  "rust/gate.py",
+  "rust/lanes.py"
+]
