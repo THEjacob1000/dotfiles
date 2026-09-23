@@ -1,77 +1,52 @@
 // generated-by: numen-sync
 /**
- * numen quota router: picks each subagent's model by which subscription has
- * headroom right now, so the Claude and Codex allowances are both spent
- * through the day instead of one running dry while the other idles.
+ * Quota-aware routing at OMP's supported pre-subagent-spawn seam.
  *
- * Hooks OMP's `subagent_route` gate once per fresh child and `subagent_settled`
- * to release the in-flight reservation. `/routing` shows the ledger.
+ * `/routing` shows dispatch-time decisions; OMP exposes no child completion
+ * lifecycle to extensions, so this module records no in-flight state.
  */
-import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
+import { randomUUID } from "node:crypto";
 import type {
-	SubagentRouteEvent,
-	SubagentRouteEventResult,
-	SubagentSettledEvent,
-} from "@oh-my-pi/pi-coding-agent/extensibility/shared-events";
+	BeforeSubagentSpawnEvent,
+	BeforeSubagentSpawnEventResult,
+	ExtensionAPI,
+	ExtensionCommandContext,
+	ExtensionContext,
+} from "@oh-my-pi/pi-coding-agent";
 import { logger } from "@oh-my-pi/pi-utils";
 import { config, routingEnabled } from "./config";
-import { routeSubagentModel, routingStore, SubagentRoutingError, type SubagentRoutingOutcome } from "./router";
-import type { RoutingCompletion, RoutingDispatchRow } from "./store";
+import { routeSubagentModel, routingStore, SubagentRoutingError } from "./router";
+import type { RoutingDispatchRow } from "./store";
 
-const releases = new Map<string, SubagentRoutingOutcome["release"]>();
-const settledEarly = new Set<string>();
-const MAX_SETTLED_EARLY = 256;
-
-async function onRoute(event: SubagentRouteEvent, ctx: ExtensionContext): Promise<SubagentRouteEventResult | undefined> {
-	let outcome: SubagentRoutingOutcome;
+async function onBeforeSubagentSpawn(
+	event: BeforeSubagentSpawnEvent,
+	ctx: ExtensionContext,
+): Promise<BeforeSubagentSpawnEventResult | undefined> {
+	const sessionId = ctx.sessionManager.getSessionId();
+	const spawnId = `${sessionId}:${event.spawnKey ?? "anonymous"}:${randomUUID()}`;
 	try {
-		outcome = await routeSubagentModel({
+		const outcome = await routeSubagentModel({
 			ctx,
-			sessionId: event.sessionId,
-			parentAgentId: event.parentAgentId,
-			id: event.id,
+			sessionId,
+			id: spawnId,
 			agent: event.agent,
-			role: event.role,
+			role: event.modelRole,
 			patterns: event.patterns,
-			sourcePatterns: event.sourcePatterns,
-			effort: event.effort,
 		});
+		if (!outcome.summary) return undefined;
+		return {
+			model: outcome.patterns,
+			note: outcome.summary.reason,
+		};
 	} catch (error) {
-		if (error instanceof SubagentRoutingError) return { block: true, reason: error.message };
-		// A router fault must never take the spawn down with it: fall through to the static selection.
+		if (error instanceof SubagentRoutingError) {
+			return { block: true, reason: error.message };
+		}
 		logger.warn("numen-quota-router: routing failed open", {
-			id: event.id,
+			id: spawnId,
 			error: error instanceof Error ? error.message : "unknown error",
 		});
 		return undefined;
-	}
-	if (!outcome.summary) return undefined;
-	if (settledEarly.delete(event.id)) {
-		outcome.release({ outcome: "aborted", endedAt: Date.now() });
-	} else {
-		releases.set(event.id, outcome.release);
-	}
-	return { patterns: outcome.patterns, routing: outcome.summary };
-}
-
-function onSettled(event: SubagentSettledEvent): void {
-	if (!routingEnabled()) return;
-	const completion: RoutingCompletion = {
-		outcome: event.outcome,
-		endedAt: Date.now(),
-		finalSelector: event.resolvedModel,
-		usage: event.usage,
-	};
-	const release = releases.get(event.id);
-	releases.delete(event.id);
-	if (release) {
-		release(completion);
-		return;
-	}
-	settledEarly.add(event.id);
-	if (settledEarly.size > MAX_SETTLED_EARLY) {
-		const oldest = settledEarly.values().next().value;
-		if (oldest !== undefined) settledEarly.delete(oldest);
 	}
 }
 
@@ -81,16 +56,13 @@ function ago(ms: number): string {
 }
 
 function describe(row: RoutingDispatchRow, now: number): string {
-	const state = row.endedAt === null ? "open" : (row.outcome ?? "ended");
-	const changed = row.modelChanged && row.finalSelector ? ` -> ${row.finalSelector}` : "";
 	const role = row.role ? `@${row.role}` : "explicit";
-	return `${ago(now - row.startedAt)} ago  ${row.id}  ${row.agent} (${role})  ${row.selector}${changed}  ${state}${row.pinned ? "  pinned" : ""}  ${row.confidence}\n    ${row.reason}`;
+	return `${ago(now - row.startedAt)} ago  ${row.id}  ${row.agent} (${role})  ${row.selector}  ${row.outcome ?? "historical"}${row.pinned ? "  pinned" : ""}  ${row.confidence}\n    ${row.reason}`;
 }
 
 async function showRouting(_args: string, ctx: ExtensionCommandContext): Promise<void> {
 	const now = Date.now();
 	const store = await routingStore();
-	const open = store.openDispatches();
 	const recent = store.recentDecisions(12);
 	const lines = [
 		`numen quota router: ${routingEnabled() ? "enabled" : "disabled"}  reserve ${config.reservePct}%  policy ${config.reservePolicy}`,
@@ -99,21 +71,16 @@ async function showRouting(_args: string, ctx: ExtensionCommandContext): Promise
 				.map(([role, pool]) => `@${role} -> ${pool.join(" | ")}`)
 				.join("; ") || "none"
 		}`,
-		"",
-		`in flight (${open.length}):`,
-		...(open.length > 0 ? open.map(row => `  ${describe(row, now)}`) : ["  none"]),
-		"",
-		"recent decisions:",
+		"recent dispatch decisions:",
 		...(recent.length > 0 ? recent.map(row => `  ${describe(row, now)}`) : ["  none"]),
 	];
 	ctx.ui.notify(lines.join("\n"), "info");
 }
 
 export default function numenQuotaRouter(pi: ExtensionAPI): void {
-	pi.on("subagent_route", onRoute);
-	pi.on("subagent_settled", onSettled);
+	pi.on("before_subagent_spawn", onBeforeSubagentSpawn);
 	pi.registerCommand("routing", {
-		description: "Show the numen quota router's pools, in-flight dispatches and recent decisions",
+		description: "Show the numen quota router's pools and recent dispatch decisions",
 		handler: showRouting,
 	});
 }
