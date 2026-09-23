@@ -38,11 +38,11 @@ export const config: RouterConfig = {
 	enabled: true,
 	pools: {
 		// Judgment-heavy subagent work: Codex sol first, Fable when the Codex allowance is the tighter one.
-		task: ["openai-codex/gpt-5.6-sol", "anthropic/claude-fable-5-1"],
+		task: ["openai-codex/gpt-6-sol", "anthropic/claude-fable-5-1"],
 		// Grunt work: luna first, haiku when luna is scarce.
-		smol: ["openai-codex/gpt-5.6-luna", "anthropic/claude-haiku-4-5"],
+		smol: ["openai-codex/gpt-6-luna", "anthropic/claude-haiku-4-5"],
 		// Second-opinion review: either flagship reviewer.
-		advisor: ["openai-codex/gpt-5.6-sol", "anthropic/claude-opus-5"],
+		advisor: ["openai-codex/gpt-6-sol", "anthropic/claude-opus-5-5"],
 	},
 	reservePct: 10,
 	reservePolicy: "auto",
