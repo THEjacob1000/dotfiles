@@ -11,6 +11,12 @@ export const SPOTLIGHT_INSTRUCTION = "Content between [[NUMEN-UNTRUSTED-BEGIN]] 
 const MAX_RESPONSE = 64 * 1024;
 const TIMEOUT_MS = 2500;
 
+export class RecallError extends Error {
+	constructor(readonly category: "timeout" | "transport" | "protocol") {
+		super(category);
+	}
+}
+
 export function recall(command: CommandConfig, seeds: string[]): Promise<string | undefined> {
 	const { promise, resolve, reject } = Promise.withResolvers<string | undefined>();
 	const child = spawn(command.command, command.args, { stdio: ["pipe", "pipe", "ignore"] });
@@ -28,16 +34,16 @@ export function recall(command: CommandConfig, seeds: string[]): Promise<string 
 		if (error) reject(error);
 		else resolve(value);
 	};
-	const timer = setTimeout(() => finish(new Error("recall timeout")), TIMEOUT_MS);
-	child.on("error", error => finish(error));
+	const timer = setTimeout(() => finish(new RecallError("timeout")), TIMEOUT_MS);
+	child.on("error", () => finish(new RecallError("transport")));
 	child.on("close", () => {
 		clearTimeout(escalation);
-		finish(new Error("recall transport closed"));
+		finish(new RecallError("transport"));
 	});
-	child.stdin.on("error", error => finish(error));
+	child.stdin.on("error", () => finish(new RecallError("transport")));
 	child.stdout.on("data", (chunk: Buffer) => {
 		if (complete) return;
-		if (pending.length + chunk.length > MAX_RESPONSE) return finish(new Error("recall response too large"));
+		if (pending.length + chunk.length > MAX_RESPONSE) return finish(new RecallError("protocol"));
 		pending = Buffer.concat([pending, chunk]);
 		let end: number;
 		while (!complete && (end = pending.indexOf(10)) !== -1) {
@@ -62,7 +68,7 @@ export function recall(command: CommandConfig, seeds: string[]): Promise<string 
 					finish(undefined, rows.length ? JSON.stringify(rows) : undefined);
 				}
 			} catch {
-				finish(new Error("malformed recall response"));
+				finish(new RecallError("protocol"));
 			}
 		}
 	});

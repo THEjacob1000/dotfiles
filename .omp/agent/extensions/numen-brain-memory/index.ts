@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import { isAbsolute, join } from "node:path";
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 import type { AgentMessage } from "@oh-my-pi/pi-agent-core";
-import { recall, SPOTLIGHT_INSTRUCTION, type CommandConfig } from "./recall";
+import { recall, RecallError, SPOTLIGHT_INSTRUCTION, type CommandConfig } from "./recall";
 import { capture } from "./capture";
 
 interface ClientConfig {
@@ -104,6 +104,20 @@ export function recallContext(rows: string, systemPrompt: string[]) {
 	};
 }
 
+export function recallWarning(error: unknown): string {
+	if (error instanceof RecallError) {
+		switch (error.category) {
+			case "timeout": return "numen-brain-memory: recall timeout (helper did not respond within 2.5s)";
+			case "transport": return "numen-brain-memory: recall transport unavailable (check helper executable and connection)";
+			case "protocol": return "numen-brain-memory: recall protocol error (check helper compatibility and response framing)";
+		}
+	}
+	if (error instanceof SyntaxError || (error instanceof Error && ["client config unreadable", "client config too large", "invalid client config", "invalid recall command", "invalid capture command"].includes(error.message))) {
+		return "numen-brain-memory: recall configuration invalid (check Numen brain client configuration)";
+	}
+	return "numen-brain-memory: recall unavailable";
+}
+
 export default function numenBrainMemory(pi: ExtensionAPI): void {
 	pi.registerCommand("brain-memory", {
 		description: "Show whether Numen short-term capture and recall are configured",
@@ -123,8 +137,8 @@ export default function numenBrainMemory(pi: ExtensionAPI): void {
 			const rows = await recall(config.recall, seeds);
 			if (!rows || Buffer.byteLength(rows) > MAX_RECALL_BYTES) return;
 			return recallContext(rows, event.systemPrompt);
-		} catch {
-			console.warn("numen-brain-memory: recall unavailable");
+		} catch (error) {
+			console.warn(recallWarning(error));
 		}
 	});
 	pi.on("session_stop", async (event, ctx) => {
