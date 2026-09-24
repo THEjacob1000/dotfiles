@@ -61,6 +61,17 @@ export function usageWindows(
 	});
 }
 
+export function fetchUsageReports(
+	authStorage: {
+		fetchUsageReports?: (signal: AbortSignal) => Promise<UsageReport[] | null>;
+	},
+	signal: AbortSignal,
+): Promise<UsageReport[] | null> {
+	return typeof authStorage.fetchUsageReports === "function"
+		? authStorage.fetchUsageReports(signal).catch(() => null)
+		: Promise.resolve(null);
+}
+
 function duration(reset: number, now: number): string {
 	const minutes = Math.max(0, Math.floor((reset - now) / 60_000));
 	const hours = Math.floor(minutes / 60);
@@ -242,9 +253,10 @@ export default function (pi: ExtensionAPI) {
 						const refreshUsage = Date.now() - lastUsage >= 30_000;
 						if (refreshUsage) lastUsage = Date.now();
 						const quota = refreshUsage
-							? ctx.modelRegistry.authStorage
-									.fetchUsageReports({ signal: AbortSignal.timeout(5000) })
-									.catch(() => null)
+							? fetchUsageReports(
+									ctx.modelRegistry.authStorage,
+									AbortSignal.timeout(5000),
+								)
 							: Promise.resolve(null);
 						const [nextRepository, nextReports] = await Promise.all([
 							repositoryLine(ctx.cwd),
