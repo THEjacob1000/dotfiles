@@ -70,11 +70,13 @@ export function experience(messages: AgentMessage[], terminal?: AgentMessage): s
 	if (!prompt || SENSITIVE.test(prompt)) return undefined;
 	const finalAssistant = terminal ?? messages.findLast(message => message.role === "assistant");
 	if (finalAssistant?.role !== "assistant" || finalAssistant.stopReason !== "stop") return undefined;
-	const recalled = messages.slice(start + 1).some(message => message.role === "custom" && message.customType === "numen-brain-recall");
 	const answer = text(finalAssistant.content, 8 * 1024);
 	if (!answer || SENSITIVE.test(answer)) return undefined;
+	let recalled = false;
 	const outcomes: string[] = [];
-	for (const message of messages.slice(start + 1)) {
+	for (let index = start + 1; index < messages.length; index++) {
+		const message = messages[index];
+		if (message.role === "custom" && message.customType === "numen-brain-recall") recalled = true;
 		if (message.role !== "toolResult" || message.toolName !== "bash" || message.useless || outcomes.length >= 3) continue;
 		const result = text(message.content, MAX_RESULT_BYTES);
 		if (result && !SENSITIVE.test(result)) outcomes.push(`bash (${message.isError ? "error" : "success"}): ${result}`);

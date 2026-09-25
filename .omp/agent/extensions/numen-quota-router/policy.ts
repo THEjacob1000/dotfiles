@@ -217,21 +217,6 @@ function eligiblePatterns(
 	return patterns;
 }
 
-function selectionPatterns(
-	selected: RoutingCandidateAssessment,
-	strictFallbackOrder: boolean,
-	orderedByPreference: RoutingCandidateAssessment[],
-	balancedOrder: RoutingCandidateAssessment[],
-	includeReserve: boolean,
-): string[] {
-	return eligiblePatterns(
-		selected,
-		strictFallbackOrder ? orderedByPreference : balancedOrder,
-		strictFallbackOrder,
-		includeReserve,
-	);
-}
-
 function firstUsableCandidate(
 	ordered: RoutingCandidateAssessment[],
 ): { assessment: RoutingCandidateAssessment; confidence: RoutingConfidence } | undefined {
@@ -333,11 +318,10 @@ export function decideRoute(input: RoutingPolicyInput): RoutingDecision {
 		selector: chosen.selector,
 		provider: chosen.provider,
 		modelId: chosen.modelId,
-		patterns: selectionPatterns(
+		patterns: eligiblePatterns(
 			chosen,
+			strictFallbackOrder ? orderedByPreference : chain,
 			strictFallbackOrder,
-			orderedByPreference,
-			chain,
 			input.reservePolicy === "auto",
 		),
 		reason: explain(chosen, assessments, input, why),

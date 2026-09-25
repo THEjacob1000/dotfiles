@@ -11,6 +11,8 @@ import * as path from "node:path";
 import type { Api, AuthStorage, Model, ModelUsageAccountHealth, ModelUsageHealth } from "@oh-my-pi/pi-ai";
 import type { ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 import { isAuthenticated, kNoAuth, settings } from "@oh-my-pi/pi-coding-agent";
+import { cfgDisabledProviders } from "@oh-my-pi/pi-coding-agent/config/model-settings";
+import { cfgRetryFallbackChains } from "@oh-my-pi/pi-coding-agent/session/settings";
 import { splitThinkingSuffix, splitUpstreamRouting } from "@oh-my-pi/pi-tui/overlays/model-selector";
 import { getAgentDir, logger } from "@oh-my-pi/pi-utils";
 import { config, routingEnabled } from "./config";
@@ -20,12 +22,11 @@ import {
 	type RoutingBlockedOutcome,
 	type RoutingCandidate,
 	type RoutingCandidateAssessment,
-	type RoutingConfidence,
 	type RoutingHealthSnapshot,
 } from "./policy";
 import { RoutingStore } from "./store";
 
-export interface SubagentRoutingRequest {
+interface SubagentRoutingRequest {
 	ctx: ExtensionContext;
 	sessionId?: string;
 	id: string;
@@ -38,21 +39,11 @@ export interface SubagentRoutingRequest {
 	store?: RoutingStore;
 }
 
-/** What the parent shows and persists about one routing decision. */
-export interface SubagentRoutingSummary {
-	selector: string;
-	reason: string;
-	/** Selectors that would take over on runtime provider failure, in order. */
-	fallbacks: string[];
-	pinned: boolean;
-	confidence: RoutingConfidence;
-}
-
-export interface SubagentRoutingOutcome {
+interface SubagentRoutingOutcome {
 	/** Patterns to spawn with: selected model first, then the eligible fallbacks. */
 	patterns: string[];
 	/** Undefined when routing did not apply (disabled, inherited model, no candidates). */
-	summary?: SubagentRoutingSummary;
+	reason?: string;
 }
 
 /** Routing refused to dispatch; the message names each candidate's state and the operator's choices. */
@@ -121,7 +112,7 @@ function resolveCandidates(
 	ctx: ExtensionContext,
 	strictFallbacks: boolean,
 ): ResolvedCandidate[] {
-	const disabledProviders = new Set(settings.get("disabledProviders"));
+	const disabledProviders = new Set(cfgDisabledProviders.get(settings));
 	const candidates: ResolvedCandidate[] = [];
 	const seen = new Set<string>();
 	for (const [index, pattern] of selectors.entries()) {
@@ -186,7 +177,7 @@ function candidatePool(request: SubagentRoutingRequest): CandidatePool | undefin
 			pinned: false,
 		};
 	}
-	const chains = settings.get("retry.fallbackChains");
+	const chains = cfgRetryFallbackChains.get(settings);
 	const { base, level } = selectorParts(primary);
 	const chain =
 		chains?.[primary] ?? chains?.[base] ?? (role !== undefined ? chains?.[role] : undefined) ?? chains?.default ?? [];
@@ -331,14 +322,5 @@ export async function routeSubagentModel(request: SubagentRoutingRequest): Promi
 		pinned: pool.pinned,
 		reason: outcome.reason,
 	});
-	return {
-		patterns: outcome.patterns,
-		summary: {
-			selector: outcome.selector,
-			reason: outcome.reason,
-			fallbacks: outcome.patterns.slice(1),
-			pinned: pool.pinned,
-			confidence: outcome.confidence,
-		},
-	};
+	return { patterns: outcome.patterns, reason: outcome.reason };
 }
