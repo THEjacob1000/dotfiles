@@ -33,10 +33,10 @@ async function onBeforeSubagentSpawn(
 			role: event.modelRole,
 			patterns: event.patterns,
 		});
-		if (!outcome.summary) return undefined;
+		if (!outcome.reason) return undefined;
 		return {
 			model: outcome.patterns,
-			note: outcome.summary.reason,
+			note: outcome.reason,
 		};
 	} catch (error) {
 		if (error instanceof SubagentRoutingError) {

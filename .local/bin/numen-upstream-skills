@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# numen-upstream-skills: fetch the latest upstream skills the frontend-design
+# skill routes to. Each source is a shallow, sparse checkout of the default
+# branch under $NUMEN_UPSTREAM_DIR (default ~/.local/share/numen/upstream), reset
+# to the remote head on every run. A timer runs this daily; see harness/README.md.
+set -euo pipefail
+
+ROOT="${NUMEN_UPSTREAM_DIR:-$HOME/.local/share/numen/upstream}"
+
+# name|repository|directories to check out (space-separated; root files always come along)
+SOURCES=(
+  "impeccable|https://github.com/pbakaus/impeccable|.claude/skills/impeccable"
+  "taste-skill|https://github.com/Leonxlnx/taste-skill|skills"
+  "emil|https://github.com/emilkowalski/skill|skills"
+)
+
+mkdir -p "$ROOT"
+failed=0
+for source in "${SOURCES[@]}"; do
+  IFS='|' read -r name url dirs <<<"$source"
+  read -ra sparse <<<"$dirs"
+  dir="$ROOT/$name"
+  # A checkout of some other repository is replaced, never merged into.
+  if [[ $(git -C "$dir" remote get-url origin 2>/dev/null) != "$url" ]]; then
+    rm -rf "$dir"
+    if ! git clone --quiet --depth 1 --filter=blob:none --no-checkout "$url" "$dir"; then
+      echo "$name: clone failed" >&2
+      failed=1
+      continue
+    fi
+  fi
+  if git -C "$dir" sparse-checkout set "${sparse[@]}" \
+    && git -C "$dir" fetch --quiet --depth 1 origin HEAD \
+    && git -C "$dir" reset --quiet --hard FETCH_HEAD; then
+    echo "$name $(git -C "$dir" rev-parse --short HEAD)"
+  else
+    echo "$name: update failed, keeping $(git -C "$dir" rev-parse --short HEAD 2>/dev/null || echo nothing)" >&2
+    failed=1
+  fi
+done
+exit "$failed"

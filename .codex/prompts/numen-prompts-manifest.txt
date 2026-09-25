@@ -4,6 +4,7 @@ numen-coderabbit-resolve.md
 numen-coverage-target.md
 numen-deep-interview.md
 numen-error-cleanup.md
+numen-frontend-design.md
 numen-go-guidelines.md
 numen-jj-history-surgery.md
 numen-jj-pr-flow.md

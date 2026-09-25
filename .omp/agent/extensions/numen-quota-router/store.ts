@@ -78,14 +78,9 @@ export interface RoutingDecisionRecord {
 
 export interface RoutingDispatchRow {
 	id: string;
-	sessionId: string | null;
-	parentAgentId: string | null;
 	agent: string;
 	role: string | null;
-	provider: string;
-	modelId: string;
 	selector: string;
-	effort: string | null;
 	pinned: boolean;
 	confidence: RoutingConfidence;
 	reason: string;
@@ -93,8 +88,6 @@ export interface RoutingDispatchRow {
 	endedAt: number | null;
 	outcome: RoutingDispatchOutcome | null;
 	finalSelector: string | null;
-	modelChanged: boolean;
-	totalTokens: number | null;
 }
 
 /** Write view offered inside one transaction so fairness and its audit row share a consistent snapshot. */
@@ -105,14 +98,9 @@ export interface RoutingLedgerView {
 
 interface DispatchDbRow {
 	id: string;
-	session_id: string | null;
-	parent_agent_id: string | null;
 	agent: string;
 	role: string | null;
-	provider: string;
-	model_id: string;
 	selector: string;
-	effort: string | null;
 	pinned: number;
 	confidence: string;
 	reason: string;
@@ -120,21 +108,14 @@ interface DispatchDbRow {
 	ended_at: number | null;
 	outcome: string | null;
 	final_selector: string | null;
-	model_changed: number | null;
-	total_tokens: number | null;
 }
 
 function toRow(row: DispatchDbRow): RoutingDispatchRow {
 	return {
 		id: row.id,
-		sessionId: row.session_id,
-		parentAgentId: row.parent_agent_id,
 		agent: row.agent,
 		role: row.role,
-		provider: row.provider,
-		modelId: row.model_id,
 		selector: row.selector,
-		effort: row.effort,
 		pinned: row.pinned === 1,
 		confidence: row.confidence === "low" ? "low" : "high",
 		reason: row.reason,
@@ -142,8 +123,6 @@ function toRow(row: DispatchDbRow): RoutingDispatchRow {
 		endedAt: row.ended_at,
 		outcome: row.outcome as RoutingDispatchOutcome | null,
 		finalSelector: row.final_selector,
-		modelChanged: row.model_changed === 1,
-		totalTokens: row.total_tokens,
 	};
 }
 
@@ -225,8 +204,8 @@ export class RoutingStore {
 	recentDecisions(limit: number): RoutingDispatchRow[] {
 		return this.#db
 			.query<DispatchDbRow, [number]>(
-				`SELECT id, session_id, parent_agent_id, agent, role, provider, model_id, selector, effort, pinned, confidence,
-				 reason, started_at, ended_at, outcome, final_selector, model_changed, total_tokens
+				`SELECT id, agent, role, selector, pinned, confidence, reason, started_at,
+				 ended_at, outcome, final_selector
 				 FROM dispatches ORDER BY started_at DESC LIMIT ?`,
 			)
 			.all(limit)

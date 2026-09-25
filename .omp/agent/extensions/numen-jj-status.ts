@@ -1,4 +1,5 @@
 // generated-by: numen-sync
+import { dlopen, FFIType, ptr } from "bun:ffi";
 import { readdir, readFile } from "node:fs/promises";
 import { totalmem } from "node:os";
 import type { UsageReport } from "@oh-my-pi/pi-ai";
@@ -160,21 +161,23 @@ export function renderStatus(
 		theme.fg("statusLineModel", `${theme.icon.model} ${clean(snapshot.model)}`),
 		snapshot.effort ? theme.getThinkingBorderColor(snapshot.effort)(clean(snapshot.effort)) : "",
 	].filter(Boolean).join(sep);
-	const right = contextSegment(snapshot, theme);
-	const room = Math.max(0, width - visibleWidth(right) - 1);
-	const firstRow = visibleWidth(right) < width
-		? `${truncateToWidth(first, room, undefined, true)} ${right}`
-		: first;
 	const quota = snapshot.usage.map((window) => {
 		const color = window.percent >= 80 ? "error" : window.percent >= 50 ? "warning" : "muted";
 		const reset = window.reset === undefined ? "" : theme.fg("muted", ` (${duration(window.reset, now)})`);
 		return `${window.weekly ? "7d" : "5h"} ${theme.fg(color, `${window.percent}%`)}${reset}`;
 	});
 	const usage = quota.length ? `${theme.icon.time} ${quota.join(sep)}` : "";
-	const third = [usage, resourceSegment(snapshot.resources, theme)].filter(Boolean).join(sep);
-	return [firstRow, snapshot.repository ?? "", third].map((line) =>
-		truncateToWidth(line, Math.max(0, width)),
-	);
+	return [
+		withRight(first, contextSegment(snapshot, theme), width),
+		withRight(snapshot.repository ?? "", resourceSegment(snapshot.resources, theme), width),
+		usage,
+	].map((line) => truncateToWidth(line, Math.max(0, width)));
+}
+
+function withRight(left: string, right: string, width: number): string {
+	if (!right || visibleWidth(right) >= width) return left;
+	const room = Math.max(0, width - visibleWidth(right) - 1);
+	return `${truncateToWidth(left, room, undefined, true)} ${right}`;
 }
 
 export interface ProcessStat {
@@ -217,6 +220,28 @@ export async function sampleProcessTree(
 			return undefined;
 		}
 	}))).filter((stat): stat is ProcessStat => stat !== undefined);
+	return sumProcessTree(root, at, stats, async (pid) => {
+		try {
+			const pss = /^Pss:\s+(\d+)\s+kB/m.exec(await read(pid, "smaps_rollup"));
+			if (pss) return Number(pss[1]) * 1024;
+		} catch {
+			// Rollup may be inaccessible while status remains readable.
+		}
+		try {
+			return Number(/^VmRSS:\s+(\d+)\s+kB/m.exec(await read(pid, "status"))?.[1] ?? 0) * 1024;
+		} catch {
+			return 0; // A process can exit between reading stat and memory.
+		}
+	}, previous);
+}
+
+async function sumProcessTree(
+	root: number,
+	at: number,
+	stats: readonly ProcessStat[],
+	memoryOf: (pid: number) => Promise<number>,
+	previous?: ResourceSample,
+): Promise<ResourceSample> {
 	const children = new Map<number, ProcessStat[]>();
 	for (const stat of stats) {
 		const siblings = children.get(stat.ppid) ?? [];
@@ -235,29 +260,48 @@ export async function sampleProcessTree(
 		pending.push(...(children.get(stat.pid) ?? []));
 		const oldTicks = previous?.ticks.get(stat.pid);
 		if (oldTicks !== undefined) delta += Math.max(0, stat.ticks - oldTicks);
-		try {
-			const rollup = await read(stat.pid, "smaps_rollup");
-			const pss = /^Pss:\s+(\d+)\s+kB/m.exec(rollup);
-			if (pss) {
-				memory += Number(pss[1]) * 1024;
-				continue;
-			}
-		} catch {
-			// Rollup may be inaccessible while status remains readable.
-		}
-		try {
-			const status = await read(stat.pid, "status");
-			memory += Number(/^VmRSS:\s+(\d+)\s+kB/m.exec(status)?.[1] ?? 0) * 1024;
-		} catch {
-			// A process can exit between reading stat and memory.
-		}
+		memory += await memoryOf(stat.pid);
 	}
 	const seconds = previous ? (at - previous.at) / 1000 : 0;
 	return { at, ticks, cpu: seconds > 0 && rootStat ? delta / seconds : undefined, memory };
 }
 
+const PROC_PPID_ONLY = 6;
+
+function libprocSampler(): (previous?: ResourceSample) => Promise<ResourceSample> {
+	const { symbols } = dlopen("/usr/lib/libSystem.B.dylib", {
+		proc_listpids: { args: [FFIType.u32, FFIType.u32, FFIType.ptr, FFIType.i32], returns: FFIType.i32 },
+		proc_pid_rusage: { args: [FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
+		mach_timebase_info: { args: [FFIType.ptr], returns: FFIType.i32 },
+	});
+	const timebase = new Uint32Array(2);
+	symbols.mach_timebase_info(ptr(timebase));
+	// rusage CPU times are mach ticks; scale to the 1/100 s units /proc reports.
+	const toTicks = timebase[0] / timebase[1] / 1e7;
+	const usage = new BigUint64Array(12); // rusage_info_v0
+	const childPids = new Int32Array(4096);
+	return async (previous) => {
+		const stats: ProcessStat[] = [];
+		const footprint = new Map<number, number>();
+		const pending = [[process.pid, process.ppid]];
+		while (pending.length) {
+			const [pid, ppid] = pending.pop()!;
+			if (symbols.proc_pid_rusage(pid, 0, ptr(usage)) !== 0) continue;
+			stats.push({ pid, ppid, ticks: Number(usage[2] + usage[3]) * toTicks });
+			footprint.set(pid, Number(usage[9]));
+			const bytes = symbols.proc_listpids(PROC_PPID_ONLY, pid, ptr(childPids), childPids.byteLength);
+			for (const child of childPids.subarray(0, Math.max(0, bytes) / 4)) pending.push([child, pid]);
+		}
+		return sumProcessTree(process.pid, performance.now(), stats,
+			async (pid) => footprint.get(pid) ?? 0, previous);
+	};
+}
+
+const sampleDarwin = process.platform === "darwin" ? libprocSampler() : undefined;
+
 async function sampleResources(previous?: ResourceSample): Promise<ResourceSample | undefined> {
 	try {
+		if (sampleDarwin) return await sampleDarwin(previous);
 		const pids = (await readdir("/proc")).filter((name) => /^\d+$/.test(name)).map(Number);
 		return await sampleProcessTree(process.pid, performance.now(), pids,
 			(pid, file) => readFile(`/proc/${pid}/${file}`, "utf8"), previous);
