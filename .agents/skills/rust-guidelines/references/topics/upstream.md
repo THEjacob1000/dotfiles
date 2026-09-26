@@ -5,6 +5,7 @@ Read the relevant baseline alongside Microsoft's topic rules. Microsoft adds gui
 - API design and known `C-*` IDs: [checklist](../rust-api-guidelines/src/checklist.md). Find the ID's reference definition, then read that local chapter and section. [Contents](../rust-api-guidelines/src/SUMMARY.md) lists every chapter.
 - Formatting and syntax layout: [Style Guide contents](../rust-style-guide/src/doc/style-guide/src/SUMMARY.md). Use the repository's rustfmt configuration; consult the relevant chapter for choices formatting does not settle.
 - Idioms, patterns, and anti-patterns: [Design Patterns contents](../rust-design-patterns/src/SUMMARY.md). Select the specific idiom or pattern relevant to the design; the catalogue does not require introducing a pattern.
+- Performance: [Performance Book contents](../rust-performance-book/src/SUMMARY.md), maintained here for the pinned nightly. Read the chapter for the cost at hand; measure first.
 - Unsafe and soundness: [undefined behavior](../rust-reference/src/behavior-considered-undefined.md), [behavior not considered unsafe](../rust-reference/src/behavior-not-considered-unsafe.md), [unsafety](../rust-reference/src/unsafety.md), and [unsafe keyword](../rust-reference/src/unsafe-keyword.md). The Reference explicitly does not give a complete formal model of Rust's unsafe semantics.
 
 ## Resolve upstream links locally

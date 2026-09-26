@@ -21,7 +21,7 @@ Resolve links relative to this skill's installed directory, not the working dire
 | Trait bounds, I/O abstractions, dependency types | [Interoperability](references/topics/libs-interop.md) |
 | Cargo features and library build behavior | [Library builds](references/topics/libs-building.md) |
 | Unsafe, soundness, panic contracts | [Correctness](references/topics/correctness.md) |
-| Async scheduling, allocation, batching, profiling | [Performance](references/topics/performance.md) |
+| Allocation, profiling, benchmarking, build tuning, async scheduling, batching | [Performance](references/topics/performance.md) |
 | Foreign calls and platform boundaries | [FFI](references/topics/ffi.md) |
 | Declarative or procedural macros | [Macros](references/topics/macros.md) |
 | Binary error handling, allocator or CPU choices | [Applications](references/topics/apps.md) |
@@ -40,4 +40,4 @@ For a known `M-*` rule, locate its file directly under `references/microsoft/src
 
 Use the repository's verification commands. In review, cite applicable rule IDs with the concrete consequence; a stylistic preference alone does not establish a correctness defect.
 
-Each source directory has an `upstream.json` recording its repository, pinned revision, selection, file hashes, and license, alongside the original license files. The [source map](references/topics/upstream.md) links the manifests, including [Microsoft](references/microsoft/upstream.json). Read them only when auditing or updating the vendored source.
+Each vendored source directory has an `upstream.json` recording its repository, pinned revision, selection, file hashes, and license, alongside the original license files. The performance book is maintained in this repository instead and keeps only its licenses. The [source map](references/topics/upstream.md) links the manifests, including [Microsoft](references/microsoft/upstream.json). Read them only when auditing or updating the vendored source.
