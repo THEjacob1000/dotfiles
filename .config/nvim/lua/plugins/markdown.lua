@@ -46,4 +46,31 @@ return {
       opts.linters_by_ft.markdown = nil
     end,
   },
+  {
+    "HakonHarnes/img-clip.nvim",
+    opts = {
+      default = { dir_path = "assets", relative_to_current_file = true, prompt_for_file_name = false },
+    },
+    keys = {
+      { "<leader>mi", "<cmd>PasteImage<cr>", desc = "Paste Image From Clipboard" },
+    },
+  },
+  {
+    "obsidian-nvim/obsidian.nvim",
+    version = "*",
+    ft = "markdown",
+    cmd = "Obsidian",
+    opts = {
+      legacy_commands = false,
+      workspaces = {
+        { name = "jacob", path = "~/Documents/Jacob's Vault" },
+        { name = "liebeswahn", path = "~/Documents/Liebeswahn" },
+      },
+      -- otherwise every save rewrites the note's id/aliases/tags block
+      frontmatter = { enabled = false },
+      picker = { name = "snacks.picker" },
+      -- render-markdown already draws checkboxes and links
+      ui = { enable = false },
+    },
+  },
 }
