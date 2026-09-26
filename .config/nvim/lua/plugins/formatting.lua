@@ -15,4 +15,9 @@ return {
       },
     },
   },
+  -- the markdown extra already lists prettier for markdown; it just was never installed
+  {
+    "mason-org/mason.nvim",
+    opts = { ensure_installed = { "prettier" } },
+  },
 }
