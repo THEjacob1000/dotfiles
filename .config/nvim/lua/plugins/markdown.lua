@@ -64,7 +64,6 @@ return {
       legacy_commands = false,
       workspaces = {
         { name = "jacob", path = "~/Documents/Jacob's Vault" },
-        { name = "liebeswahn", path = "~/Documents/Liebeswahn" },
       },
       -- otherwise every save rewrites the note's id/aliases/tags block
       frontmatter = { enabled = false },
