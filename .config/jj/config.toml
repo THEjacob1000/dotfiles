@@ -7,3 +7,6 @@ default-command = "log"
 name = "Jacob Sanderson"
 email = "jacob@jacobdevelops.com"
 
+[gg.ui]
+recent-workspaces = ["/home/jacob/Documents/Developer/jfit"]
+

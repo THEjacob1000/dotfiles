@@ -1,0 +1,430 @@
+# Build Configuration
+
+You can drastically change the performance of a Rust program without changing
+its code, just by changing its build configuration. There are many possible
+build configurations for each Rust program. The one chosen will affect several
+characteristics of the compiled code, such as compile times, runtime speed,
+memory use, binary size, debuggability, profilability, and which architectures
+your compiled program will run on.
+
+Most configuration choices will improve one or more characteristics while
+worsening one or more others. For example, a common trade-off is to accept
+worse compile times in exchange for higher runtime speeds. The right choice
+for your program depends on your needs and the specifics of your program, and
+performance-related choices (which is most of them) should be validated with
+benchmarking.
+
+It is worth reading this chapter carefully to understand all the build
+configuration choices. However, for the impatient or forgetful,
+[`cargo-wizard`] encapsulates this information and can help you choose an
+appropriate build configuration.
+
+Note that Cargo only looks at the profile settings in the `Cargo.toml` file at
+the root of the workspace. Profile settings defined in dependencies are
+ignored. Therefore, these options are mostly relevant for binary crates, not
+library crates.
+
+[`cargo-wizard`]: https://github.com/Kobzol/cargo-wizard
+
+## Release Builds
+
+The single most important build configuration choice is simple but [easy to
+overlook]: make sure you are using a [release build] rather than a [dev build]
+when you want high performance. This is usually done by specifying the
+`--release` flag to Cargo.
+
+[easy to overlook]: https://users.rust-lang.org/t/why-my-rust-program-is-so-slow/47764/5
+[release build]: https://doc.rust-lang.org/cargo/reference/profiles.html#release
+[dev build]: https://doc.rust-lang.org/cargo/reference/profiles.html#dev
+
+Dev builds are the default. They are good for debugging, but are not optimized.
+They are produced if you run `cargo build` or `cargo run`. (Alternatively,
+running `rustc` without additional options also produces an unoptimized build.)
+
+Consider the following final line of output from a `cargo build` run.
+```text
+Finished dev [unoptimized + debuginfo] target(s) in 29.80s
+```
+This output indicates that a dev build has been produced. The compiled code
+will be placed in the `target/debug/` directory. `cargo run` will run the dev
+build.
+
+In comparison, release builds are much more optimized, omit debug assertions
+and integer overflow checks, and omit debug info. 10-100x speedups over dev
+builds are common! They are produced if you run `cargo build --release` or
+`cargo run --release`. (Alternatively, `rustc` has multiple options for
+optimized builds, such as `-O` and `-C opt-level`.) This will typically take
+longer than a dev build because of the additional optimizations.
+
+Consider the following final line of output from a `cargo build --release` run.
+```text
+Finished release [optimized] target(s) in 1m 01s
+```
+This output indicates that a release build has been produced. The compiled code
+will be placed in the `target/release/` directory. `cargo run --release` will
+run the release build.
+
+See the [Cargo profile documentation] for more details about the differences
+between dev builds (which use the `dev` profile) and release builds (which use
+the `release` profile).
+
+[Cargo profile documentation]: https://doc.rust-lang.org/cargo/reference/profiles.html
+
+The default build configuration choices used in release builds provide a good
+balance between the abovementioned characteristics such as compile times, runtime
+speed, and binary size. But there are many possible adjustments, as the
+following sections explain.
+
+## Maximizing Runtime Speed
+
+The following build configuration options are designed primarily to maximize
+runtime speed. Some of them may also reduce binary size.
+
+### Codegen Units
+
+The Rust compiler splits crates into multiple [codegen units] to parallelize
+(and thus speed up) compilation. However, this might cause it to miss some
+potential optimizations. You may be able to improve runtime speed and reduce
+binary size, at the cost of increased compile times, by setting the number of
+units to one. Add these lines to the `Cargo.toml` file:
+```toml
+[profile.release]
+codegen-units = 1
+```
+<!-- Using `https` for this link triggers "potential security risk" warnings due
+to a certificate problem. -->
+[**Example 1**](http://likebike.com/posts/How_To_Write_Fast_Rust_Code.html#emit-asm),
+[**Example 2**](https://github.com/rust-lang/rust/pull/115554#issuecomment-1742192440).
+
+[codegen units]: https://doc.rust-lang.org/cargo/reference/profiles.html#codegen-units
+
+### Link-time Optimization
+
+[Link-time optimization] (LTO) is a whole-program optimization technique that
+can improve runtime speed by 10-20% or more, and also reduce binary size, at
+the cost of worse compile times. It comes in several forms.
+
+[Link-time optimization]: https://doc.rust-lang.org/cargo/reference/profiles.html#lto
+
+The first form is *thin local LTO*, which optimizes across a crate's codegen
+units. The release profile uses it by default (`lto = false`), provided there
+is more than one codegen unit and optimization is enabled. To request it:
+```toml
+[profile.release]
+lto = false
+```
+
+The second form of LTO is *thin LTO*, which is a little more aggressive, and
+likely to improve runtime speed and reduce binary size while also increasing
+compile times. Use `lto = "thin"` in `Cargo.toml` to enable it.
+
+The third form of LTO is *fat LTO*, which is even more aggressive, and may
+improve performance and reduce binary size further (but [not always]) while
+increasing build times again. Use `lto = "fat"` in `Cargo.toml` to enable it.
+
+[not always]: https://github.com/rust-lang/rust/pull/103453
+
+To disable LTO entirely, use `lto = "off"` in `Cargo.toml`. Unlike `false`,
+this also disables thin local LTO.
+
+### Alternative Allocators
+
+It is possible to replace the default (system) heap allocator used by a Rust
+program with an alternative allocator. The exact effect will depend on the
+individual program and the alternative allocator chosen, but large improvements
+in runtime speed and large reductions in memory usage have been seen in
+practice. The effect will also vary across platforms, because each platform's
+system allocator has its own strengths and weaknesses. The use of an
+alternative allocator is also likely to increase binary size and compile times.
+
+#### jemalloc
+
+One popular alternative allocator for Linux and Mac is [jemalloc], usable via
+the [`tikv-jemallocator`] crate. To use it, add a dependency to your
+`Cargo.toml` file:
+```toml
+[dependencies]
+tikv-jemallocator = "0.7"
+```
+Then add the following to your Rust code, e.g. at the top of `src/main.rs`:
+```rust,ignore
+#[global_allocator]
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
+```
+
+Furthermore, on Linux, jemalloc can use [transparent huge pages][THP].
+This may speed up programs at the cost of higher memory usage.
+
+[THP]: https://www.kernel.org/doc/html/next/admin-guide/mm/transhuge.html
+
+Set [`_RJEM_MALLOC_CONF`] for the running program (unless jemalloc was built
+without its `_rjem_` prefix), for example:
+```bash
+_RJEM_MALLOC_CONF="thp:always,metadata_thp:always" ./target/release/my-program
+```
+The system running the compiled program also has to be configured to support
+THP. See [this blog post] for more details.
+
+[`_RJEM_MALLOC_CONF`]: https://github.com/tikv/jemallocator/issues/65
+[this blog post]: https://kobzol.github.io/rust/rustc/2023/10/21/make-rust-compiler-5percent-faster.html
+
+#### mimalloc
+
+Another alternative allocator that works on many platforms is [mimalloc],
+usable via the [`mimalloc`] crate. To use it, add a dependency to your
+`Cargo.toml` file:
+```toml
+[dependencies]
+mimalloc = "0.1"
+```
+Then add the following to your Rust code, e.g. at the top of `src/main.rs`:
+```rust,ignore
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+```
+
+[jemalloc]: https://github.com/jemalloc/jemalloc
+[`tikv-jemallocator`]: https://docs.rs/crate/tikv-jemallocator/latest
+[mimalloc]: https://github.com/microsoft/mimalloc
+[`mimalloc`]: https://crates.io/crates/mimalloc
+
+### CPU Specific Instructions
+
+If you do not care about the compatibility of your binary on older (or other
+types of) processors, you can tell the compiler to generate the newest (and
+potentially fastest) instructions specific to a [certain CPU architecture],
+such as AVX SIMD instructions for x86-64 CPUs.
+
+[certain CPU architecture]: https://doc.rust-lang.org/rustc/codegen-options/index.html#target-cpu
+
+To request these instructions from the command line, use the `-C
+target-cpu=native` flag. For example:
+```bash
+RUSTFLAGS="-C target-cpu=native" cargo build --release
+```
+
+Alternatively, to request these instructions from a [`config.toml`] file (for
+one or more projects), add these lines:
+```toml
+[build]
+rustflags = ["-C", "target-cpu=native"]
+```
+[`config.toml`]: https://doc.rust-lang.org/cargo/reference/config.html
+
+This can improve runtime speed, especially if the compiler finds vectorization
+opportunities in your code.
+
+If you are unsure whether `-C target-cpu=native` is working optimally, compare
+the output of `rustc --print cfg` and `rustc --print cfg -C target-cpu=native`
+to see if the CPU features are being detected correctly in the latter case. If
+not, you can use `-C target-feature` to target specific features.
+
+### Profile-guided Optimization
+
+Profile-guided optimization (PGO) is a compilation model where you compile
+your program, run it on sample data while collecting profiling data, and then
+use that profiling data to guide a second compilation of the program. This can
+improve runtime speed by 10% or more.
+[**Example 1**](https://blog.rust-lang.org/inside-rust/2020/11/11/exploring-pgo-for-the-rust-compiler.html),
+[**Example 2**](https://github.com/rust-lang/rust/pull/96978).
+
+See the [rustc PGO documentation] for the instrument, train, and rebuild
+workflow. [`cargo-pgo`] wraps PGO and [BOLT] workflows. PGO needs
+`llvm-profdata` (available with the `llvm-tools-preview` component); BOLT
+requires `llvm-bolt` and `merge-fdata` and operates on a linked binary.
+Training requires representative workloads. BOLT support in `cargo-pgo` is
+experimental; avoid stripping symbols before using it. A plain `cargo install`
+cannot distribute a pre-trained, optimised binary.
+
+[rustc PGO documentation]: https://doc.rust-lang.org/rustc/profile-guided-optimization.html
+[`cargo-pgo`]: https://github.com/Kobzol/cargo-pgo
+[BOLT]: https://github.com/llvm/llvm-project/tree/main/bolt
+
+## Minimizing Binary Size
+
+The following build configuration options are designed primarily to minimize
+binary size. Their effects on runtime speed vary.
+
+### Optimization Level
+
+You can request an [optimization level] that aims to minimize binary size by
+adding these lines to the `Cargo.toml` file:
+```toml
+[profile.release]
+opt-level = "z"
+```
+[optimization level]: https://doc.rust-lang.org/cargo/reference/profiles.html#opt-level
+
+This may also reduce runtime speed.
+
+An alternative is `opt-level = "s"`, which targets minimal binary size a little
+less aggressively. Compared to `opt-level = "z"`, it allows [slightly more
+inlining] and also the vectorization of loops.
+
+[slightly more inlining]: https://doc.rust-lang.org/rustc/codegen-options/index.html#inline-threshold
+
+### Abort on `panic!`
+
+If you do not need to unwind on panic, e.g. because your program doesn't use
+[`catch_unwind`], you can tell the compiler to simply [abort on panic].
+
+[`catch_unwind`]: https://doc.rust-lang.org/std/panic/fn.catch_unwind.html
+[abort on panic]: https://doc.rust-lang.org/cargo/reference/profiles.html#panic
+
+This might reduce binary size and increase runtime speed slightly, and may even
+reduce compile times slightly. Add these lines to the `Cargo.toml` file:
+```toml
+[profile.release]
+panic = "abort"
+```
+
+### Strip Symbols
+
+You can tell the compiler to [strip] symbols from a release build by adding
+these lines to `Cargo.toml`:
+```toml
+[profile.release]
+strip = "symbols"
+```
+[strip]: https://doc.rust-lang.org/cargo/reference/profiles.html#strip
+
+[**Example**](https://github.com/nnethercote/counts/commit/53cab44cd09ff1aa80de70a6dbe1893ff8a41142).
+
+However, stripping symbols may make your compiled program more difficult to
+debug and profile. For example, if a stripped program panics, the backtrace
+produced may contain less useful information than normal. The exact effects
+depend on the platform.
+
+Release builds generate no debug info for local crates by default. Cargo
+[strips debug info][release strip behaviour] from the precompiled standard
+library in such builds.
+
+[release strip behaviour]: https://blog.rust-lang.org/2024/03/21/Rust-1.77.0.html#enable-strip-in-release-profiles-by-default
+
+### Other Ideas
+
+For more advanced binary size minimization techniques, consult the
+comprehensive documentation in the excellent [`min-sized-rust`] repository.
+
+[`min-sized-rust`]: https://github.com/johnthagen/min-sized-rust
+
+## Minimizing Compile Times
+
+The following build configuration options are designed primarily to minimize
+compile times.
+
+### Linking
+
+Linking can dominate rebuild time after a small change. On
+`x86_64-unknown-linux-gnu`, rustc uses the bundled [rust-lld] by default.
+Other targets may use the system linker; check your target before overriding
+it. To use the system linker instead on this target, pass
+`-C linker-features=-lld`.
+
+[rust-lld]: https://blog.rust-lang.org/2025/09/01/rust-lld-on-1.90.0-stable/
+
+On Linux, [mold] is another fast linker. With a suitable installed C compiler
+driver, select it with `-C link-arg=-fuse-ld=mold`:
+```bash
+RUSTFLAGS="-C link-arg=-fuse-ld=mold" cargo build
+```
+Compare the result with the default linker on your workload. [wild] is another
+Linux linker; check its platform and feature support before using it.
+Linker compatibility and resource use can differ, so test the resulting binary.
+
+[mold]: https://github.com/rui314/mold
+[wild]: https://github.com/wild-linker/wild
+
+### Disable Debug Info Generation
+
+Although release builds give the best performance, many people use dev builds
+while developing because they build more quickly. If you use dev builds but
+don't often use a debugger, consider disabling debuginfo. This can improve dev
+build times significantly, by as much as 20-40%.
+[**Example.**](https://kobzol.github.io/rust/rustc/2025/05/20/disable-debuginfo-to-improve-rust-compile-times.html)
+
+To disable debug info generation, add these lines to the `Cargo.toml` file:
+```toml
+[profile.dev]
+debug = false
+```
+Note that this means that stack traces will not contain line information. If
+you want to keep that line information, but do not require full information for
+the debugger, you can use `debug = "line-tables-only"` instead, which still
+gives most of the compile time benefits.
+
+### Experimental Parallel Front-end
+
+On nightly Rust, the experimental parallel front-end can reduce compile times
+at the cost of more compile-time memory. Enable it with the nightly-only
+`-Z unstable-options --jobs-frontend=N` flags, for example:
+```bash
+RUSTFLAGS="-Z unstable-options --jobs-frontend=8" cargo +nightly build
+```
+The default frontend limit is one; Cargo's jobserver may limit parallelism
+further. Measure builds to choose a useful value of `N`.
+
+
+### Cranelift Codegen Back-end
+
+If you use nightly Rust you can enable the Cranelift codegen back-end on [some
+platforms]. It may reduce compile times at the cost of lower quality generated
+code, and therefore is recommended for dev builds rather than release builds.
+
+Install the back-end for the toolchain being used:
+```bash
+rustup component add rustc-codegen-cranelift --toolchain nightly
+```
+Select it with the nightly-only `-Zcodegen-backend=cranelift` flag:
+```bash
+RUSTFLAGS="-Zcodegen-backend=cranelift" cargo +nightly build
+```
+
+Alternatively, to specify Cranelift from a [`config.toml`] file (for one or
+more projects), add these lines:
+```toml
+[unstable]
+codegen-backend = true
+
+[profile.dev]
+codegen-backend = "cranelift"
+```
+[`config.toml`]: https://doc.rust-lang.org/cargo/reference/config.html
+
+For more information, see the [Cranelift documentation].
+
+[some platforms]: https://github.com/rust-lang/rustc_codegen_cranelift#platform-support
+[Cranelift documentation]: https://github.com/rust-lang/rustc_codegen_cranelift
+
+## Custom profiles
+
+In addition to the `dev` and `release` profiles, Cargo supports [custom
+profiles]. It might be useful, for example, to create a custom profile halfway
+between `dev` and `release` if you find the runtime speed of dev builds
+insufficient and the compile times of release builds too slow for everyday
+development.
+
+[custom profiles]: https://doc.rust-lang.org/cargo/reference/profiles.html#custom-profiles
+
+## Summary
+
+There are many choices to be made when it comes to build configurations. The
+following points summarize the above information into some recommendations.
+
+- To maximize runtime speed, consider `codegen-units = 1`, `lto = "fat"`,
+  an alternative allocator, and `panic = "abort"`.
+- To minimize binary size, consider `opt-level = "z"`, `codegen-units = 1`,
+  `lto = "fat"`, `panic = "abort"`, and `strip = "symbols"`.
+- Consider `-C target-cpu=native` if broad CPU support is not needed, and
+  `cargo-pgo` if you control how the binary is built and distributed.
+- Compare alternative linkers against your target's default.
+- Use `cargo-wizard` if you need additional help with these choices.
+- Benchmark all changes, one at a time, to ensure they have the expected
+  effects.
+
+Finally, [this issue] tracks the evolution of the Rust compiler's own build
+configuration. The Rust compiler's build system is stranger and more complex
+than that of most Rust programs. Nonetheless, this issue may be instructive in
+showing how build configuration choices can be applied to a large program.
+
+[this issue]: https://github.com/rust-lang/rust/issues/103595
