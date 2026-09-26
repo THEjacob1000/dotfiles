@@ -23,6 +23,10 @@ return {
   {
     "folke/snacks.nvim",
     init = function()
+      -- with extended-keys on, snacks reads tmux's client_termname (xterm-256color) and misses Ghostty
+      if vim.env.TMUX and vim.fn.system({ "tmux", "display-message", "-p", "#{client_termtype}" }):find("ghostty") then
+        vim.env.SNACKS_GHOSTTY = "1"
+      end
       vim.filetype.add({
         pattern = {
           ["/home/jacob/Documents/Developer/parser%-ts%-files/.*"] = { "bigfile", { priority = 1000 } },
@@ -31,6 +35,7 @@ return {
     end,
     opts = {
       explorer = { enabled = true },
+      image = { enabled = true },
       picker = {
         sources = {
           explorer = {
