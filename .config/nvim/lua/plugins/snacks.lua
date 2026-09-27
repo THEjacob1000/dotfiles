@@ -12,12 +12,17 @@ local unignored_path_globs = {
   "bench/results/**",
 }
 
-local ignored_file_args = table.concat(vim.tbl_map(function(pattern)
-  return "--glob " .. vim.fn.shellescape(pattern)
-end, ignored_file_globs), " ")
+local ignored_file_args = table.concat(
+  vim.tbl_map(function(pattern)
+    return "--glob " .. vim.fn.shellescape(pattern)
+  end, ignored_file_globs),
+  " "
+)
 
-local files_command = ("{ rg --files --hidden --glob '!.git' --glob '!.jj'; "
-  .. "rg --files --hidden --no-ignore --glob '!.git' --glob '!.jj' %s; } | sort -u"):format(ignored_file_args)
+local files_command = (
+  "{ rg --files --hidden --glob '!.git' --glob '!.jj'; "
+  .. "rg --files --hidden --no-ignore --glob '!.git' --glob '!.jj' %s; } | sort -u"
+):format(ignored_file_args)
 
 return {
   {
@@ -35,7 +40,15 @@ return {
     end,
     opts = {
       explorer = { enabled = true },
-      image = { enabled = true },
+      image = {
+        enabled = true,
+        -- diagrams replace their source block until the cursor enters it
+        doc = {
+          conceal = function(_, type)
+            return type == "math" or type == "chart"
+          end,
+        },
+      },
       picker = {
         sources = {
           explorer = {

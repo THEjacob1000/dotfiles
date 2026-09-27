@@ -32,7 +32,8 @@ return {
           "RenderMarkdownH6",
         },
       },
-      code = { width = "full", right_pad = 0 },
+      -- "hide" conceals the fence lines, which also hides snacks.image's diagram anchored there
+      code = { width = "full", right_pad = 0, border = "none", disable_background = { "diff", "mermaid" } },
       checkbox = { enabled = true },
     },
     keys = {
