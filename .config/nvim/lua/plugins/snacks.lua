@@ -63,13 +63,23 @@ return {
           terminal.env = function()
             return vim.tbl_extend("force", env(), { remote = true })
           end
-          -- snacks wraps graphics for one tmux; a nested tmux over ssh needs a second wrap. Send both:
-          -- each terminal ignores the copy meant for the other
+          -- snacks wraps graphics for one tmux; a nested tmux over ssh needs a second wrap. Send both,
+          -- and each terminal ignores the copy meant for the other. The nested copies wait until a
+          -- chunked upload finishes, since Ghostty drops an upload that is interrupted mid-way
           local write = terminal.write
+          local nested = {} ---@type string[]
           terminal.write = function(data)
             write(data)
-            if data:sub(1, 3) == "\27_G" then
-              write(("\27Ptmux;" .. data:gsub("\27", "\27\27")) .. "\27\\")
+            local control = data:match("^\27_G([^;\27]*)")
+            if not control then
+              return
+            end
+            nested[#nested + 1] = ("\27Ptmux;" .. data:gsub("\27", "\27\27")) .. "\27\\"
+            if not ("," .. control .. ","):find(",m=1,") then
+              for _, copy in ipairs(nested) do
+                write(copy)
+              end
+              nested = {}
             end
           end
         end,
