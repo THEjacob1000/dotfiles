@@ -34,6 +34,7 @@ interface SubagentRoutingRequest {
 	role?: string;
 	/** Expanded patterns from the static resolver, in configured order. */
 	patterns: string[];
+	note?: string;
 	now?: number;
 	/** Ledger override for tests; production shares one file under the agent dir. */
 	store?: RoutingStore;
@@ -298,7 +299,7 @@ export async function routeSubagentModel(request: SubagentRoutingRequest): Promi
 			pinned: pool.pinned,
 			policyVersion: ROUTING_POLICY_VERSION,
 			confidence: decision.confidence,
-			reason: decision.reason,
+			reason: request.note ? `${request.note}; ${decision.reason}` : decision.reason,
 			assessments: decision.assessments,
 			startedAt: now,
 		});
