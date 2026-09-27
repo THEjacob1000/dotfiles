@@ -28,10 +28,34 @@ return {
   {
     "folke/snacks.nvim",
     init = function()
-      -- with extended-keys on, snacks reads tmux's client_termname (xterm-256color) and misses Ghostty
-      if vim.env.TMUX and vim.fn.system({ "tmux", "display-message", "-p", "#{client_termtype}" }):find("ghostty") then
+      -- with extended-keys on, snacks reads tmux's client_termname (xterm-256color) and misses Ghostty;
+      -- check every client on this session, since the most recent one may be a nested tmux over ssh
+      if
+        vim.env.TMUX
+        and vim.fn
+          .system({ "tmux", "list-clients", "-t", vim.env.TMUX_PANE or "", "-F", "#{client_termtype}" })
+          :find("ghostty")
+      then
         vim.env.SNACKS_GHOSTTY = "1"
       end
+      -- snacks.image keeps conceal_lines when it hides a diagram for editing, so source lines
+      -- past the image's height stayed hidden; still present upstream as of 882c996
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "VeryLazy",
+        once = true,
+        callback = function()
+          local Placement = require("snacks.image.placement")
+          local render = Placement._render
+          Placement._render = function(self, extmarks)
+            if self.hidden then
+              for _, extmark in ipairs(extmarks) do
+                extmark.conceal_lines = nil
+              end
+            end
+            return render(self, extmarks)
+          end
+        end,
+      })
       vim.filetype.add({
         pattern = {
           ["/home/jacob/Documents/Developer/parser%-ts%-files/.*"] = { "bigfile", { priority = 1000 } },
@@ -47,6 +71,9 @@ return {
           conceal = function(_, type)
             return type == "math" or type == "chart"
           end,
+          -- the 80x40 default shrinks wide sequence diagrams until their text is unreadable
+          max_width = 160,
+          max_height = 60,
         },
       },
       picker = {
