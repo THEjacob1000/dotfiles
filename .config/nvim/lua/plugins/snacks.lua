@@ -28,14 +28,13 @@ return {
   {
     "folke/snacks.nvim",
     init = function()
-      -- with extended-keys on, snacks reads tmux's client_termname (xterm-256color) and misses Ghostty;
-      -- check every client on this session, since the most recent one may be a nested tmux over ssh
-      if
-        vim.env.TMUX
-        and vim.fn
-          .system({ "tmux", "list-clients", "-t", vim.env.TMUX_PANE or "", "-F", "#{client_termtype}" })
-          :find("ghostty")
-      then
+      -- with extended-keys on, snacks reads tmux's client_termname (xterm-256color) and misses Ghostty.
+      -- A client whose termtype is tmux is the Mac's tmux carrying an ssh session; every terminal
+      -- here is Ghostty, so treat that as Ghostty too
+      local clients = vim.env.TMUX
+          and vim.fn.system({ "tmux", "list-clients", "-t", vim.env.TMUX_PANE or "", "-F", "#{client_termtype}" })
+        or ""
+      if clients:find("ghostty") or clients:find("tmux") then
         vim.env.SNACKS_GHOSTTY = "1"
       end
       -- snacks.image keeps conceal_lines when it hides a diagram for editing, so source lines
@@ -53,6 +52,25 @@ return {
               end
             end
             return render(self, extmarks)
+          end
+
+          if not vim.env.TMUX then
+            return
+          end
+          local terminal = require("snacks.image.terminal")
+          -- the outer terminal may be on the other end of ssh, so send image bytes, never a local path
+          local env = terminal.env
+          terminal.env = function()
+            return vim.tbl_extend("force", env(), { remote = true })
+          end
+          -- snacks wraps graphics for one tmux; a nested tmux over ssh needs a second wrap. Send both:
+          -- each terminal ignores the copy meant for the other
+          local write = terminal.write
+          terminal.write = function(data)
+            write(data)
+            if data:sub(1, 3) == "\27_G" then
+              write(("\27Ptmux;" .. data:gsub("\27", "\27\27")) .. "\27\\")
+            end
           end
         end,
       })
