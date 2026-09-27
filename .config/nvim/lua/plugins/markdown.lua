@@ -12,6 +12,50 @@ return {
   },
   {
     "MeanderingProgrammer/render-markdown.nvim",
+    init = function()
+      -- render-markdown only draws the header delimiter, so wrapped multi-line rows run together;
+      -- add a ├─┼─┤ rule under every body row except the last, like GitHub's row lines
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "LazyLoad",
+        callback = function(ev)
+          if ev.data ~= "render-markdown.nvim" then
+            return
+          end
+          local Table = require("render-markdown.render.markdown.table")
+          local run = Table.run
+          Table.run = function(self)
+            local rows = self.data.rows
+            local separators = {} ---@type table<integer, table>
+            if self.config.border_enabled and self.data.layout.valid then
+              local border = self.config.border
+              local parts = vim.tbl_map(function(col)
+                return border[11]:rep(col.width)
+              end, self.data.cols)
+              local text = border[4] .. table.concat(parts, border[5]) .. border[6]
+              for i = 2, #rows - 1 do
+                local line = self:line():pad(self.data.layout.col):text(text, self.config.row)
+                separators[rows[i].node.start_row] = self:indent():line(true):extend(line):get()
+              end
+            end
+            -- wrapped rows are replaced by virtual lines, so the rule joins those; the rest get their own
+            local replace = self.marks.replace
+            self.marks.replace = function(marks, config, node, lines)
+              local separator = separators[node.start_row]
+              if separator then
+                lines[#lines + 1] = separator
+                separators[node.start_row] = nil
+              end
+              return replace(marks, config, node, lines)
+            end
+            run(self)
+            self.marks.replace = nil
+            for start_row, separator in pairs(separators) do
+              self.marks:add(self.config, "virtual_lines", start_row, 0, { virt_lines = { separator } })
+            end
+          end
+        end,
+      })
+    end,
     opts = {
       enabled = true,
       render_modes = true,
