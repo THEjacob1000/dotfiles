@@ -5,9 +5,21 @@
  * the environment disables routing for one process without a sync.
  */
 import type { RoutingReservePolicy } from "./policy";
+export interface TierConfig {
+	enabled: boolean;
+	model: string;
+	agents: string[];
+	minConfidence: number;
+	shadowFloor: number;
+	timeoutMs: number;
+	maxStateChars: number;
+	instructions: string;
+	options: Array<{ id: string; selector: string; active: boolean; criteria: string }>;
+}
 
 export interface RouterConfig {
 	enabled: boolean;
+	tiers: TierConfig;
 	/**
 	 * Optional quota-balanced pools for roles that intentionally permit peers
 	 * to trade places. Ordered retry chains do not belong here: roles absent
@@ -36,11 +48,74 @@ export const config: RouterConfig = {
 	reservePolicy: "auto",
 	preferenceWeight: 0.15,
 	tieTolerance: 0.1,
+	tiers: {
+		enabled: true,
+		model: "jev-1.13.0",
+		agents: ["task"],
+		minConfidence: 0.3,
+		shadowFloor: 0.15,
+		timeoutMs: 1500,
+		maxStateChars: 12000,
+		instructions:
+			"Pick the option that gives the best result per dollar for this delegated coding task. Each option describes where that model beats its price. A cheaper option wins whenever its strengths cover the task; pick a pricier one only when the task needs what it is specifically better at. Judge the work required, not the length of the brief.",
+		options: [
+			{
+				id: "luna-low",
+				selector: "openai-codex/gpt-6-luna:low",
+				active: true,
+				criteria:
+					"Fully specified mechanical work: renames, edits whose exact change the brief spells out, file/symbol inventory, search-and-report, formatting, running named commands and summarising output. About a twentieth of Sol's price; weak when anything is ambiguous.",
+			},
+			{
+				id: "luna-high",
+				selector: "openai-codex/gpt-6-luna:high",
+				active: false,
+				criteria:
+					"Well-scoped implementation, tests or a localised bugfix where the brief names the files and the expected behaviour. Near Sol's coding benchmark scores at a fraction of the cost, but unreliable on vague briefs or delicate behaviour changes.",
+			},
+			{
+				id: "sol-medium",
+				selector: "openai-codex/gpt-6-sol:medium",
+				active: true,
+				criteria:
+					"Routine engineering across a few files: specified features and tests, known-cause bugs, scoped investigation of one subsystem, tool-heavy automation. Good general value; its 272k context is small for work that must read a large codebase.",
+			},
+			{
+				id: "sonnet-medium",
+				selector: "anthropic/claude-sonnet-5:medium",
+				active: false,
+				criteria:
+					"The same routine engineering as Sol when the task must read or hold a large amount of code or documentation at once; 1M context at Sol's price.",
+			},
+			{
+				id: "opus-medium",
+				selector: "anthropic/claude-opus-5-5:medium",
+				active: false,
+				criteria:
+					"Code review, cross-module refactors, long-codebase work and terminal-heavy agentic tasks where the cause or design is mostly known. Top Terminal-Bench and FrontierCode scores at twice Sol's price.",
+			},
+			{
+				id: "opus-high",
+				selector: "anthropic/claude-opus-5-5:high",
+				active: true,
+				criteria:
+					"Unknown-cause debugging, architecture decisions, security or trust-boundary code, concurrency, and long autonomous runs where a wrong answer is expensive. Strongest available coder, and cheaper than GPT-6 Astra.",
+			},
+		],
+	},
 };
 
-export function routingEnabled(): boolean {
-	const override = process.env.NUMEN_QUOTA_ROUTER?.trim().toLowerCase();
+function enabledWithOverride(value: string | undefined, fallback: boolean): boolean {
+	const override = value?.trim().toLowerCase();
 	if (override === "off" || override === "0" || override === "false") return false;
 	if (override === "on" || override === "1" || override === "true") return true;
-	return config.enabled;
+	return fallback;
+}
+
+export function routingEnabled(): boolean {
+	return enabledWithOverride(process.env.NUMEN_QUOTA_ROUTER, config.enabled);
+}
+
+export function tiersEnabled(): boolean {
+	return enabledWithOverride(process.env.NUMEN_JEV_ROUTER, config.tiers.enabled);
 }
