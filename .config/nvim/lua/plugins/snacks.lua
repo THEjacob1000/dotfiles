@@ -103,6 +103,14 @@ return {
           max_width = 160,
           max_height = 60,
         },
+        convert = {
+          -- snacks renders at the terminal's reported scale, which is 1 behind tmux or ssh even on a
+          -- retina screen, so text in big diagrams was upscaled mush; 3x gives the terminal pixels to spare
+          mermaid = function()
+            local theme = vim.o.background == "light" and "neutral" or "dark"
+            return { "-i", "{src}", "-o", "{file}", "-b", "transparent", "-t", theme, "-s", "3" }
+          end,
+        },
       },
       picker = {
         sources = {
