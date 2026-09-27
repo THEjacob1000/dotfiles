@@ -32,8 +32,9 @@ return {
           "RenderMarkdownH6",
         },
       },
-      -- "hide" conceals the fence lines, which also hides snacks.image's diagram anchored there
-      code = { width = "full", right_pad = 0, border = "none", disable_background = { "diff", "mermaid" } },
+      -- "hide" conceals the fence lines, which also hides snacks.image's diagram anchored there;
+      -- mermaid is left to snacks, whose diagram starts on the fence line render-markdown would paint over
+      code = { width = "full", right_pad = 0, border = "none", disable = { "mermaid" } },
       checkbox = { enabled = true },
     },
     keys = {
