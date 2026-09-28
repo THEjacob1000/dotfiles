@@ -1,4 +1,4 @@
-function rmrec --description 'Recursively remove directories matching any supplied name'
+function rmrec --description 'Recursively remove files and directories matching any supplied name'
     if test (count $argv) -eq 0
         echo "usage: rmrec <name> [name ...]" >&2
         return 1
@@ -11,7 +11,6 @@ function rmrec --description 'Recursively remove directories matching any suppli
         --hidden \
         --no-ignore \
         --one-file-system \
-        --type directory \
         --print0 \
         -- "$pattern" . \
     | xargs -0 -r -P 8 rm -rf --
