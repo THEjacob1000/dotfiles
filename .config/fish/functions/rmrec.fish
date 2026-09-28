@@ -14,5 +14,5 @@ function rmrec --description 'Recursively remove directories matching any suppli
         --type directory \
         --print0 \
         -- "$pattern" . \
-    | xargs -0 --no-run-if-empty --max-procs=8 rm -rf --
+    | xargs -0 -r -P 8 rm -rf --
 end
