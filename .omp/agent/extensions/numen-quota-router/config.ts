@@ -75,10 +75,10 @@ export const config: RouterConfig = {
 			},
 			{
 				id: "sol-medium",
-				selector: "openai-codex/gpt-6-sol:medium",
+				selector: "openai-codex/gpt-6.1-sol:medium",
 				active: true,
 				criteria:
-					"Routine engineering across a few files: specified features and tests, known-cause bugs, scoped investigation of one subsystem, tool-heavy automation. Good general value; its 272k context is small for work that must read a large codebase.",
+					"Most engineering work: multi-file features and tests, known-cause and moderately hard bugs, long-horizon changes inside one repo, subsystem investigation, terminal-, tool- and computer-use-heavy automation, data analysis and reading dense documents. Matches GPT-6 Astra on DeepSWE at a fifth of its price and beats Opus 5.5 on agentic workflows at about a third of its cost; its 272k context is small for work that must read a large codebase at once.",
 			},
 			{
 				id: "sonnet-medium",
