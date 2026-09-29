@@ -29,6 +29,8 @@ call count. Open a file only once the map has named it.
   a second command in the same turn costs only its bytes.
 - Orient on a task: `ripwire . --for="<task in words>" --token-budget=1200`.
   Paste symbol and file names from the ask verbatim.
+- Ripwire maps one repo. Root it at a checkout (or 2..16 named ones), never at a
+  folder of repos: the front refuses that, and a search across many repos is `rg`.
 - One symbol: `--callers=SYM`; "is it safe to change" needs `--impact=SYM` plus
   `--uses=SYM`. Narrow flat verbs with `--limit=N`, never `--token-budget` (it
   gates them to empty output and the turn is wasted).
@@ -284,6 +286,6 @@ sessions/engines and, when the vault is wired, pushes it into memory for free.
 
 A local `jj` MCP server is also configured, prefer it for jj operations. Context7
 is available; use it only when a task needs it. The `ripwire` MCP entry exposes
-only its audit verbs (analyze, quality_delta, flags, doc_drift); everything else
-is the CLI.
+only its audit verbs (analyze, quality_delta, flags, doc_drift) and runs under a
+4 GB memory cap; everything else is the CLI.
 <!-- numen:sync:end -->

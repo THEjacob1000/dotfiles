@@ -34,3 +34,7 @@ vim.keymap.set("n", "<leader>U", function()
   vim.cmd.packadd("nvim.undotree")
   vim.cmd.Undotree()
 end, { desc = "Undotree" })
+
+vim.keymap.set({ "n", "x" }, "x", '"_x', { desc = "Delete Char Without Yank" })
+vim.keymap.set("n", "dd", '"_dd', { desc = "Delete Line Without Yank" })
+vim.keymap.set("x", "p", "P", { desc = "Paste Without Yanking Selection" })

@@ -82,17 +82,17 @@ export const config: RouterConfig = {
 			},
 			{
 				id: "sonnet-medium",
-				selector: "anthropic/claude-sonnet-5:medium",
+				selector: "anthropic/claude-sonnet-5-5:medium",
 				active: false,
 				criteria:
-					"The same routine engineering as Sol when the task must read or hold a large amount of code or documentation at once; 1M context at Sol's price.",
+					"Well-scoped engineering and bugfixes that must read or hold a lot of code or documentation at once, terminal-heavy agentic work, and UI polish. Sol's price and coding scores with 1M context, and above Opus 5.5 on Terminal-Bench; weaker than Opus on open-ended judgment, and its cyber safeguards refuse or downgrade exploit-style security work.",
 			},
 			{
 				id: "opus-medium",
 				selector: "anthropic/claude-opus-5-5:medium",
 				active: false,
 				criteria:
-					"Code review, cross-module refactors, long-codebase work and terminal-heavy agentic tasks where the cause or design is mostly known. Top Terminal-Bench and FrontierCode scores at twice Sol's price.",
+					"Code review, cross-module refactors, long-codebase work and agentic tasks where the cause or design is mostly known. Top FrontierCode and CursorBench scores at twice Sol's price.",
 			},
 			{
 				id: "opus-high",
