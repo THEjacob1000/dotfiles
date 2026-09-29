@@ -13,6 +13,20 @@ fi
 [ $# -eq 0 ] && exec "$real"
 
 for arg in "$@"; do
+  if [ "$arg" = --mcp ] && command -v systemd-run >/dev/null &&
+    systemd-run --user --scope --quiet true 2>/dev/null; then
+    # The server keeps every index it builds for the whole session; a cgroup cap kills it instead of the machine.
+    exec systemd-run --user --scope --quiet -p MemoryMax=4G -p MemorySwapMax=0 "$real" "$@"
+  fi
+  case "$arg" in -*) continue ;; esac
+  if [ -d "$arg" ] && ! git -C "$arg" rev-parse --is-inside-work-tree >/dev/null 2>&1 &&
+    { compgen -G "$arg/*/.git" || compgen -G "$arg/*/.jj"; } >/dev/null; then
+    echo "ripwire: $arg holds several repos; root it at one checkout (or list 2..16 of them), or use rg across the tree" >&2
+    exit 2
+  fi
+done
+
+for arg in "$@"; do
   case "$arg" in
     --legend|--legend=*|--json|--mcp|--mcp-*|--help|-h|--version|--help-task|--help-task=*|\
     --situ|--situ=*|--recall|--recall=*|--report|--report=*|--mermaid|--mermaid=*|--html|--html=*|\

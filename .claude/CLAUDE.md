@@ -29,6 +29,8 @@ call count. Open a file only once the map has named it.
   a second command in the same turn costs only its bytes.
 - Orient on a task: `ripwire . --for="<task in words>" --token-budget=1200`.
   Paste symbol and file names from the ask verbatim.
+- Ripwire maps one repo. Root it at a checkout (or 2..16 named ones), never at a
+  folder of repos: the front refuses that, and a search across many repos is `rg`.
 - One symbol: `--callers=SYM`; "is it safe to change" needs `--impact=SYM` plus
   `--uses=SYM`. Narrow flat verbs with `--limit=N`, never `--token-budget` (it
   gates them to empty output and the turn is wasted).
@@ -240,8 +242,9 @@ not by blocking on it or opening its transcript.
 Whom to delegate to:
 - Bulk search/analysis → Explore or general-purpose (haiku for mechanical sweeps,
   sonnet for lookups needing judgment, opus for judgment-heavy analysis); parallel
-  when independent. Brief them to map with `ripwire` first; a subagent that greps
-  the tree blind spends the tokens delegation was meant to save.
+  when independent. Brief them to map with `ripwire` first when the work sits in
+  one repo; a subagent that greps it blind spends the tokens delegation was meant
+  to save.
 - After nontrivial changes → `code-reviewer`, plus `security-reviewer` when the
   change touches untrusted input, auth, secrets, privilege, or a TCB. Both on opus.
 - A red build or typecheck with a mechanical fix → `build-resolver` on sonnet.

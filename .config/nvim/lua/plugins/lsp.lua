@@ -6,6 +6,8 @@ return {
       server = {
         default_settings = {
           ["rust-analyzer"] = {
+            -- own target dir, so a stuck check-on-save never holds the build lock other cargo runs need
+            cargo = { targetDir = true },
             check = { command = "clippy" },
             imports = {
               granularity = { group = "module" },
