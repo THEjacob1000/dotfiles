@@ -59,11 +59,12 @@ TEMPLATE=$(val template)
 norm() { tr -s ' ' ' ' | sed -E 's/[[:space:]]+$//'; }
 # Only headings the template ships live — commented-out blocks stay optional.
 REQUIRED=$(perl -0777 -pe 's/<!--.*?-->//gs' "$TEMPLATE" | grep -E '^#{2,3} ' | norm || true)
+NORMALIZED_BODY=$(norm <<<"$BODY")
 
 FAIL=()
 while IFS= read -r h; do
   [[ -z $h ]] && continue
-  grep -qxF "$h" <<<"$(norm <<<"$BODY")" || FAIL+=("missing section: $h")
+  grep -qxF "$h" <<<"$NORMALIZED_BODY" || FAIL+=("missing section: $h")
 done <<<"$REQUIRED"
 
 # The checklist is the point of the LOKE template; an empty body drops it silently.

@@ -71,35 +71,35 @@ export const config: RouterConfig = {
 				selector: "openai-codex/gpt-6-luna:high",
 				active: false,
 				criteria:
-					"Well-scoped implementation, tests or a localised bugfix where the brief names the files and the expected behaviour. Near Sol's coding benchmark scores at a fraction of the cost, but unreliable on vague briefs or delicate behaviour changes.",
+					"Well-scoped implementation, tests or a localised bugfix where the brief names the files and the expected behaviour. Scores about Opus 5 at medium on DeepSWE for a twentieth of Sol's price, but trails GPT-6.1 Sol by nine points there and is unreliable on vague briefs or delicate behaviour changes.",
 			},
 			{
 				id: "sol-medium",
 				selector: "openai-codex/gpt-6.1-sol:medium",
 				active: true,
 				criteria:
-					"Most engineering work: multi-file features and tests, known-cause and moderately hard bugs, long-horizon changes inside one repo, subsystem investigation, terminal-, tool- and computer-use-heavy automation, data analysis and reading dense documents. Matches GPT-6 Astra on DeepSWE at a fifth of its price and beats Opus 5.5 on agentic workflows at about a third of its cost; its 272k context is small for work that must read a large codebase at once.",
+					"Most engineering work: multi-file features and tests, known-cause and moderately hard bugs, long-horizon changes inside one repo, subsystem investigation, terminal-, tool- and computer-use-heavy automation, data analysis and reading dense documents. Beats GPT-6 Astra on DeepSWE and Opus 5.5 on document and medium-effort workflow benchmarks at a third to a seventh of their cost per task, and uses the fewest tokens of any option above Luna. Trails Opus on open-ended judgment: it tends to satisfy a wrong spec rather than challenge it. Slow at about 67 tokens/s, and its 272k Codex context is small for work that must read a large codebase at once.",
 			},
 			{
 				id: "sonnet-medium",
 				selector: "anthropic/claude-sonnet-5-5:medium",
-				active: false,
+				active: true,
 				criteria:
-					"Well-scoped engineering and bugfixes that must read or hold a lot of code or documentation at once, terminal-heavy agentic work, and UI polish. Sol's price and coding scores with 1M context, and above Opus 5.5 on Terminal-Bench; weaker than Opus on open-ended judgment, and its cyber safeguards refuse or downgrade exploit-style security work.",
+					"Front-end and UI work where visual polish matters, terminal-heavy agentic work, fast iteration, and well-scoped engineering that must hold more code or documentation than Sol's 272k window. Tops Opus 5.5 on Terminal-Bench 4.0, sits two points under it on CursorBench, runs about twice Sol's speed with 1M context, at Sol's token price but spending several times Sol's tokens per task. Weaker than Opus on open-ended judgment, and its cyber safeguards downgrade exploit-style security work.",
 			},
 			{
 				id: "opus-medium",
 				selector: "anthropic/claude-opus-5-5:medium",
 				active: false,
 				criteria:
-					"Code review, cross-module refactors, long-codebase work and agentic tasks where the cause or design is mostly known. Top FrontierCode and CursorBench scores at twice Sol's price.",
+					"Code review, cross-module refactors, codebase-wide migrations and audits, and agentic tasks where the cause or design is mostly known. Leads FrontierCode and CursorBench and catches wrong specs Sol would implement, at twice Sol's token price.",
 			},
 			{
 				id: "opus-high",
 				selector: "anthropic/claude-opus-5-5:high",
 				active: true,
 				criteria:
-					"Unknown-cause debugging, architecture decisions, security or trust-boundary code, concurrency, and long autonomous runs where a wrong answer is expensive. Strongest available coder, and cheaper than GPT-6 Astra.",
+					"Unknown-cause debugging, architecture decisions, trust-boundary and concurrency code, underspecified problems where the brief itself may be wrong, and long autonomous runs where a wrong answer is expensive. Highest independent intelligence score and best prompt-injection resistance of any option, at twice Sol's token price; exploit-style security work falls back to an older Opus under its safeguards, so Sol suits that better.",
 			},
 		],
 	},
