@@ -1,0 +1,83 @@
+---
+modelRoles:
+  default: "openai-codex/gpt-6.1-sol:medium"
+  slow: "openai-codex/gpt-6-astra:medium"
+  plan: "anthropic/claude-opus-5-5:medium"
+  task: "openai-codex/gpt-6.1-sol:medium"
+  advisor: "anthropic/claude-opus-5-5:high"
+  smol: "openai-codex/gpt-6-luna:medium"
+  commit: "openai-codex/gpt-6-luna:low"
+symbolPreset: nerd
+composer:
+  shape: band
+theme:
+  dark: titanium
+  light: light
+setupVersion: 2
+enabledProviders:
+  - codex
+statusLine:
+  preset: custom
+  leftSegments: []
+  rightSegments: []
+  contextLine: "off"
+  showHookStatus: false
+  transparent: true
+task:
+  eager: preferred
+  maxConcurrency: 8
+  isolation:
+    enabled: true
+  agentModelOverrides:
+    code-reviewer: "anthropic/claude-opus-5-5:high"
+    security-reviewer: "openai-codex/gpt-6.1-sol:high"
+    build-resolver: "openai-codex/gpt-5.6-terra:medium"
+dev:
+  autoqaConsent: granted
+retry:
+  modelFallback: true
+  usageAwareFallback: true
+  usageReservePct: 0
+  usageReservePolicy: auto
+  fallbackRevertPolicy: cooldown-expiry
+  fallbackChains:
+    anthropic/claude-fable-5-1:
+      - openai-codex/gpt-6-astra
+    openai-codex/gpt-6-astra:
+      - kiro/gpt-5-6-sol
+      - anthropic/claude-opus-5-5
+    anthropic/claude-opus-5-5:
+      - kiro/claude-opus-5-5
+      - openai-codex/gpt-6.1-sol
+    openai-codex/gpt-6-sol:
+      - kiro/gpt-5-6-sol
+      - anthropic/claude-opus-5-5
+    anthropic/claude-haiku-4-5:
+      - kiro/claude-haiku-4-5
+      - openai-codex/gpt-6-luna
+    openai-codex/gpt-6-luna:
+      - kiro/gpt-5-6-luna
+      - anthropic/claude-haiku-4-5
+    openai-codex/gpt-5.6-sol:
+      - kiro/gpt-5-6-sol
+      - anthropic/claude-opus-5
+    anthropic/claude-opus-5:
+      - kiro/claude-opus-5
+      - openai-codex/gpt-5.6-sol
+    openai-codex/gpt-5.6-luna:
+      - kiro/gpt-5-6-luna
+      - anthropic/claude-haiku-4-5
+    openai-codex/gpt-5.6-terra:
+      - kiro/gpt-5-6-terra
+      - anthropic/claude-opus-5-5
+    anthropic/claude-sonnet-5:
+      - kiro/claude-sonnet-5
+      - openai-codex/gpt-6.1-sol
+    anthropic/claude-sonnet-5-5:
+      - kiro/claude-sonnet-5
+      - openai-codex/gpt-6.1-sol
+    openai-codex/gpt-6.1-sol:
+      - kiro/gpt-5-6-sol
+      - anthropic/claude-opus-5-5
+browser:
+  relay: true
