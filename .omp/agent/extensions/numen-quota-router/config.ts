@@ -78,14 +78,14 @@ export const config: RouterConfig = {
 				selector: "openai-codex/gpt-6.1-sol:medium",
 				active: true,
 				criteria:
-					"Most engineering work: multi-file features and tests, known-cause and moderately hard bugs, long-horizon changes inside one repo, subsystem investigation, terminal-, tool- and computer-use-heavy automation, data analysis and reading dense documents. Beats GPT-6 Astra on DeepSWE and Opus 5.5 on document and medium-effort workflow benchmarks at a third to a seventh of their cost per task, and uses the fewest tokens of any option above Luna. Trails Opus on open-ended judgment: it tends to satisfy a wrong spec rather than challenge it. Slow at about 67 tokens/s, and its 272k Codex context is small for work that must read a large codebase at once.",
+					"Most non-UI engineering work: multi-file features and tests, known-cause and moderately hard bugs, long-horizon changes inside one repo, subsystem investigation, graphics programming (rendering, shaders, 3D models and meshes, visualisation), terminal-, tool- and computer-use-heavy automation, data analysis and reading dense documents. Beats GPT-6 Astra on DeepSWE and Opus 5.5 on document and medium-effort workflow benchmarks at a third to a seventh of their cost per task, and uses the fewest tokens of any option above Luna. Poor at front-end, UI and interface design work, which goes to Sonnet or Opus however well specified; graphics and 3D model work are not UI and stay here. Trails Opus on open-ended judgment: it tends to satisfy a wrong spec rather than challenge it. Slow at about 67 tokens/s, and its 272k Codex context is small for work that must read a large codebase at once.",
 			},
 			{
 				id: "sonnet-medium",
 				selector: "anthropic/claude-sonnet-5-5:medium",
 				active: true,
 				criteria:
-					"Front-end and UI work where visual polish matters, terminal-heavy agentic work, fast iteration, and well-scoped engineering that must hold more code or documentation than Sol's 272k window. Tops Opus 5.5 on Terminal-Bench 4.0, sits two points under it on CursorBench, runs about twice Sol's speed with 1M context, at Sol's token price but spending several times Sol's tokens per task. Weaker than Opus on open-ended judgment, and its cyber safeguards downgrade exploit-style security work.",
+					"Front-end and UI work: components, styling, layout, interaction and visual polish, the default for any UI task Opus is not needed for. Also terminal-heavy agentic work, fast iteration, and well-scoped engineering that must hold more code or documentation than Sol's 272k window. Tops Opus 5.5 on Terminal-Bench 4.0, sits two points under it on CursorBench, runs about twice Sol's speed with 1M context, at Sol's token price but spending several times Sol's tokens per task. Weaker than Opus on open-ended judgment, and its cyber safeguards downgrade exploit-style security work.",
 			},
 			{
 				id: "opus-medium",
@@ -99,7 +99,7 @@ export const config: RouterConfig = {
 				selector: "anthropic/claude-opus-5-5:high",
 				active: true,
 				criteria:
-					"Unknown-cause debugging, architecture decisions, trust-boundary and concurrency code, underspecified problems where the brief itself may be wrong, and long autonomous runs where a wrong answer is expensive. Highest independent intelligence score and best prompt-injection resistance of any option, at twice Sol's token price; exploit-style security work falls back to an older Opus under its safeguards, so Sol suits that better.",
+					"Unknown-cause debugging, architecture decisions, trust-boundary and concurrency code, UI work that needs design judgment (new screens, design systems, UX flows) rather than polish, underspecified problems where the brief itself may be wrong, and long autonomous runs where a wrong answer is expensive. Highest independent intelligence score and best prompt-injection resistance of any option, at twice Sol's token price; exploit-style security work falls back to an older Opus under its safeguards, so Sol suits that better.",
 			},
 		],
 	},
