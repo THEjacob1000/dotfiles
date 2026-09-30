@@ -112,7 +112,21 @@ return {
           explorer = {
             hidden = true,
             ignored = true,
-            exclude = { "**/.git", "**/.jj" },
+            exclude = {
+              "**/.git",
+              "**/.jj",
+              "**/node_modules",
+              "**/dist",
+              "**/target",
+              "**/.direnv",
+              "**/.devenv",
+              "**/__pycache__",
+              "**/*.tsbuildinfo",
+              "**/.next",
+              "**/.output",
+              "**/.tanstack",
+              "**/coverage",
+            },
           },
           files = {
             finder = "proc",
