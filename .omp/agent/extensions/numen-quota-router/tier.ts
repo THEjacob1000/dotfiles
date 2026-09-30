@@ -34,17 +34,17 @@ function decisionFromJev(data: unknown): TierDecision | undefined {
 	const tier = data.answers.tier;
 	const choice = typeof tier.choice === "string" ? tier.choice : undefined;
 	const probabilities = object(tier.probabilities) ? tier.probabilities : undefined;
+	const winner = config.tiers.options.find(option => option.id === choice);
 	if (
 		tier.type !== "choice" ||
 		!choice ||
-		!config.tiers.options.some(option => option.id === choice) ||
+		!winner ||
 		!probability(tier.confidence) ||
 		!probabilities ||
 		!config.tiers.options.every(option => probability(probabilities[option.id]))
 	)
 		throw new Error("malformed classification");
 	if (tier.confidence < config.tiers.minConfidence) return undefined;
-	const winner = config.tiers.options.find(option => option.id === choice);
 	const bestActive = config.tiers.options
 		.filter(candidate => candidate.active)
 		.reduce<TierConfig["options"][number] | undefined>(
