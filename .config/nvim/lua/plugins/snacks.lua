@@ -7,11 +7,6 @@ local ignored_file_globs = {
   "GoogleService-Info.plist",
 }
 
-local unignored_path_globs = {
-  "bench/results",
-  "bench/results/**",
-}
-
 local ignored_file_args = table.concat(
   vim.tbl_map(function(pattern)
     return "--glob " .. vim.fn.shellescape(pattern)
@@ -116,7 +111,7 @@ return {
         sources = {
           explorer = {
             hidden = true,
-            include = vim.list_extend(vim.deepcopy(ignored_file_globs), unignored_path_globs),
+            ignored = true,
             exclude = { "**/.git", "**/.jj" },
           },
           files = {
