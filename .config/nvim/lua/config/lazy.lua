@@ -32,7 +32,14 @@ require("lazy").setup({
   },
   install = { colorscheme = { "tokyonight", "habamax" } },
   checker = {
-    enabled = true, -- check for plugin updates periodically
+    -- Fetches go over SSH; while gcr's key is still locked each one fires its own unlock prompt.
+    enabled = (function()
+      local agent = (vim.env.XDG_RUNTIME_DIR or "") .. "/gcr/.ssh"
+      if not vim.uv.fs_stat(agent) then
+        return true
+      end
+      return vim.system({ "ssh-add", "-l" }, { env = { SSH_AUTH_SOCK = agent } }):wait().code == 0
+    end)(),
     notify = false, -- notify on update
   }, -- automatically check for plugin updates
   performance = {
