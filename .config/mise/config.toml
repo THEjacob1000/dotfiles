@@ -41,7 +41,10 @@ vercel = "latest"
 yq = "latest"
 "github:rabbitmq/rabbitmqadmin-ng" = "latest"
 "npm:@mermaid-js/mermaid-cli" = "latest"
-"http:loke" = { version = "latest", url = "https://tools.tailnet-redacted.ts.net:8443/downloads/loke-cli/{{ version }}/loke-{{ os(macos=\"darwin\") }}-{{ arch(x64=\"amd64\") }}.tar.gz", version_list_url = "https://tools.tailnet-redacted.ts.net:8443/downloads/loke-cli/latest" }
+loke = { version = "latest", url = "https://tools.tailnet-redacted.ts.net:8443/downloads/loke-cli/{{ version }}/loke-{{ os(macos=\"darwin\") }}-{{ arch(x64=\"amd64\") }}.tar.gz", version_list_url = "https://tools.tailnet-redacted.ts.net:8443/downloads/loke-cli/latest" }
+
+[tool_alias]
+loke = "http:loke"
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
