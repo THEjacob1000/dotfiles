@@ -97,9 +97,11 @@ if [[ $MODE == comment ]]; then
 fi
 
 if [[ $MODE == pr ]]; then
-  # CI already shows the reviewer whether tests, lint and typecheck passed.
-  CIRECOUNT='(all|[0-9]+) (unit |integration |e2e )?tests? (pass|passing|passed|green)|tests? (are|is) (passing|green)|(lint|clippy|typecheck|type-?check|mypy|ruff|biome|eslint|tsc|fmt|rustfmt|cargo (test|clippy)|bun test|pytest|ci) (is |are )?(pass(es|ing|ed)?|clean|green)|coverage (is|at|of) [0-9]|[0-9]+(\.[0-9]+)?% coverage|[0-9]+ (passed|failed), [0-9]+'
-  HITS=$(grep -inE "$CIRECOUNT" <<<"$LIVE" | head -3 || true)
+  # CI already shows the reviewer whether tests, lint and typecheck passed. A
+  # line naming a check and an outcome is a recount, however it's phrased.
+  CHECK='\b(tests?|suite|checks?|ci|lint(er|s)?|clippy|typecheck|type-?check|tsc|mypy|ruff|biome|eslint|rustfmt|fmt|pytest|coverage)\b'
+  OUTCOME='\b(pass(es|ing|ed)?|green|clean|locally|ran|succeed(s|ed)?)\b|[0-9]+(\.[0-9]+)?%|[0-9]+ (passed|failed)'
+  HITS=$(grep -inE "$CHECK" <<<"$LIVE" | grep -iE "$OUTCOME" | head -3 || true)
   [[ -n $HITS ]] && FAIL+=("Recounts what CI already shows (test/lint/coverage results). Delete it; evidence means the change exercised by hand, see pr-evidence: $(tr '\n' ';' <<<"$HITS")")
 fi
 
@@ -150,7 +152,9 @@ if [[ $MODE == pr ]]; then
     /^## / { flush(); h = $0; n = 0; neg = 0; next }
     NF && h != "" {
       n++
-      if (tolower($0) ~ /^(n\/?a|none|no [a-z ]*|not applicable|just a code revert)\.?$/) neg++
+      line = tolower($0)
+      gsub(/^[[:space:]]*([-*+][[:space:]]+)?[_*]*/, "", line)
+      if (line ~ /^(n\/?a|none|nothing|no|not (applicable|needed|required)|just a code revert|revert (this|the) pr|standard revert)([^a-z]|$)/) neg++
     }
     END { flush() }
   ' <<<"$LIVE" | head -3 || true)
