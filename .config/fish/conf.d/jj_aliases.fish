@@ -20,7 +20,6 @@ alias jc="jj commit"
 alias jcmsg="jj commit --message"
 alias jd="jj diff"
 alias jdmsg="jj desc --message"
-alias jds="jj desc"
 alias je="jj edit"
 alias jgcl="jj git clone"
 alias jgf="jj git fetch"
@@ -171,7 +170,7 @@ function jdf
     end
 end
 
-function jbs
+function jds
     jj diff $argv --stat | tail -1
 end
 
