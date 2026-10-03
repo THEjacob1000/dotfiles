@@ -110,4 +110,24 @@ return {
     opts = {},
   },
   { "wsdjeg/vim-fetch", lazy = false },
+  {
+    "HawkinsT/pathfinder.nvim",
+    event = "VeryLazy",
+    -- its defaults shadow LazyVim's <leader>gf file history and treesitter's ]f/[f
+    opts = { remap_default_keys = false },
+    config = function(_, opts)
+      local pathfinder = require("pathfinder")
+      pathfinder.setup(opts)
+      local map = function(lhs, rhs, desc)
+        vim.keymap.set("n", lhs, rhs, { silent = true, desc = desc })
+      end
+      map("gf", pathfinder.gf, "Go to File")
+      map("gF", pathfinder.gF, "Go to File (Line)")
+      map("gx", pathfinder.gx, "Open URL/Repo")
+      map("]u", pathfinder.next_url, "Next URL")
+      map("[u", pathfinder.prev_url, "Prev URL")
+      map("<leader>gF", pathfinder.select_file_line, "Pick File (Line)")
+      map("<leader>gx", pathfinder.select_url, "Pick URL")
+    end,
+  },
 }
