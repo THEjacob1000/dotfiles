@@ -49,6 +49,16 @@ return {
             return render(self, extmarks)
           end
 
+          -- terminals are disabled (config/options.lua); no-op every entry before snacks opens a window
+          local snacks_terminal = require("snacks.terminal")
+          local refuse = function()
+            vim.notify("Terminals are disabled in this config", vim.log.levels.WARN)
+          end
+          for _, name in ipairs({ "open", "get", "toggle", "focus" }) do
+            snacks_terminal[name] = refuse
+          end
+          getmetatable(snacks_terminal).__call = refuse
+
           if not vim.env.TMUX then
             return
           end
