@@ -7,8 +7,9 @@ return {
         default_settings = {
           ["rust-analyzer"] = {
             -- own target dir, so a stuck check-on-save never holds the build lock other cargo runs need
-            cargo = { targetDir = true },
-            check = { command = "clippy" },
+            -- LazyVim's rust extra turns allFeatures on; every feature combo of every dep gets indexed and checked
+            cargo = { targetDir = true, allFeatures = false },
+            check = { command = "clippy", workspace = false },
             imports = {
               granularity = { group = "module" },
               group = { enable = true },

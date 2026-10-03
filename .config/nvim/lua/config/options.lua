@@ -41,3 +41,34 @@ vim.filetype.add({
     ["Dockerfile.*"] = "dockerfile",
   },
 })
+
+-- no terminals: block every process-backed terminal, whether a plugin, :terminal or a keymap asks
+local function refuse_terminal()
+  vim.notify("Terminals are disabled in this config", vim.log.levels.WARN)
+  return -1
+end
+vim.fn.termopen = refuse_terminal
+local jobstart = vim.fn.jobstart
+vim.fn.jobstart = function(cmd, opts)
+  if type(opts) == "table" and opts.term then
+    return refuse_terminal()
+  end
+  return jobstart(cmd, opts)
+end
+-- :terminal bypasses vim.fn, so kill it on open; display-only buffers from nvim_open_term have no job and survive
+vim.api.nvim_create_autocmd("TermOpen", {
+  group = vim.api.nvim_create_augroup("jacob_no_terminal", { clear = true }),
+  callback = function(args)
+    local job = vim.b[args.buf].terminal_job_id
+    if not job then
+      return
+    end
+    vim.fn.jobstop(job)
+    refuse_terminal()
+    vim.schedule(function()
+      if vim.api.nvim_buf_is_valid(args.buf) then
+        vim.api.nvim_buf_delete(args.buf, { force = true })
+      end
+    end)
+  end,
+})
