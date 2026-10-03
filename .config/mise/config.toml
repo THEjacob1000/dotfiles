@@ -70,6 +70,7 @@ cargo-binstall = "latest"
 "cargo:flamegraph" = "latest"
 "cargo:jj-navi" = "latest"
 "cargo:mdv" = "latest"
+"cargo:rumdl" = "latest"
 
 [tool_alias]
 loke = "http:loke"
