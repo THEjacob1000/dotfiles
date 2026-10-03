@@ -6,15 +6,17 @@ vim.keymap.set("n", "<C-p>", function()
   Snacks.picker.files()
 end, { desc = "Find Files" })
 
--- jj is the VCS here; lazygit (<leader>gg) still works on the colocated git repo
-vim.keymap.set("n", "<leader>gJ", function()
-  Snacks.terminal({ "jjui" }, { cwd = LazyVim.root.git(), interactive = true })
-end, { desc = "jjui (Root Dir)" })
-
--- Zed's ctrl-j (toggle bottom dock) -> toggle terminal
-vim.keymap.set({ "n", "t" }, "<C-j>", function()
-  Snacks.terminal.toggle()
-end, { desc = "Toggle Terminal" })
+-- terminals are blocked in options.lua; drop LazyVim's maps so they don't advertise dead keys
+for _, map in ipairs({
+  { "n", "<leader>ft" },
+  { "n", "<leader>fT" },
+  { { "n", "t" }, "<c-/>" },
+  { { "n", "t" }, "<c-_>" },
+  { "n", "<leader>gg" },
+  { "n", "<leader>gG" },
+}) do
+  pcall(vim.keymap.del, map[1], map[2])
+end
 
 vim.keymap.set("n", "<leader>yp", function()
   local path = vim.api.nvim_buf_get_name(0)
