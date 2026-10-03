@@ -49,11 +49,11 @@ local function refuse_terminal()
 end
 vim.fn.termopen = refuse_terminal
 local jobstart = vim.fn.jobstart
-vim.fn.jobstart = function(cmd, opts)
+vim.fn.jobstart = function(cmd, opts, ...)
   if type(opts) == "table" and opts.term then
     return refuse_terminal()
   end
-  return jobstart(cmd, opts)
+  return jobstart(cmd, opts or vim.empty_dict(), ...)
 end
 -- :terminal bypasses vim.fn, so kill it on open; display-only buffers from nvim_open_term have no job and survive
 vim.api.nvim_create_autocmd("TermOpen", {
