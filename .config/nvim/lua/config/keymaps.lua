@@ -18,6 +18,15 @@ for _, map in ipairs({
   pcall(vim.keymap.del, map[1], map[2])
 end
 
+-- jjui runs in a tmux popup over the editor, so the in-nvim terminal ban stays intact
+vim.keymap.set("n", "<leader>gJ", function()
+  if not vim.env.TMUX then
+    vim.notify("jjui needs tmux", vim.log.levels.WARN)
+    return
+  end
+  vim.system({ "tmux", "display-popup", "-E", "-w", "90%", "-h", "90%", "-d", LazyVim.root.git(), "jjui" })
+end, { desc = "jjui (Root Dir)" })
+
 vim.keymap.set("n", "<leader>yp", function()
   local path = vim.api.nvim_buf_get_name(0)
   vim.fn.setreg("+", vim.fs.relpath(LazyVim.root(), path) or vim.fn.fnamemodify(path, ":."))
