@@ -1,0 +1,15 @@
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-creative/palettes/dark-premium.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+# Dark / Premium
+
+Tech, finance, luxury, cinematic content.
+
+```
+#000000 #14213D #FCA311 #E5E5E5 #FFFFFF
+#000814 #001D3D #003566 #FFC300 #FFD60A
+#0D1B2A #1B263B #415A77 #778DA9 #E0E1DD
+#0D1321 #1D2D44 #3E5C76 #748CAB #F0EBD8
+#011627 #FDFFFC #2EC4B6 #E71D36 #FF9F1C
+#0B090A #161A1D #660708 #A4161A #E5383B
+#001427 #708D81 #F4D58D #BF0603 #8D0801
+#001524 #15616D #FFECD1 #FF7D00 #78290F
+```

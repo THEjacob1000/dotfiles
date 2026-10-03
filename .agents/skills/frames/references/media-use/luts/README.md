@@ -1,0 +1,4 @@
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/media-use/luts/README.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: unavailable LUT resolver and remote hosting procedures removed. -->
+# LUT references
+
+Use `frames.media_treatment` for supported grading controls and `frames.grade_compare` to compare candidate looks. Use `frames.lut {"project": "/absolute/path/to/project", "params": {"temperature": 0.18}, "type": "lut"}` to build, validate, freeze, and inventory a local parametric cube, or `"from": "look.cube"` to ingest a supplied cube. Pass `"validate_only": true` for side-effect-free validation. The bundled index's `params` can be passed directly; CDN-only entries and hosted LUT workflows remain unavailable. Keep LUTs local and do not read their numeric body into context.
