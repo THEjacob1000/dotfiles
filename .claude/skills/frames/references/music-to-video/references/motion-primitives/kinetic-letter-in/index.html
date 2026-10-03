@@ -1,0 +1,54 @@
+<!doctype html>
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/music-to-video/references/motion-primitives/kinetic-letter-in/index.html). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>02 · kinetic_letter_in</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --hg-violet: #7c3aed;
+        --hg-violet-2: #a855f7;
+        --hg-bg: #0a0a0f;
+        --hg-fg: #f5f5fa;
+        --hg-dim: #6b6b78;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--hg-bg);
+        font-family: "Inter", system-ui, sans-serif;
+        color: var(--hg-fg);
+        -webkit-font-smoothing: antialiased;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="2"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div
+        id="scene"
+        class="clip"
+        data-composition-id="kinetic-letter-in"
+        data-composition-src="scene.html"
+        data-start="0"
+        data-duration="2"
+        data-track-index="1"
+      ></div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

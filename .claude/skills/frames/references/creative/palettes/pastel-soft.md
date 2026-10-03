@@ -1,0 +1,15 @@
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-creative/palettes/pastel-soft.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+# Pastel / Soft
+
+Fashion, beauty, lifestyle, wellness content.
+
+```
+#CDB4DB #FFC8DD #FFAFCC #BDE0FE #A2D2FF
+#CCD5AE #E9EDC9 #FEFAE0 #FAEDCD #D4A373
+#FFD6FF #E7C6FF #C8B6FF #B8C0FF #BBD0FF
+#FFA69E #FAF3DD #B8F2E6 #AED9E0 #5E6472
+#EDAFB8 #F7E1D7 #DEDBD2 #B0C4B1 #4A5759
+#555B6E #89B0AE #BEE3DB #FAF9F9 #FFD6BA
+#006D77 #83C5BE #EDF6F9 #FFDDD2 #E29578
+#0081A7 #00AFB9 #FDFCDC #FED9B7 #F07167
+```
