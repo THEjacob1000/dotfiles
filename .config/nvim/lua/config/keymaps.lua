@@ -17,7 +17,8 @@ vim.keymap.set({ "n", "t" }, "<C-j>", function()
 end, { desc = "Toggle Terminal" })
 
 vim.keymap.set("n", "<leader>yp", function()
-  vim.fn.setreg("+", vim.fn.expand("%"))
+  local path = vim.api.nvim_buf_get_name(0)
+  vim.fn.setreg("+", vim.fs.relpath(LazyVim.root(), path) or vim.fn.fnamemodify(path, ":."))
 end, { desc = "Yank Relative File Path" })
 
 vim.keymap.set("n", "<leader>yP", function()
