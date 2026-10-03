@@ -1,3 +1,5 @@
+wrappers = { cargo = { command = "mbx", env = { MBX_CARGO_SHIM_MODE = "1" } } }
+
 [tools]
 air = "latest"
 argocd = "latest"
@@ -43,6 +45,31 @@ yq = "latest"
 "npm:@mermaid-js/mermaid-cli" = "latest"
 loke = { version = "latest", url = "https://tools.tailnet-redacted.ts.net:8443/downloads/loke-cli/{{ version }}/loke-{{ os(macos=\"darwin\") }}-{{ arch(x64=\"amd64\") }}.tar.gz", version_list_url = "https://tools.tailnet-redacted.ts.net:8443/downloads/loke-cli/latest" }
 mysql-client = "latest"
+mr-boxington = "latest"
+taplo = "latest"
+prettier = "latest"
+markdownlint-cli2 = "latest"
+"github:glennib/stakk" = "latest"
+"npm:codebase-context" = "2.2.0"
+"npm:typescript" = "latest"
+"npm:mitata" = "latest"
+cargo-binstall = "latest"
+"cargo:bacon" = "latest"
+"cargo:cargo-cache" = "latest"
+"cargo:cargo-feature" = "latest"
+"cargo:cargo-generate" = "latest"
+"cargo:cargo-llvm-cov" = "latest"
+"cargo:cargo-make" = "latest"
+"cargo:cargo-nextest" = "latest"
+"cargo:cargo-outdated" = "latest"
+"cargo:cargo-udeps" = "latest"
+"cargo:cargo-update" = "latest"
+"cargo:cargo-watch" = "latest"
+"cargo:cargo-workspaces" = "latest"
+"cargo:create-tauri-app" = "latest"
+"cargo:flamegraph" = "latest"
+"cargo:jj-navi" = "latest"
+"cargo:mdv" = "latest"
 
 [tool_alias]
 loke = "http:loke"
@@ -50,6 +77,10 @@ loke = "http:loke"
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
 trusted_config_paths = ["/home/jacob/Documents/Codex/loke-workspaces"]
+experimental = true
+cargo.binstall_quickinstall = true
+npm.package_manager = "bun"
+pypi.uvx = true
 
 [settings.node]
 gpg_verify = false
