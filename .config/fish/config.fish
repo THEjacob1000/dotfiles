@@ -78,6 +78,7 @@ alias py="python3"
 alias tf="terraform"
 alias cf-tf="cf-terraforming"
 alias bazel bazelisk
+alias ef="exec fish"
 
 # loke built from source, for when the mise-managed one is not what you want
 alias loke-debug="$HOME/Documents/Developer/loke-cli/loke"
