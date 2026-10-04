@@ -100,8 +100,8 @@ staticcheck = "latest"
 "pipx:graphifyy" = "latest"
 "pipx:trafilatura" = "latest"
 "pipx:superclaude" = "latest"
-# ngrok only publishes a rolling "stable" archive, so the version is just a label
-"http:ngrok" = { version = "3", url = "https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-{{ os(macos=\"darwin\") }}-{{ arch(x64=\"amd64\") }}.tgz" }
+# ngrok's versioned archives need a per-release token, so versions come from its archive page and the download stays on the rolling stable build
+"http:ngrok" = { version = "latest", version_list_url = "https://ngrok.com/download/archive/ngrok/ngrok-v3/stable/ngrok_archive", version_regex = 'ngrok-v3-(\d+\.\d+\.\d+)-darwin-arm64\.zip', version_order = "semver", url = "https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-{{ os(macos=\"darwin\") }}-{{ arch(x64=\"amd64\") }}.tgz" }
 # the registry chromedriver's latest is canary, which won't drive stable Chrome
 "http:chromedriver" = { version = "latest", version_list_url = "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE", platforms = { macos-arm64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/mac-arm64/chromedriver-mac-arm64.zip" }, macos-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/mac-x64/chromedriver-mac-x64.zip" }, linux-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/linux64/chromedriver-linux64.zip" } } }
 
