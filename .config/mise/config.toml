@@ -83,7 +83,7 @@ lazygit = "latest"
 neovim = "latest"
 yt-dlp = "latest"
 "npm:@openai/codex" = "latest"
-"npm:@oh-my-pi/pi-coding-agent" = "18.5.0"
+"npm:@oh-my-pi/pi-coding-agent" = "latest"
 "pipx:graphifyy" = "latest"
 "pipx:trafilatura" = "latest"
 "pipx:superclaude" = "latest"
@@ -100,6 +100,7 @@ experimental = true
 cargo.binstall_quickinstall = true
 npm.package_manager = "bun"
 pypi.uvx = true
+minimum_release_age_excludes = ["npm:@oh-my-pi/pi-coding-agent"]
 
 [settings.node]
 gpg_verify = false
