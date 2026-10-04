@@ -1,0 +1,1 @@
+numen completions fish | source
