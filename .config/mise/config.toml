@@ -102,6 +102,8 @@ staticcheck = "latest"
 "pipx:superclaude" = "latest"
 # ngrok only publishes a rolling "stable" archive, so the version is just a label
 "http:ngrok" = { version = "3", url = "https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-{{ os(macos=\"darwin\") }}-{{ arch(x64=\"amd64\") }}.tgz" }
+# the registry chromedriver's latest is canary, which won't drive stable Chrome
+"http:chromedriver" = { version = "latest", version_list_url = "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE", platforms = { macos-arm64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/mac-arm64/chromedriver-mac-arm64.zip" }, macos-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/mac-x64/chromedriver-mac-x64.zip" }, linux-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/linux64/chromedriver-linux64.zip" } } }
 
 [tool_alias]
 loke = "http:loke"
