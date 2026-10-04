@@ -62,6 +62,12 @@ return {
       { "<leader>gD", "<cmd>DiffviewClose<cr>", desc = "Close Diff View" },
       { "<leader>gH", "<cmd>DiffviewFileHistory %<cr>", desc = "Git File History" },
     },
-    opts = {},
+    opts = {
+      keymaps = {
+        view = { { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview" } } },
+        file_panel = { { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview" } } },
+        file_history_panel = { { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview" } } },
+      },
+    },
   },
 }
