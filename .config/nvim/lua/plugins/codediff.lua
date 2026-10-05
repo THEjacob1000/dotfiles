@@ -24,10 +24,30 @@ local function open_jj_diff(rev)
   end
 end
 
+local function preview_on_move(event)
+  local last
+  vim.api.nvim_create_autocmd("CursorMoved", {
+    buffer = event.buf,
+    callback = function()
+      local explorer = require("codediff.ui.lifecycle").get_panel_view(vim.api.nvim_get_current_tabpage())
+      local node = explorer and explorer.tree and explorer.tree:get_node()
+      local data = node and node.data
+      if not data or data.type == "group" or data.type == "directory" or data == last then
+        return
+      end
+      last = data
+      explorer.on_file_select(data)
+    end,
+  })
+end
+
 return {
   {
     "esmuellert/codediff.nvim",
     cmd = "CodeDiff",
+    init = function()
+      vim.api.nvim_create_autocmd("FileType", { pattern = "codediff-explorer", callback = preview_on_move })
+    end,
     keys = {
       { "<leader>jd", function() open_jj_diff("@-") end, desc = "JJ change diff" },
       { "<leader>jD", function() open_jj_diff("fork_point(trunk() | @)") end, desc = "JJ branch diff" },
