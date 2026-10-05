@@ -28,7 +28,18 @@ vim.keymap.set("n", "<leader>gJ", function()
     vim.notify("jjui needs tmux", vim.log.levels.WARN)
     return
   end
-  vim.system({ "tmux", "display-popup", "-E", "-w", "90%", "-h", "90%", "-d", vim.fs.root(0, ".jj") or vim.uv.cwd(), "jjui" })
+  local pane = vim.env.TMUX_PANE
+  local size = vim.system({ "tmux", "display", "-p", "-t", pane, "#{pane_width} #{pane_height}" }):wait().stdout
+  local pane_w, pane_h = size:match("(%d+) (%d+)")
+  local w, h = math.floor(pane_w * 0.9), math.floor(pane_h * 0.9)
+  -- tmux sizes -w/-h percentages against the whole client, so centre on the pane by hand
+  vim.system({
+    "tmux", "display-popup", "-E", "-t", pane,
+    "-w", tostring(w), "-h", tostring(h),
+    "-x", ("#{e|+:#{popup_pane_left},%d}"):format(math.floor((pane_w - w) / 2)),
+    "-y", ("#{e|+:#{popup_pane_top},%d}"):format(math.floor((pane_h - h) / 2)),
+    "-d", vim.fs.root(0, ".jj") or vim.uv.cwd(), "jjui",
+  })
 end, { desc = "jjui (Root Dir)" })
 
 vim.keymap.set("n", "<leader>yp", function()
