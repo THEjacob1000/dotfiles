@@ -120,16 +120,18 @@ The following cli/references and owning skills are mandatory command contracts, 
 | `doctor`, browser management                                                                       | `cli/references/doctor-browser.md`        |
 | `info`, `compositions`, `timeline`, `benchmark`, media preprocessing | `cli/references/upgrade-info-misc.md`     |
 
-For composition variables, also read `/frames → cli/references/core.md` → `core/references/variables-and-media.md`. For `frames.add` and `frames.catalog`, use `/frames → cli/references/registry.md`. Before `frames.present`, read `/frames → cli/references/slideshow.md`; before `frames.keyframes`, read `/frames → cli/references/keyframes.md`. For TTS, transcription, captions, or background removal choices, use `/frames → cli/references/media-use.md`.
+For composition variables, also read `/frames → cli/references/core.md` → `core/references/variables-and-media.md`. For `frames.add` and `frames.catalog`, use `/frames → cli/references/registry.md`. Before `frames.present`, read `/frames → cli/references/slideshow.md`; before `frames.lesson` or `frames.lesson_plan`, read `/frames → references/lesson.md`; before `frames.keyframes`, read `/frames → cli/references/keyframes.md`. For TTS, transcription, captions, or background removal choices, use `/frames → cli/references/media-use.md`.
 
 The specialized commands are deliberately documented by their owning workflows:
 
 ```bash
 frames.present {"project": "/absolute/path/to/project", "port": 3004, "open": false}
+frames.lesson {"spec": {"title": "…", "entry": {"type": "topic", "value": "…"}, "size": 1, "steps": […], "prerequisites": []}, "workspace_root": "/absolute/path/to/repo"}
+frames.lesson_plan {"workspace_root": "/absolute/path/to/repo", "graph": [{"id": "…", "title": "…", "entry": {"type": "topic", "value": "…"}, "prerequisites": []}]}
 frames.beats {"project": "/absolute/path/to/project"}
 frames.keyframes {"project": "/absolute/path/to/project"}
 frames.media_treatment {"capabilities": true}
 ```
 
-`present` serves a navigable deck with presenter and audience synchronization. `beats` is the project beat-grid utility defined in `cli/references/beats.md`. `keyframes` surfaces seek-safe animation and motion-path diagnostics. `media-treatment` discovers, applies, and clears deterministic looks on local footage; start with `"capabilities": true` for the overview and `"capability": "<name>"` for one family. `/frames → cli/references/media-use.md` owns which treatment a brief is asking for. Figma import is unavailable; use exported local assets.
+`present` serves a navigable deck with presenter and audience synchronization. `lesson` serves one grounded, narrated browser lesson and blocks until it ends, returning the learner event log; `lesson_plan` orders a caller-authored lesson dependency graph. `beats` is the project beat-grid utility defined in `cli/references/beats.md`. `keyframes` surfaces seek-safe animation and motion-path diagnostics. `media-treatment` discovers, applies, and clears deterministic looks on local footage; start with `"capabilities": true` for the overview and `"capability": "<name>"` for one family. `/frames → cli/references/media-use.md` owns which treatment a brief is asking for. Figma import is unavailable; use exported local assets.
 
