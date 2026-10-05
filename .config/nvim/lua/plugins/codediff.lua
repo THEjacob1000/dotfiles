@@ -53,12 +53,36 @@ local function bound_wheel(key)
   end
 end
 
+local preexisting_bufs = {}
+
+local function remember_bufs(event)
+  preexisting_bufs[event.data.tabpage] = vim.api.nvim_list_bufs()
+end
+
+local function wipe_session_bufs(event)
+  local keep = {}
+  for _, buf in ipairs(preexisting_bufs[event.data.tabpage] or {}) do
+    keep[buf] = true
+  end
+  preexisting_bufs[event.data.tabpage] = nil
+  vim.schedule(function()
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      local stray = not keep[buf] and vim.bo[buf].buflisted and vim.bo[buf].buftype == "" and not vim.bo[buf].modified
+      if stray and vim.fn.bufwinid(buf) == -1 then
+        vim.api.nvim_buf_delete(buf, {})
+      end
+    end
+  end)
+end
+
 return {
   {
     "esmuellert/codediff.nvim",
     cmd = "CodeDiff",
     init = function()
       vim.api.nvim_create_autocmd("FileType", { pattern = "codediff-explorer", callback = explorer_keys })
+      vim.api.nvim_create_autocmd("User", { pattern = "CodeDiffOpen", callback = remember_bufs })
+      vim.api.nvim_create_autocmd("User", { pattern = "CodeDiffClose", callback = wipe_session_bufs })
       -- scrollbind only follows the focused window, so wheel over an unfocused pane would scroll it alone
       for _, key in ipairs({ "<ScrollWheelUp>", "<ScrollWheelDown>" }) do
         vim.keymap.set("n", key, bound_wheel(key))
