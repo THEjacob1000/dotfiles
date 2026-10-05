@@ -24,21 +24,23 @@ local function open_jj_diff(rev)
   end
 end
 
-local function preview_on_move(event)
-  local last
-  vim.api.nvim_create_autocmd("CursorMoved", {
-    buffer = event.buf,
-    callback = function()
-      local explorer = require("codediff.ui.lifecycle").get_panel_view(vim.api.nvim_get_current_tabpage())
-      local node = explorer and explorer.tree and explorer.tree:get_node()
-      local data = node and node.data
-      if not data or data.type == "group" or data.type == "directory" or data == last then
-        return
-      end
-      last = data
-      explorer.on_file_select(data)
-    end,
-  })
+local function file_row(ctx)
+  local left = {
+    { segments = require("codediff.ui.explorer.formatters.common").prefix(ctx) },
+    { segments = { { text = ctx.filename, hl = ctx.status_hl } }, truncate_priority = 2 },
+  }
+  if ctx.directory ~= "" then
+    left[#left + 1] = {
+      segments = { { text = " " .. ctx.directory, hl = "ExplorerDirectorySmall" } },
+      truncate_priority = 1,
+    }
+  end
+  return { left = left, right = {} }
+end
+
+local function explorer_keys(event)
+  vim.keymap.set("n", "l", "<CR>", { buffer = event.buf, remap = true, desc = "Open diff / expand" })
+  vim.keymap.set("n", "h", "zc", { buffer = event.buf, remap = true, desc = "Collapse folder" })
 end
 
 local function bound_wheel(key)
@@ -56,7 +58,7 @@ return {
     "esmuellert/codediff.nvim",
     cmd = "CodeDiff",
     init = function()
-      vim.api.nvim_create_autocmd("FileType", { pattern = "codediff-explorer", callback = preview_on_move })
+      vim.api.nvim_create_autocmd("FileType", { pattern = "codediff-explorer", callback = explorer_keys })
       -- scrollbind only follows the focused window, so wheel over an unfocused pane would scroll it alone
       for _, key in ipairs({ "<ScrollWheelUp>", "<ScrollWheelDown>" }) do
         vim.keymap.set("n", key, bound_wheel(key))
@@ -68,6 +70,10 @@ return {
     },
     opts = {
       diff = { layout = "side-by-side" },
+      explorer = {
+        view_mode = "tree",
+        formatters = { file = file_row },
+      },
       keymaps = {
         view = {
           toggle_stage = false,
