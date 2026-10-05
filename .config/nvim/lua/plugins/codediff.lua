@@ -75,6 +75,72 @@ local function wipe_session_bufs(event)
   end)
 end
 
+local blame_ns = vim.api.nvim_create_namespace("codediff_jj_blame")
+local blame_cache = {}
+local blame_template = [[if(commit.current_working_copy(), "Uncommitted changes", commit.author().name() ++ ", " ++ commit.author().timestamp().ago() ++ " · " ++ commit.change_id().shortest(8) ++ " " ++ if(commit.description(), commit.description().first_line(), "(no description)")) ++ "\n"]]
+
+local function blame_target(buf)
+  local lifecycle = package.loaded["codediff.ui.lifecycle"]
+  local tabpage = lifecycle and lifecycle.find_tabpage_by_buffer(buf)
+  local session = tabpage and lifecycle.get_session(tabpage)
+  if not session then
+    return
+  end
+  if buf == session.original_bufnr and session.original then
+    return session.git_root, session.original_revision or "@", session.original.relative
+  end
+  if buf == session.modified_bufnr and session.modified then
+    return session.git_root, session.modified_revision or "@", session.modified.relative
+  end
+end
+
+local function render_blame(buf, row, lines)
+  vim.api.nvim_buf_clear_namespace(buf, blame_ns, 0, -1)
+  local win = vim.api.nvim_get_current_win()
+  if lines[row] and vim.api.nvim_win_get_buf(win) == buf and vim.api.nvim_win_get_cursor(win)[1] == row then
+    vim.api.nvim_buf_set_extmark(buf, blame_ns, row - 1, 0, { virt_text = { { "    " .. lines[row], "Comment" } } })
+  end
+end
+
+local function show_blame()
+  local buf = vim.api.nvim_get_current_buf()
+  local root, rev, path = blame_target(buf)
+  if not root or rev == ":0" or vim.bo[buf].modified then
+    return
+  end
+  local key = rev .. "\0" .. path
+  if rev == "@" then
+    local stat = vim.uv.fs_stat(root .. "/" .. path)
+    if not stat then
+      return
+    end
+    key = key .. "\0" .. stat.mtime.sec .. "." .. stat.mtime.nsec
+  end
+  local row = vim.api.nvim_win_get_cursor(0)[1]
+  if blame_cache[key] then
+    return render_blame(buf, row, blame_cache[key])
+  end
+  local cmd = { "jj", "--color=never", "file", "annotate", "-r", rev, "-T", blame_template, path }
+  if rev ~= "@" then
+    table.insert(cmd, 2, "--ignore-working-copy")
+  end
+  vim.system(cmd, { cwd = root, text = true }, function(result)
+    if result.code ~= 0 then
+      return
+    end
+    vim.schedule(function()
+      blame_cache[key] = vim.split(result.stdout, "\n", { plain = true })
+      if vim.api.nvim_buf_is_valid(buf) then
+        render_blame(buf, row, blame_cache[key])
+      end
+    end)
+  end)
+end
+
+local function clear_blame(event)
+  vim.api.nvim_buf_clear_namespace(event.buf, blame_ns, 0, -1)
+end
+
 return {
   {
     "esmuellert/codediff.nvim",
@@ -83,6 +149,8 @@ return {
       vim.api.nvim_create_autocmd("FileType", { pattern = "codediff-explorer", callback = explorer_keys })
       vim.api.nvim_create_autocmd("User", { pattern = "CodeDiffOpen", callback = remember_bufs })
       vim.api.nvim_create_autocmd("User", { pattern = "CodeDiffClose", callback = wipe_session_bufs })
+      vim.api.nvim_create_autocmd("CursorHold", { callback = show_blame })
+      vim.api.nvim_create_autocmd({ "CursorMoved", "BufLeave", "InsertEnter" }, { callback = clear_blame })
       -- scrollbind only follows the focused window, so wheel over an unfocused pane would scroll it alone
       for _, key in ipairs({ "<ScrollWheelUp>", "<ScrollWheelDown>" }) do
         vim.keymap.set("n", key, bound_wheel(key))
