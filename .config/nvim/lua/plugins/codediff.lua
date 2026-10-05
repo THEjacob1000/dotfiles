@@ -41,12 +41,26 @@ local function preview_on_move(event)
   })
 end
 
+local function bound_wheel(key)
+  return function()
+    local win = vim.fn.getmousepos().winid
+    if win ~= 0 and win ~= vim.api.nvim_get_current_win() and vim.wo[win].scrollbind then
+      vim.api.nvim_set_current_win(win)
+    end
+    vim.api.nvim_feedkeys(vim.keycode(key), "n", false)
+  end
+end
+
 return {
   {
     "esmuellert/codediff.nvim",
     cmd = "CodeDiff",
     init = function()
       vim.api.nvim_create_autocmd("FileType", { pattern = "codediff-explorer", callback = preview_on_move })
+      -- scrollbind only follows the focused window, so wheel over an unfocused pane would scroll it alone
+      for _, key in ipairs({ "<ScrollWheelUp>", "<ScrollWheelDown>" }) do
+        vim.keymap.set("n", key, bound_wheel(key))
+      end
     end,
     keys = {
       { "<leader>jd", function() open_jj_diff("@-") end, desc = "JJ change diff" },
