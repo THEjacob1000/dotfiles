@@ -1,6 +1,6 @@
 ---
 name: frames
-description: Create, edit, animate, inspect, validate, preview, or render HyperFrames HTML video compositions and interactive decks with Numen's frames tools. Covers custom videos, product promos, PR and topic explainers, music-driven videos, captions, talking-head overlays, motion graphics, Remotion ports, composition structure, animation, keyframes, creative direction, media, audio mixing, and local catalog components. Read this entry first, then load only the references needed for the task. Figma import, Studio, hosted publishing, and remote asset services are unavailable.
+description: Create, edit, animate, inspect, validate, preview, or render HyperFrames HTML video compositions, interactive decks, and interactive browser lessons with Numen's frames tools. Covers custom videos, product promos, PR and topic explainers, interactive concept lessons, music-driven videos, captions, talking-head overlays, motion graphics, Remotion ports, composition structure, animation, keyframes, creative direction, media, audio mixing, and local catalog components. Read this entry first, then load only the references needed for the task. Figma import, Studio, hosted publishing, and remote asset services are unavailable.
 generated-by: numen-sync
 ---
 
@@ -10,10 +10,10 @@ Frames renders video from HTML. A composition declares clip timing and tracks wi
 
 ## Core workflow: init → lint → render
 
-1. **Start from state.** For an existing project, read its `BRIEF.md` and `STORYBOARD.md` when relevant. Perform the requested edit or operation without restarting intake. Use `frames.timeline` to inspect what plays, where, and when. For a fresh creation request, read [the intent interview](references/intent-interview.md), choose the deliverable workflow below, and read its intake contract in `references/routes/`. An explicit Remotion port goes directly to its guide. A question or hold does not authorize an edit.
-2. **Init and author.** Read [the composition contract](references/core.md) before writing HTML. Use `frames.init` to initialize a new project, then write the confirmed `BRIEF.md`; initialization requires an empty destination. Follow the selected workflow and load domain references only as needed. For code explainers or lessons, supply grounded `code_refs` in the lesson `spec` and the absolute repository `workspace_root` to `frames.init`. Narrate only symbols and behavior resolved from that source.
+1. **Start from state.** For an existing project, read its `BRIEF.md` and `STORYBOARD.md` when relevant. Perform the requested edit or operation without restarting intake. Use `frames.timeline` to inspect what plays, where, and when. For a fresh creation request, read [the intent interview](references/intent-interview.md), choose the deliverable workflow below, and read its intake contract in `references/routes/`. An explicit Remotion port or interactive lesson goes directly to its guide. A question or hold does not authorize an edit.
+2. **Init and author.** Read [the composition contract](references/core.md) before writing HTML. Use `frames.init` to initialize a new project, then write the confirmed `BRIEF.md`; initialization requires an empty destination. Follow the selected workflow and load domain references only as needed. For code explainer videos, supply grounded `code_refs` in the lesson `spec` and the absolute repository `workspace_root` to `frames.init`. Narrate only symbols and behavior resolved from that source.
 3. **Lint and inspect.** Run `frames.lint`, then `frames.check`; fix reported defects. Inspect `frames.snapshot` output at representative times and use `frames.preview` for the live player. Follow the [review loop](references/review-loop.md) for storyboard and final-look approvals. A plan or sketch approval is not final-video approval.
-4. **Render.** After the final approval required by the review contract, call `frames.render` and deliver the local output. For an interactive deck, use `frames.present` instead of assuming an MP4 is the deliverable. Tool arguments and diagnostics live in [the CLI guide](references/cli.md).
+4. **Render.** After the final approval required by the review contract, call `frames.render` and deliver the local output. For an interactive deck, use `frames.present`; for an interactive lesson, use `frames.lesson`. Do not assume an MP4 is the deliverable. Tool arguments and diagnostics live in [the CLI guide](references/cli.md).
 
 ## Deliverable workflows
 
@@ -30,6 +30,7 @@ Choose by the requested output, not an incidental input format. A caption or ove
 | Captions or subtitles on unchanged talking-head footage | [references/embedded-captions.md](references/embedded-captions.md) |
 | Designed graphic overlays on unchanged interview or podcast footage | [references/talking-head-recut.md](references/talking-head-recut.md) |
 | Presentation, pitch deck, or interactive slideshow | [references/slideshow.md](references/slideshow.md) |
+| Interactive lesson or concept explainer the learner steps through and answers | [references/lesson.md](references/lesson.md) |
 | Explicitly port existing Remotion source to HyperFrames | [references/remotion-to-hyperframes.md](references/remotion-to-hyperframes.md) |
 
 ## Domain guides
