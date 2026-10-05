@@ -45,7 +45,7 @@ yq = "latest"
 "npm:@mermaid-js/mermaid-cli" = "latest"
 loke = { version = "latest", url = "https://tools.tailnet-redacted.ts.net:8443/downloads/loke-cli/{{ version }}/loke-{{ os(macos=\"darwin\") }}-{{ arch(x64=\"amd64\") }}.tar.gz", version_list_url = "https://tools.tailnet-redacted.ts.net:8443/downloads/loke-cli/latest" }
 mysql-client = "latest"
-mr-boxington = "readonly-fix"
+mr-boxington = "latest"
 # standalone, since a global mise rust would set RUSTUP_TOOLCHAIN and override every project's rust-toolchain.toml
 rust-analyzer = "latest"
 taplo = "latest"
