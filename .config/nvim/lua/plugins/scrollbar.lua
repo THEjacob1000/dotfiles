@@ -1,7 +1,6 @@
 return {
   {
     "lewis6991/satellite.nvim",
-    dependencies = { "lewis6991/gitsigns.nvim" },
     opts = {
       current_only = false,
       winblend = 0,
@@ -24,10 +23,7 @@ return {
       handlers = {
         cursor = { enable = false },
         diagnostic = { enable = false },
-        gitsigns = {
-          enable = true,
-          overlap = true,
-        },
+        gitsigns = { enable = false },
         marks = { enable = false },
         quickfix = { enable = false },
         search = { enable = false },

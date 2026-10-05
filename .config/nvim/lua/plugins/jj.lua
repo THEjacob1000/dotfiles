@@ -1,4 +1,3 @@
--- jj log/status in-editor; jjui stays at <leader>gJ for the full TUI
 local change_ids = {}
 local refresh_interval = 5000
 
@@ -53,22 +52,23 @@ local function jj_change_id(component)
   return LazyVim.lualine.format(component, unique, "Special") .. short:sub(#unique + 1)
 end
 
-local function is_jj_repo()
-  return jj_root() ~= nil
-end
-
 return {
   {
     "nicolasgb/jj.nvim",
     version = "*",
-    dependencies = { "sindrets/diffview.nvim" },
+    dependencies = { "esmuellert/codediff.nvim" },
     cmd = { "J", "Jread", "Jbrowse" },
     keys = {
       { "<leader>gj", "<cmd>J log<cr>", desc = "jj log" },
+      { "<leader>gs", function() require("jj.picker").status() end, desc = "JJ status" },
+      { "<leader>gf", function() require("jj.picker").file_history() end, desc = "JJ file history" },
+      { "<leader>gb", function() require("jj.annotate").line() end, desc = "JJ annotate line" },
+      { "<leader>gA", function() require("jj.annotate").file() end, desc = "JJ annotate file" },
+      { "<leader>gB", function() require("jj.browse").browse() end, desc = "JJ browse" },
     },
     opts = {
       diff = {
-        backend = "diffview",
+        backend = "codediff",
       },
     },
   },
@@ -77,11 +77,18 @@ return {
     opts = function(_, opts)
       for index, component in ipairs(opts.sections.lualine_b) do
         if component == "branch" or (type(component) == "table" and component[1] == "branch") then
-          opts.sections.lualine_b[index] = { jj_change_id, cond = is_jj_repo }
-          table.insert(opts.sections.lualine_b, index + 1, { "branch", cond = function()
-            return not is_jj_repo()
-          end })
+          opts.sections.lualine_b[index] = { jj_change_id, cond = function() return jj_root() ~= nil end }
           break
+        end
+      end
+      for _, component in ipairs(opts.sections.lualine_x) do
+        if type(component) == "table" and component[1] == "diff" then
+          component.source = function()
+            local summary = vim.b.minidiff_summary
+            if summary then
+              return { added = summary.add, modified = summary.change, removed = summary.delete }
+            end
+          end
         end
       end
     end,

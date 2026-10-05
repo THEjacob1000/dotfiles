@@ -14,6 +14,10 @@ for _, map in ipairs({
   { { "n", "t" }, "<c-_>" },
   { "n", "<leader>gg" },
   { "n", "<leader>gG" },
+  { "n", "<leader>gL" },
+  { "n", "<leader>gl" },
+  { { "n", "x" }, "<leader>gY" },
+  { "x", "<leader>gB" },
 }) do
   pcall(vim.keymap.del, map[1], map[2])
 end
@@ -24,7 +28,7 @@ vim.keymap.set("n", "<leader>gJ", function()
     vim.notify("jjui needs tmux", vim.log.levels.WARN)
     return
   end
-  vim.system({ "tmux", "display-popup", "-E", "-w", "90%", "-h", "90%", "-d", LazyVim.root.git(), "jjui" })
+  vim.system({ "tmux", "display-popup", "-E", "-w", "90%", "-h", "90%", "-d", vim.fs.root(0, ".jj") or vim.uv.cwd(), "jjui" })
 end, { desc = "jjui (Root Dir)" })
 
 vim.keymap.set("n", "<leader>yp", function()
