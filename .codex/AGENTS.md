@@ -144,6 +144,7 @@ Code and doc comments, PR titles and descriptions, commit messages, PR review
 comments and replies to reviewers and bots, issue comments: load the
 `write-as-jacob` skill BEFORE drafting, every time, without being asked. That
 skill is the voice spec and this file does not restate it.
+- Any commit, PR open/edit or PR review: load `jj-pr-flow` first, every time, without being asked.
 - These rules override PR formats supplied by any skill or command.
   A repository PR template still wins; fill only the sections that apply.
 - A PR description is three short paragraphs, ~100 words of prose, outside the
