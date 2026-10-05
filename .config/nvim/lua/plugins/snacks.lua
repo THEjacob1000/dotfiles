@@ -22,6 +22,24 @@ local files_command = (
 return {
   {
     "folke/snacks.nvim",
+    keys = {
+      { "<leader>gg", false },
+      { "<leader>gG", false },
+      { "<leader>gs", false },
+      { "<leader>gS", false },
+      { "<leader>gl", false },
+      { "<leader>gL", false },
+      { "<leader>gb", false },
+      { "<leader>gB", false },
+      { "<leader>gY", false },
+      { "<leader>gf", false },
+      { "<leader>gd", false },
+      { "<leader>gD", false },
+      { "<leader>gi", false },
+      { "<leader>gI", false },
+      { "<leader>gp", false },
+      { "<leader>gP", false },
+    },
     init = function()
       -- with extended-keys on, snacks reads tmux's client_termname (xterm-256color) and misses Ghostty.
       -- A client whose termtype is tmux is the Mac's tmux carrying an ssh session; every terminal
