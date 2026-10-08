@@ -69,3 +69,6 @@ __pycache__/
 
 # Secrets: sourced locally by fish, never committed
 .config/fish/conf.d/env.fish
+
+# Per-machine/work-internal mise tools (e.g. LOKE CLI on the work tailnet)
+.config/mise/conf.d/local.toml
