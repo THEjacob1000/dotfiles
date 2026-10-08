@@ -66,3 +66,6 @@
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Secrets: sourced locally by fish, never committed
+.config/fish/conf.d/env.fish
