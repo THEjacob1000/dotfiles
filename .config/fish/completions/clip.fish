@@ -1,1 +1,1 @@
-complete -c clip -x -a '(__fish_complete_subcommand)'
+complete -c clip -a '(__fish_complete_subcommand)'
