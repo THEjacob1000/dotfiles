@@ -73,6 +73,7 @@ zoxide = "latest"
 fzf = "latest"
 fastfetch = "latest"
 tealdeer = "latest"
+dua = "latest"
 
 [tool_alias]
 loke = "http:loke"
