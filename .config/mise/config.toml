@@ -2,7 +2,6 @@ wrappers = { cargo = { command = "mbx", env = { MBX_CARGO_SHIM_MODE = "1" } } }
 
 [tools]
 air = "latest"
-argocd = "latest"
 "asdf:asdf-community/asdf-bitwarden-secrets-manager" = "latest"
 aws = { version = "latest", symlink_bins = "true" }
 bazelisk = "latest"
@@ -11,7 +10,6 @@ bun = "latest"
 cocoapods = { version = "latest", os = ["macos"] }
 direnv = "latest"
 doppler = "latest"
-duckdb = "latest"
 firebase = "latest"
 gemini = "latest"
 gh = "latest"
@@ -25,8 +23,6 @@ java = "latest"
 jj = "latest"
 jjui = "latest"
 just = "latest"
-mysql = "latest"
-pipx = "latest"
 postgres = "latest"
 python = "latest"
 railway = { version = "latest", exe = "railway" }
@@ -34,15 +30,12 @@ ruby = "latest"
 sentry = "latest"
 sqlite = "latest"
 stripe = "latest"
-task = "latest"
 terraform = "latest"
-terraformer = "latest"
 usage = "latest"
 uv = "latest"
 vercel = "latest"
 yq = "latest"
 "github:rabbitmq/rabbitmqadmin-ng" = "latest"
-"npm:@mermaid-js/mermaid-cli" = "latest"
 loke = { version = "latest", url = "https://tools.tailnet-redacted.ts.net:8443/downloads/loke-cli/{{ version }}/loke-{{ os(macos=\"darwin\") }}-{{ arch(x64=\"amd64\") }}.tar.gz", version_list_url = "https://tools.tailnet-redacted.ts.net:8443/downloads/loke-cli/latest" }
 mysql-client = "latest"
 mr-boxington = "latest"
@@ -51,39 +44,21 @@ rust-analyzer = "latest"
 taplo = "latest"
 prettier = "latest"
 markdownlint-cli2 = "latest"
-"github:glennib/stakk" = "latest"
-"npm:codebase-context" = "2.2.0"
-"npm:typescript" = "latest"
-"npm:mitata" = "latest"
 cargo-binstall = "latest"
 "cargo:bacon" = "latest"
 "cargo:cargo-cache" = "latest"
-"cargo:cargo-feature" = "latest"
-"cargo:cargo-generate" = "latest"
 "cargo:cargo-llvm-cov" = "latest"
 "cargo:cargo-make" = "latest"
 "cargo:cargo-nextest" = "latest"
-"cargo:cargo-outdated" = "latest"
-"cargo:cargo-udeps" = "latest"
-"cargo:cargo-update" = "latest"
 "cargo:cargo-watch" = "latest"
-"cargo:cargo-workspaces" = "latest"
-"cargo:create-tauri-app" = "latest"
-"cargo:flamegraph" = "latest"
-"cargo:jj-navi" = "latest"
-"cargo:mdv" = "latest"
-"cargo:rumdl" = "latest"
 cargo-deny = "latest"
 cargo-insta = "latest"
-zellij = "latest"
 "cargo:wasm-opt" = "latest"
-"cargo:worker-build" = "latest"
 "cargo:magic-wormhole-cli" = "latest"
 "cargo:rustlings" = "latest"
 kubectl = "latest"
 lazygit = "latest"
 neovim = "latest"
-yt-dlp = "latest"
 "npm:@openai/codex" = "latest"
 "npm:@oh-my-pi/pi-coding-agent" = "latest"
 claude = "latest"
@@ -97,14 +72,16 @@ gradle = "latest"
 xcodegen = { version = "latest", os = ["macos"] }
 xcodes = { version = "latest", os = ["macos"] }
 "go:golang.org/x/tools/gopls" = "latest"
-"aqua:securego/gosec" = "latest"
-staticcheck = "latest"
-"pipx:trafilatura" = "latest"
 "pipx:superclaude" = "latest"
 # ngrok's versioned archives need a per-release token, so versions come from its archive page and the download stays on the rolling stable build
 "http:ngrok" = { version = "latest", version_list_url = "https://ngrok.com/download/archive/ngrok/ngrok-v3/stable/ngrok_archive", version_regex = 'ngrok-v3-(\d+\.\d+\.\d+)-darwin-arm64\.zip', version_order = "semver", url = "https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-{{ os(macos=\"darwin\") }}-{{ arch(x64=\"amd64\") }}.tgz" }
 # the registry chromedriver's latest is canary, which won't drive stable Chrome
 "http:chromedriver" = { version = "latest", version_list_url = "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE", platforms = { macos-arm64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/mac-arm64/chromedriver-mac-arm64.zip" }, macos-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/mac-x64/chromedriver-mac-x64.zip" }, linux-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/linux64/chromedriver-linux64.zip" } } }
+zoxide = "latest"
+"go:github.com/owenthereal/upterm/cmd/upterm" = "latest"
+fzf = "latest"
+fastfetch = "latest"
+tealdeer = "latest"
 
 [tool_alias]
 loke = "http:loke"
@@ -120,3 +97,6 @@ minimum_release_age_excludes = ["npm:@oh-my-pi/pi-coding-agent"]
 
 [settings.node]
 gpg_verify = false
+
+[settings.self_update]
+auto = true
