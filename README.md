@@ -47,6 +47,56 @@ That's it. All dotfiles will be symlinked to their correct locations in `~`.
 Stow refuses to overwrite existing real files, so move anything already in place
 out of the way first (`mv ~/.gitconfig ~/.gitconfig.bak`) and re-run `stow .`.
 
+## Zed Vim workflow
+
+`~/.config/zed/settings.json` and `keymap.json` mirror the practical editing
+keys from the local Neovim config and installed LazyVim defaults. Space is the
+leader. Existing themes, panels, collaboration, agent and language/formatter
+settings are unchanged.
+
+| Keys | Action |
+|---|---|
+| `Ctrl-P`, `Space Space`, `Space ff` | Find files |
+| `Space e`, `Space E`, `Space fe` | Focus/toggle the project explorer |
+| `Space sg`, `Space /` | Project grep with an empty query |
+| `Space sw` | Search the word under the cursor or visual selection |
+| ``Ctrl-` `` | Toggle Zed's terminal panel (native shortcut, not Neovim's terminal ban) |
+| `gd`, `gI`, `gy`, `K` | Definition, implementation, type definition, hover (native Zed Vim) |
+| `gr`, `Space ca`, `Space cr`, `Space cf` | References, code actions, rename, format |
+| `Ctrl-H/J/K/L`, `Ctrl-W h/j/k/l` | Navigate splits |
+| `Ctrl-W s/v`, `Space -`, `Space \|` | Horizontal/vertical split |
+| `Space wd`, `Space wm` | Close the active split item / toggle zoom |
+| `H/L`, `[b` / `]b` | Previous/next tab |
+| `Space bb`, `Space` followed by backtick | Alternate file |
+| `Space ,`, `Space fb` | Open tab switcher |
+| `Space bd`, `Space qq` | Close the current file in all panes / close the workspace window |
+| `Ctrl-S`, `:w` | Save using existing format-on-save policy |
+| `Space yp`, `Space yP` | Copy workspace-relative / absolute file path |
+| `x`, `dd`, visual `x` | Delete without replacing the system clipboard |
+| Visual `p` | Paste without yanking the replaced selection |
+
+Normal Vim `/`, `?`, `n/N`, `*`/`#`, `g*`/`g#`, folds and `Ctrl-W` commands
+remain native. Clipboard integration is explicit (`always`, like
+`unnamedplus`), with relative line numbers and four lines of scroll context.
+The old `Ctrl-W` close and `Ctrl-J` dock toggle remain available in insert,
+replace and non-Vim editors, not normal/visual Vim.
+
+This is not a plugin emulation layer: explorer root/cwd variants both use
+Zed's workspace tree, buffer pickers use Zed's tab switcher, and grep uses
+Zed's project search rather than Snacks. Existing Zed ignore rules and search
+options still apply. Visual `Space cf` formats the selection; normal mode
+formats the buffer. Save does not force an exit from insert mode. Neovim's preview,
+undotree, custom window-move menus and jj/tmux integrations have no substitute
+bindings here; no unrelated Git action is advertised as jj parity.
+
+Zed 1.23.2 has a macro-recording limitation: these `SendKeystrokes` delete
+remaps can record both the wrapper and generated deletion, so replay can
+delete twice. Do not record mapped `x`/`dd` in macros. Use native blackhole
+commands instead: `"_` followed by the Delete key for a character, `"_d_`
+for a line, or `"_d` for a visual selection. Ordinary mapped deletes retain
+counts and dot-repeat; verify these and clipboard preservation in the GUI
+when upgrading Zed.
+
 ## Cross-platform
 
 One tree serves both machines. Three mechanisms handle the differences:

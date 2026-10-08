@@ -1,12 +1,11 @@
----
 modelRoles:
-  slow: "openai-codex/gpt-6-astra:medium"
-  plan: "anthropic/claude-opus-5-5:medium"
-  task: "openai-codex/gpt-6.1-sol:medium"
-  advisor: "anthropic/claude-opus-5-5:high"
-  smol: "openai-codex/gpt-6-luna:medium"
-  commit: "openai-codex/gpt-6-luna:low"
-  default: "anthropic/claude-opus-5-5:medium"
+  slow: openai-codex/gpt-6-astra:medium
+  plan: anthropic/claude-opus-5-5:medium
+  task: openai-codex/gpt-6.1-sol:medium
+  advisor: anthropic/claude-opus-5-5:high
+  smol: openai-codex/gpt-6-luna:medium
+  commit: openai-codex/gpt-6-luna:low
+  default: anthropic/claude-opus-5-5:medium
 symbolPreset: nerd
 composer:
   shape: band
@@ -18,8 +17,10 @@ enabledProviders:
   - codex
 statusLine:
   preset: custom
-  leftSegments: []
-  rightSegments: []
+  leftSegments:
+    []
+  rightSegments:
+    []
   contextLine: "off"
   showHookStatus: false
   transparent: true
@@ -29,9 +30,9 @@ task:
   isolation:
     enabled: true
   agentModelOverrides:
-    code-reviewer: "anthropic/claude-opus-5-5:high"
-    security-reviewer: "openai-codex/gpt-6.1-sol:high"
-    build-resolver: "openai-codex/gpt-5.6-terra:medium"
+    code-reviewer: anthropic/claude-opus-5-5:high
+    security-reviewer: openai-codex/gpt-6.1-sol:high
+    build-resolver: openai-codex/gpt-5.6-terra:medium
 dev:
   autoqaConsent: granted
 retry:
