@@ -79,6 +79,7 @@ alias tf="terraform"
 alias cf-tf="cf-terraforming"
 alias bazel bazelisk
 alias ef="exec fish"
+alias ff="fastfetch"
 
 # loke built from source, for when the mise-managed one is not what you want
 alias loke-debug="$HOME/Documents/Developer/loke-cli/loke"
@@ -105,10 +106,12 @@ set -g fish_greeting
 
 # key bindings live in functions/fish_user_key_bindings.fish (vi mode)
 
-if status is-interactive; and not string match -q "screen*" $TERM; and not string match -q "tmux*" $TERM
+# GUI terminals can inherit TMUX while setting their own TERM; do not nest tmux.
+if status is-interactive; and not set -q TMUX; and not string match -q "screen*" $TERM; and not string match -q "tmux*" $TERM
     set -l session_name (if test "$PWD" = "$HOME"; echo main; else; basename $PWD; end)
     exec tmux new-session -A -s $session_name
 end
 
 # opencode
 fish_add_path /home/jacob/.opencode/bin
+zoxide init fish | source

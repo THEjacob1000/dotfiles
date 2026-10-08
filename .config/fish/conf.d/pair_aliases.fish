@@ -1,5 +1,8 @@
+# Global detach-on-destroy is off, so without this exiting the last pair shell drops the client into main.
+set -g _pair_new "new-session -A -s pair \; set-option detach-on-destroy on"
+
 function pair --description 'Start or join the shared tmux pairing session'
-    tmux new-session -A -s pair
+    eval tmux $_pair_new
 end
 
 function pair-allow --description 'Let a GitHub user ssh straight into the pair session (--ro to watch only)'
@@ -17,8 +20,8 @@ function pair-allow --description 'Let a GitHub user ssh straight into the pair 
     end
 
     # Non-interactive ssh has no mise shims on PATH, so pin the real binary.
-    set -l tmux_cmd (command -s tmux)" new-session -A -s pair"
-    set -q _flag_ro; and set tmux_cmd (command -s tmux)" attach -r -t pair"
+    set -l tmux_cmd (command -s tmux)" $_pair_new"
+    set -q _flag_ro; and set tmux_cmd (command -s tmux)" attach -r -t pair \; set-option detach-on-destroy on"
 
     pair-revoke $user 2>/dev/null
     for key in $keys
