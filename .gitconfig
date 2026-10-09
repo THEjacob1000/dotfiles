@@ -2,13 +2,6 @@
 	excludesFile = ~/.gitignore_global
 	hooksPath = ~/.codex/git-hooks
 	ignorecase = false
-[user]
-	email = jacob@jacobdevelops.com
-	name = Jacob Sanderson
-[gpg]
-	format = ssh
-[commit]
-	gpgsign = true
 [http]
 	postBuffer = 524288000
 [filter "lfs"]
@@ -32,8 +25,6 @@
 [url "git@github.com:"]
 	insteadOf = https://github.com/
 
-# Per-machine: signing key, coderabbit machineId. Untracked; see README.
+# Per-machine: identity, commit signing, coderabbit machineId. Untracked; see README.
 [include]
 	path = ~/.gitconfig.local
-[coderabbit]
-	machineId = cli/786bbb8f17b14d7098ac4dbe81d2cac0
