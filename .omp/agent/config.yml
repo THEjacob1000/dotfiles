@@ -1,11 +1,12 @@
+---
 modelRoles:
-  slow: openai-codex/gpt-6-astra:medium
-  plan: anthropic/claude-opus-5-5:medium
-  task: openai-codex/gpt-6.1-sol:medium
-  advisor: anthropic/claude-opus-5-5:high
-  smol: openai-codex/gpt-6-luna:medium
-  commit: openai-codex/gpt-6-luna:low
-  default: anthropic/claude-opus-5-5:medium
+  slow: "openai-codex/gpt-6-astra:medium"
+  plan: "anthropic/claude-opus-5-5:medium"
+  task: "openai-codex/gpt-6.1-sol:medium"
+  advisor: "anthropic/claude-opus-5-5:high"
+  smol: "openai-codex/gpt-6-luna:medium"
+  commit: "openai-codex/gpt-6-luna:low"
+  default: "anthropic/claude-opus-5-5:medium"
 symbolPreset: nerd
 composer:
   shape: band
@@ -17,10 +18,8 @@ enabledProviders:
   - codex
 statusLine:
   preset: custom
-  leftSegments:
-    []
-  rightSegments:
-    []
+  leftSegments: []
+  rightSegments: []
   contextLine: "off"
   showHookStatus: false
   transparent: true
@@ -30,9 +29,9 @@ task:
   isolation:
     enabled: true
   agentModelOverrides:
-    code-reviewer: anthropic/claude-opus-5-5:high
-    security-reviewer: openai-codex/gpt-6.1-sol:high
-    build-resolver: openai-codex/gpt-5.6-terra:medium
+    code-reviewer: "anthropic/claude-opus-5-5:high"
+    security-reviewer: "openai-codex/gpt-6.1-sol:high"
+    build-resolver: "openai-codex/gpt-5.6-terra:medium"
 dev:
   autoqaConsent: granted
 retry:
@@ -58,7 +57,7 @@ retry:
       - openai-codex/gpt-6-luna
     openai-codex/gpt-6-luna:
       - kiro/gpt-5-6-luna
-      - anthropic/claude-haiku-4-5
+      - anthropic/claude-haiku-5-5
     openai-codex/gpt-5.6-sol:
       - kiro/gpt-5-6-sol
       - anthropic/claude-opus-5
@@ -67,7 +66,7 @@ retry:
       - openai-codex/gpt-5.6-sol
     openai-codex/gpt-5.6-luna:
       - kiro/gpt-5-6-luna
-      - anthropic/claude-haiku-4-5
+      - anthropic/claude-haiku-5-5
     openai-codex/gpt-5.6-terra:
       - kiro/gpt-5-6-terra
       - anthropic/claude-opus-5-5
@@ -80,5 +79,15 @@ retry:
     openai-codex/gpt-6.1-sol:
       - kiro/gpt-5-6-sol
       - anthropic/claude-opus-5-5
+    anthropic/claude-haiku-5-5:
+      - kiro/claude-haiku-4-5
+      - openai-codex/gpt-6-luna
 browser:
   relay: true
+compaction:
+  modelThresholds:
+    anthropic/claude-opus-5-5: 550000
+    kiro/claude-opus-5-5: 550000
+    anthropic/claude-haiku-5-5: 100000
+  thresholdTokens: 100000
+  modelThresholdsEnabled: true

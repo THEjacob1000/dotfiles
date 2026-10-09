@@ -1,9 +1,13 @@
 // generated-by: numen-sync
 /**
- * Operator configuration for the quota router. This file is the whole config
- * surface: edit it, run `numen sync`, restart OMP. `NUMEN_QUOTA_ROUTER=off` in
- * the environment disables routing for one process without a sync.
+ * Operator configuration for the quota router: edit it, run `numen sync`,
+ * restart OMP. `numen.jevRouter: false` in the OMP config turns Jev tier routing
+ * off per machine. `NUMEN_QUOTA_ROUTER=off` and `NUMEN_JEV_ROUTER=off` in the
+ * environment disable either for one process without a sync.
  */
+import { existsSync, readFileSync } from "node:fs";
+import * as path from "node:path";
+import { getAgentDir } from "@oh-my-pi/pi-utils";
 import type { RoutingReservePolicy } from "./policy";
 export interface TierConfig {
 	enabled: boolean;
@@ -128,6 +132,14 @@ export function routingEnabled(): boolean {
 	return enabledWithOverride(process.env.NUMEN_QUOTA_ROUTER, config.enabled);
 }
 
+/** `numen.jevRouter` from the OMP config, which `numen sync` writes to `numen.json`. */
+function jevRouterSetting(): boolean {
+	const file = path.join(getAgentDir(), "numen.json");
+	if (!existsSync(file)) return true;
+	const settings: unknown = JSON.parse(readFileSync(file, "utf8"));
+	return !(typeof settings === "object" && settings !== null && "jevRouter" in settings && settings.jevRouter === false);
+}
+
 export function tiersEnabled(): boolean {
-	return enabledWithOverride(process.env.NUMEN_JEV_ROUTER, config.tiers.enabled);
+	return enabledWithOverride(process.env.NUMEN_JEV_ROUTER, config.tiers.enabled && jevRouterSetting());
 }

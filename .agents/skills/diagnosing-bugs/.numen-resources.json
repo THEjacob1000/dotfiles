@@ -1,0 +1,4 @@
+[
+  "agents/openai.yaml",
+  "scripts/hitl-loop.template.sh"
+]
