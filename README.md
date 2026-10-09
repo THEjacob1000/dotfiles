@@ -35,10 +35,27 @@ git clone git@github.com:THEjacob1000/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
 stow .
 
-# 4. Machine-local git settings (signing key is per-machine, so not tracked)
+# 4. Machine-local identity (not tracked, so the repo carries no one's name)
 cat > ~/.gitconfig.local <<'EOF'
 [user]
+	name = Your Name
+	email = you@example.com
+EOF
+mkdir -p ~/.config/jj/conf.d
+cat > ~/.config/jj/conf.d/local.toml <<'EOF'
+[user]
+name = "Your Name"
+email = "you@example.com"
+EOF
+
+# 5. Optional: SSH-signed commits
+cat >> ~/.gitconfig.local <<'EOF'
+[user]
 	signingkey = ~/.ssh/id_ed25519.pub
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = true
 EOF
 ```
 
@@ -105,7 +122,10 @@ One tree serves both machines. Three mechanisms handle the differences:
   immediately on the wrong OS. Homebrew paths, `SSH_AUTH_SOCK`, `TMUX_TMPDIR`
   and the `DISPLAY` fixup live there, not in `config.fish`.
 - **git** — `.gitconfig` ends with `[include] path = ~/.gitconfig.local`, which
-  is untracked and holds the per-machine signing key and CodeRabbit machine ID.
+  is untracked and holds the per-machine identity, signing setup and CodeRabbit
+  machine ID.
+- **jj** — `~/.config/jj/conf.d/local.toml` is untracked and holds `[user]`;
+  jj loads `conf.d/*.toml` after `config.toml`.
 - **tmux** — `if-shell` sets `@copy_cmd`/`@paste_cmd` to `pbcopy`/`pbpaste` on
   macOS and `xclip` on X11; the copy-mode binds reference those.
 
@@ -121,7 +141,8 @@ Not in git; recreate on each machine:
 
 | File | Holds |
 |---|---|
-| `~/.gitconfig.local` | commit signing key, CodeRabbit machine ID |
+| `~/.gitconfig.local` | name/email, commit signing key, CodeRabbit machine ID |
+| `~/.config/jj/conf.d/local.toml` | jj name/email |
 | `~/.config/ghostty/config.local` | `command`, `font-family`, `font-size` |
 | `~/.config/direnv/direnv.toml` | `bash_path` (macOS needs Homebrew bash) |
 | `~/.config/gh/` | OAuth tokens |

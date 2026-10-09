@@ -72,3 +72,4 @@ __pycache__/
 
 # Per-machine/work-internal mise tools (e.g. LOKE CLI on the work tailnet)
 .config/mise/conf.d/local.toml
+.config/jj/conf.d/local.toml
