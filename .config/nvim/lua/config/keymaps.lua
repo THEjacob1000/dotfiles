@@ -22,24 +22,19 @@ for _, map in ipairs({
   pcall(vim.keymap.del, map[1], map[2])
 end
 
--- jjui runs in a tmux popup over the editor, so the in-nvim terminal ban stays intact
+-- jjui swaps into the editor's pane slot (nvim parks in a detached session until jjui exits), since a popup would swallow Alt+hjkl
 vim.keymap.set("n", "<leader>gJ", function()
   if not vim.env.TMUX then
     vim.notify("jjui needs tmux", vim.log.levels.WARN)
     return
   end
-  local pane = vim.env.TMUX_PANE
-  local size = vim.system({ "tmux", "display", "-p", "-t", pane, "#{pane_width} #{pane_height}" }):wait().stdout
-  local pane_w, pane_h = size:match("(%d+) (%d+)")
-  local w, h = math.floor(pane_w * 0.9), math.floor(pane_h * 0.9)
-  -- tmux sizes -w/-h percentages against the whole client, so centre on the pane by hand
-  vim.system({
-    "tmux", "display-popup", "-E", "-t", pane,
-    "-w", tostring(w), "-h", tostring(h),
-    "-x", ("#{e|+:#{popup_pane_left},%d}"):format(math.floor((pane_w - w) / 2)),
-    "-y", ("#{e|+:#{popup_pane_top},%d}"):format(math.floor((pane_h - h) / 2)),
-    "-d", vim.fs.root(0, ".jj") or vim.uv.cwd(), "jjui",
-  })
+  local nvim = vim.env.TMUX_PANE
+  local restore = ("tmux swap-pane -s %s -t $TMUX_PANE; tmux select-pane -t %s"):format(nvim, nvim)
+  local jjui = vim.trim(vim.system({
+    "tmux", "new-session", "-d", "-P", "-F", "#{pane_id}", "-s", "jjui" .. nvim:sub(2),
+    "-c", vim.fs.root(0, ".jj") or vim.uv.cwd(), "jjui; " .. restore,
+  }):wait().stdout)
+  vim.system({ "tmux", "swap-pane", "-s", jjui, "-t", nvim, ";", "select-pane", "-t", jjui }):wait()
 end, { desc = "jjui (Root Dir)" })
 
 vim.keymap.set("n", "<leader>yp", function()
