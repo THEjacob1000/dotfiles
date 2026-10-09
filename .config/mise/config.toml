@@ -1,9 +1,7 @@
 wrappers = { cargo = { command = "mbx", env = { MBX_CARGO_SHIM_MODE = "1" } } }
 
 [tools]
-air = "latest"
 aws = { version = "latest", symlink_bins = "true" }
-bazelisk = "latest"
 biome = "latest"
 bun = "latest"
 cocoapods = { version = "latest", os = ["macos"] }
@@ -17,7 +15,6 @@ node = "latest"
 helm = "latest"
 hurl = "latest"
 hyperfine = "latest"
-java = "latest"
 jj = "latest"
 jjui = "latest"
 just = "latest"
@@ -38,7 +35,6 @@ mr-boxington = "latest"
 rust-analyzer = "latest"
 taplo = "latest"
 prettier = "latest"
-markdownlint-cli2 = "latest"
 cargo-binstall = "latest"
 "cargo:bacon" = "latest"
 "cargo:cargo-cache" = "latest"
@@ -58,7 +54,6 @@ neovim = "latest"
 claude = "latest"
 wrangler = "latest"
 "npm:dotenv-cli" = "latest"
-gdu = "latest"
 jq = "latest"
 ripgrep = "latest"
 tmux = "latest"
@@ -69,7 +64,6 @@ xcodes = { version = "latest", os = ["macos"] }
 # the registry chromedriver's latest is canary, which won't drive stable Chrome
 "http:chromedriver" = { version = "latest", version_list_url = "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE", platforms = { macos-arm64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/mac-arm64/chromedriver-mac-arm64.zip" }, macos-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/mac-x64/chromedriver-mac-x64.zip" }, linux-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/linux64/chromedriver-linux64.zip" } } }
 zoxide = "latest"
-"go:github.com/owenthereal/upterm/cmd/upterm" = "latest"
 fzf = "latest"
 fastfetch = "latest"
 tealdeer = "latest"
