@@ -45,5 +45,5 @@ function pair-ls --description 'List users added with pair-allow'
 end
 
 function pair-host --description "This machine's tailnet hostname"
-    /usr/bin/tailscale status --json | jq -r '.Self.DNSName | rtrimstr(".")'
+    command tailscale status --json | jq -r '.Self.DNSName | rtrimstr(".")'
 end
