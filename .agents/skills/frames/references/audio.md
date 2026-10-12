@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-audio/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-audio/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 
 # HyperFrames Audio
@@ -35,7 +35,7 @@ the first two, on an `<hf-audio-group>` bus (see "One bus for many tracks"):
 | `data-fx-carve`   | the carve's own settings, so it can be re-derived         |
 
 The shipped effect families are gain, EQ (highpass, lowpass, peaking, shelves),
-compressor, limiter, gate, saturate, delay, reverb, chorus, phaser, and bitcrush.
+compressor, limiter, truepeak (lookahead true-peak limiter), gate, saturate, delay, reverb, chorus, phaser, and bitcrush.
 
 Exact JSON for each, and the rules a lane must satisfy: `audio/references/attributes.md`.
 Every effect with its parameters, ranges and units: `audio/references/fx-registry.md`.
@@ -55,7 +55,7 @@ flowchart TB
   bed["music bed<br/>media file"]
 
   subgraph AUTHOR["Authoring - the only things that write attributes"]
-    script["frames.audio_carve<br/>pair detected automatically, dynamic by default"]
+    script["frames.audio_carve<br/>pair detected automatically"]
     analysis["Voiceover carve analysis"]
     script --> analysis
   end
@@ -64,7 +64,7 @@ flowchart TB
   bed --> analysis
 
   subgraph ATTRS["Written onto the bed element"]
-    carveAttr["data-fx-carve<br/>source · strength · dynamic"]
+    carveAttr["data-fx-carve<br/>sources · strength"]
     chainAttr["data-fx-chain<br/>peaking xN + gain, tagged fromCarve"]
     autoAttr["data-automation<br/>a lane per carved parameter"]
   end
@@ -177,10 +177,9 @@ want 1–3 kHz, and taking that from the bed costs the bed far less than turning
 the whole thing down costs the mix. A high-pass on a voice is the standard fix
 for rumble; a low-pass darkens or muffles deliberately.
 
-**Dynamics** (`gain`, `compressor`, `limiter`, `gate`) decide how a track's level
+**Dynamics** (`gain`, `compressor`, `limiter`, `truepeak`, `gate`) decide how a track's level
 behaves over time. Compression narrows the distance between loud and quiet so the
-quiet parts can come up. A limiter is a ceiling - it does not shape anything, it
-guarantees nothing gets past. A gate removes what is below a threshold, which is
+quiet parts can come up. A limiter pulls peaks down toward a ceiling; `limiter` follows the level with no lookahead, so a fast or inter-sample peak can pass. For delivery use `truepeak`, which looks ahead and holds a 4x inter-sample estimate at its ceiling, not the waveform itself. Full-band noise can end up to 1.7 dB over: under a hard delivery limit set the ceiling at least 2 dB below it. A gate removes what is below a threshold, which is
 how you silence room tone between phrases. `gain` is a plain level stage, and it
 is what an automation lane rides when a track has to move out of the way.
 
@@ -322,6 +321,8 @@ of, so only the filters survive - and a bus and its members are one signal path,
 so the bed then runs through the bus's filters AND its own. The
 `audio_group_carve_attr` lint rule catches it.
 
+**One effect across the whole mix: the master bus.** Put `data-fx-chain` on the top-level composition root to process the sum of all clips and groups once, after each group's chain and fader. Put `truepeak` last for a delivery ceiling. A sub-composition root's chain is not applied inside a parent composition. There is no master automation.
+
 **One clip is not a bus.** A group exists to give several tracks one chain, one
 fader and one clock. Wrapping a single clip in a bus buys nothing the clip's own
 `data-fx-chain` does not already do, and it doubles the places a later edit has
@@ -334,7 +335,7 @@ many bands, how wide, how far to favour intelligibility over raw voice energy,
 how far the level may drop, how far under the voice to aim. Those six move
 together in any real mix - a gentle carve is a shallow cut in few bands with
 little ducking, a hard one is deeper in more bands with more - so they are one
-relationship written once, in `carveProfile`. `carve.mjs` defaults to `0.8` - six bands from 250 Hz to 2.5 kHz cut about 7 dB each and 15 dB at 1.6 kHz, with
+relationship written once, in `carveProfile`. `frames.audio_carve` defaults to `0.8` - six bands from 250 Hz to 2.5 kHz cut about 7 dB each and 15 dB at 1.6 kHz, with
 19 dB of level room - because a bed under narration has to get out of the way
 first and be music second; `0.25` (a 6 dB dip in three bands, 6 dB of room) kept
 the bed present but still let it fight the voice, and was judged too weak in
@@ -346,8 +347,8 @@ level match at all.
 **Carve by default - required whenever music plays under a voice.** A bed
 under any voice track (narration, avatar speech, interview, voiceover) gets a
 carve as part of finishing the mix, not as a polish step to get to if there is
-time. Place both tracks, run the command below (default strength `0.8`; add
-`--bed` / `--voice` when detection picks wrong), confirm the written
+time. Place both tracks, run the command below (default strength `0.8`; set
+`bed` / `voice` when detection picks wrong), confirm the written
 `data-fx-carve`, `data-fx-chain` and `data-automation` with `frames.check`,
 and only then render. A volume duck on its own is not a finished mix: it leaves
 the voice and the bed fighting in the 1–3 kHz band and costs the bed all of its
@@ -362,8 +363,7 @@ which is why the lanes show up in the timeline and can be edited afterwards.
 
 **Level matching is part of it.** Spectral carving cannot fix a bed that is
 simply louder than the voice. So the carve also measures how far over the voice
-the bed sits and writes a `gain` stage: held at one value for a static carve,
-driven by an envelope for a dynamic one. That envelope releases slowly on
+the bed sits and writes a `gain` stage: driven by an envelope. That envelope releases slowly on
 purpose - music that snaps back to full the instant a word ends sounds like a
 machine doing it.
 
@@ -391,8 +391,8 @@ and the parameter's own units. Targets are `volume` for the track's level, or
 `fx.<nodeId>.<param>` for an effect's knob.
 
 **Only some parameters can be automated, and a lane on the others is silently
-inert.** A knob is automatable when a Web Audio `AudioParam` backs it. The four
-worklet-based effects - `compressor`, `limiter`, `gate`, `bitcrush` - expose
+inert.** A knob is automatable when a Web Audio `AudioParam` backs it. The
+worklet-based effects - `compressor`, `limiter`, `truepeak`, `gate`, `bitcrush` - expose
 none at all, so no lane on any of their parameters will ever move: to make a
 compressor's behaviour change over time, automate a `gain` stage before it
 instead. `audio/references/fx-registry.md` marks every parameter.
@@ -420,6 +420,6 @@ its source, and the mix is told how much by the chain. So a bed with reverb no
 longer ends exactly at its `data-duration`; that is expected, not a bug.
 
 Beyond that, a mix is verified by rendering and listening. For a carve: the voice
-should be legible without the bed sounding hollowed, and with `dynamic` the bed
+should be legible without the bed sounding hollowed, and the bed
 should come back up between phrases rather than staying flat. If the bed sounds
 notched rather than simply quieter under the voice, the strength is too high - that is the one failure mode with an obvious sound.

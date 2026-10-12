@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/faceless-explainer/references/story-design.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/faceless-explainer/references/story-design.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Story design — faceless explainer video
 
 Use this reference in Step 3 to write `STORYBOARD.md` and `SCRIPT.md` for a faceless explainer — a topic, concept, how-to, listicle, or narrative explainer built from text, with **no product, no website, and no captured assets**.
@@ -216,7 +216,7 @@ Do not rewrite the user's words. Segment the script into frame-sized chunks at s
 The storyboard's top YAML block carries a `music:` field — the BGM mood the audio step retrieves against (e.g. `music: confident minimal tech underscore`). Omitting it falls back to `message:` → `arc:` → a neutral default, so BGM plays unless turned off explicitly.
 
 - **`music: none`** — BGM off (narration, if any, still runs).
-- **`music: none` + no `SCRIPT.md`** - the canonical fully-silent marker: no narration, no BGM, no SFX. The workflow generates nothing and the audio step is a clean skip. Use exactly this spelling when the user asks for a silent or music-free video.
+- **`music: none` + no `SCRIPT.md` + no `sfx:` cues or host audio** - the canonical **fully-silent marker**: no narration, no BGM, no SFX. The workflow generates nothing and the audio step is a clean skip. Use exactly this spelling when the user asks for a silent or music-free video.
 
 ## Frame template
 
@@ -230,7 +230,7 @@ Use the exact fields required by the core storyboard format. This is the narrati
 - duration: rough estimate in seconds
 - transition_in: crossfade
 - status: outline
-- src: compositions/frames/NN-short-name.html
+- src: compositions/frames/fNN-short-name.html
 - type: feature_showcase
 - persuasion: Progressive disclosure
 - beat: comprehension

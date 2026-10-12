@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-registry/references/discovery.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-registry/references/discovery.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Registry discovery
 
 <!-- registry-items: allow=data-composition-id,data-start,data-track-index -->
@@ -14,14 +14,14 @@ frames.catalog
 frames.catalog {}
 ```
 
-- Default output is a readable table. It does not install anything.
-- `--type` accepts `block` or `component`; `--tag` may narrow either result.
-- `--json` is the deterministic agent and CI surface. Select a name, then run `frames.add {"project": "/absolute/path/to/project", "name": "<name>"}`.
+- Output is structured JSON and does not install anything.
+- `type` accepts `block` or `component`; `tag` may narrow either result.
+- Select a name from the response, then run `frames.add {"project": "/absolute/path/to/project", "name": "<name>"}`.
 - Interactive catalog pickers are unavailable; select from the returned JSON and install explicitly.
 
 ## Registry access
 
-The upstream hosted registry manifest is not available in Numen. `frames.catalog` searches Numen's local catalog; `frames.add` installs available catalog items.
+`frames.catalog` fetches and searches the pinned upstream GitHub registry; it needs network access or a warm registry cache but no project, account or separate registry installation. `frames.add` fetches the selected upstream item and its registry dependencies into a project. There is no local Numen catalog or fallback to retired `numen-*` blocks. A failed index fetch or integrity check returns empty `items`/`results` plus top-level `warnings`, not an MCP error. Failed item metadata retains its indexed name/type/source with `item: null` in listings and lookup diagnostics in per-entry `discovery_warnings`, also aggregated into top-level `warnings` before tag, query and limit filtering; queries skip unavailable metadata. Per-entry `warnings` contains item-specific provenance, aggregated at the top level only for returned items. Index/metadata-unavailable and cancellation/deadline warnings mean discovery is incomplete. Asset-origin/license provenance warnings do not mean lookup failed.
 
 ## Reading an item's manifest
 
@@ -51,7 +51,7 @@ Where `<type-dir>` is `examples`, `blocks`, or `components`.
 
 ### Blocks
 
-For an always-current list run `frames.catalog {"type": "block"}`. **The search is the source of truth; the tables below are a hand-maintained sample and under-cover by design** — they group 97 of the registry's 180 blocks by category, so a block missing from them is not evidence the registry lacks it. Only an empty `frames.catalog {"query": "<what you want>"}` is that evidence. Do not grow these tables toward the full set; search instead. **Block name ≠ shader name**: shader-transition blocks (e.g. `domain-warp-dissolve`) wrap a HyperShader runtime whose internal name omits the `-dissolve`/`-warp` suffix — see the showcase HTML installed alongside the block for the canonical name.
+For the pinned catalog list run `frames.catalog {"type": "block"}`. **The search is the source of truth; the tables below are a hand-maintained sample and under-cover by design** — they group 97 of the registry's 180 blocks by category, so a block missing from them is not evidence the registry lacks it. Only an empty `frames.catalog {"query": "<what you want>"}` result without lookup-failure warnings is that evidence; asset-provenance warnings do not invalidate discovery. Do not grow these tables toward the full set; search instead. **Block name ≠ shader name**: shader-transition blocks (e.g. `domain-warp-dissolve`) wrap a HyperShader runtime whose internal name omits the `-dissolve`/`-warp` suffix — see the showcase HTML installed alongside the block for the canonical name.
 
 #### Shader transitions (14)
 

@@ -13,8 +13,6 @@ An interactive lesson is a frames deliverable served in the browser instead of r
    - `open_failed`: the browser could not be opened; `page_path` is the retained page.
    - `plan_required`: the spec exceeds the `limit` of 12 steps; split it with `frames.lesson_plan`.
 
-To turn the same grounded spec into a rendered explainer video instead, pass it to `frames.init` and follow the video workflow.
-
 ## Lesson authoring contract
 
 You are the lesson author. Numen owns validation, grounding, narration synthesis, rendering, delivery, and logging; it does not author or repair lesson content.

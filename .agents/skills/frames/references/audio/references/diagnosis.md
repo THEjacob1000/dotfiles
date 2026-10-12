@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-audio/references/diagnosis.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-audio/references/diagnosis.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Diagnosing audio you cannot hear
 
 The symptom table in `../../audio.md` starts from "it sounds boomy". That presumes
@@ -243,7 +243,7 @@ third voice.wav 1000
 
 In an ordinary take these land within a couple of dB of each other. A low band
 sitting **more than about 4 dB above the 1 kHz band** is a strong boom or mud
-candidate. Measured across one voice damaged several ways: undamaged +0.9,
+candidate. Measured across a single speaker damaged several ways: undamaged +0.9,
 harsh +0.6, dull +2.0; boomy +6.7, muddy +5.8. Treat the figure as indicative
 rather than a threshold — it is one speaker — but the separation is wide, and a
 reading up at +6 is worth raising even when you cannot explain it.

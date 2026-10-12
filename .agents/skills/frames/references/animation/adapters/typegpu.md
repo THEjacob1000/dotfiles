@@ -3,7 +3,7 @@ name: hyperframes-typegpu
 description: TypeGPU and raw WebGPU adapter patterns for HyperFrames. Use when creating GPU-rendered compositions with TypeGPU, raw WebGPU, WGSL fragment shaders, compute pipelines, liquid glass effects, particle systems, or any canvas layer driven by navigator.gpu that responds to HyperFrames hf-seek events.
 ---
 
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-animation/adapters/typegpu.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-animation/adapters/typegpu.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 # TypeGPU / WebGPU for HyperFrames
 
@@ -19,7 +19,7 @@ The render engine auto-passes `--enable-unsafe-webgpu` and `--enable-features=Ca
 - Render from HyperFrames time, not `performance.now()`.
 - Listen for the `hf-seek` event and re-render at exactly that time.
 - Guard against environments where WebGPU is unavailable — the adapter does not check for you.
-- If the composition cannot render without WebGPU, add `data-requires-webgpu` to its composition root. Local capture commands then report an actionable error instead of capturing a no-GPU fallback screen when auto-detection selects software rendering.
+- If the composition cannot render without WebGPU, add `data-requires-webgpu` to its composition root. Local capture commands then report an actionable error instead of capturing a no-GPU fallback screen when auto-detection selects software rendering. To render it on a host without a GPU, pass `allow_software_webgpu: true` to `frames.render`: it opts into SwiftShader Vulkan, potentially several times slower. The upstream `PRODUCER_ALLOW_SOFTWARE_WEBGPU` environment switch is not a Numen setting.
 - After submitting GPU work, register queue completion synchronously with `e.detail.waitUntil(device.queue.onSubmittedWorkDone())`. HyperFrames awaits registered work before screenshots and frame capture.
 
 The adapter sets `window.__hfTypegpuTime` and dispatches an `hf-seek` event with `{ time, waitUntil }` on each seek. While Studio is paused, HyperFrames may dispatch the same time again to keep the WebGPU swapchain presented. Re-render that exact time; do not advance simulation state.

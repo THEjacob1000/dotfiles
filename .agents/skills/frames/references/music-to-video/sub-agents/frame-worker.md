@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/music-to-video/sub-agents/frame-worker.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/music-to-video/sub-agents/frame-worker.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Frame worker — per-frame composition author (frames references/music-to-video.md)
 
 You build one frame's composition file: `compositions/frames/<frame_id>.html`. Siblings build the other frames in parallel. The generic HyperFrames law — sub-composition shape, timeline registration, determinism, layout — lives in `frames references/core.md` (`references/sub-compositions.md`
@@ -10,7 +10,7 @@ Your job: **follow the manual, fetch the materials, assemble.** The storyboard t
 ## Inputs (your dispatch context)
 
 - `PROJECT_DIR` — project root; all paths relative to it.
-- `frame_id` — the frame file's stem, e.g. `02-f2`. Use it verbatim as the composition id, the `window.__timelines` key, and the filename `compositions/frames/<frame_id>.html` (the assembler matches on it).
+- `frame_id` — the frame file's stem, e.g. `f02-hold`. Use it verbatim as the composition id, the `window.__timelines` key, and the filename `compositions/frames/<frame_id>.html` (the assembler matches on it).
 - Your **`## Frame N` block** in `STORYBOARD.md` — its `span_sec`, `pacing`, `mood`, `feel`, and its **`### Groups`** list. Each group is one of:
   - **template** — `template:<id>` + `params` + `role_bindings` (real audiomap anchor seconds) + `copy`.
   - **free_design** — `free_design:{dominant_system, primitives, density_topology}` + `anchors[]` + `copy`.

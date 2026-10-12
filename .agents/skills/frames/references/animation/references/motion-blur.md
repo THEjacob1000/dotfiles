@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-animation/references/motion-blur.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-animation/references/motion-blur.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Motion blur — shutter smear on any animated element
 
 ## Read this part before you blur anything
@@ -69,7 +69,9 @@ that is already in the document, use the attribute.
 | `samplesPerFrame` | 16                                                           | Sub-intervals of the window, so this many plus one copies, each at 1 over this many opacity. Max 64                                                    |
 | `fps`             | the `data-fps` of the target's own composition root, else 30 | Composition frame rate. Pass it explicitly when rendering with an fps override                                                                         |
 
-A key that is none of these four, and a value that is not a finite number, are
+| `sharp` | 1 | 1 paints the crisp element over its smear. 0 hides it while moving, leaving only the soft shutter average with no frame-time edge. Hiding uses a marker attribute, not the element's own visibility, so autoAlpha still works; inline `visibility: visible !important` wins. |
+
+A key that is none of these five, and a value that is not a finite number, are
 both refused by name rather than read as defaults. `{"shutterAngle": "720deg"}`
 is a refusal, not a 720 degree shutter.
 
@@ -88,7 +90,7 @@ nothing except where noted:
 | Console warns that no composition registered a timeline for an element   | The element is outside every `data-composition-id`, or that composition never registers a timeline                  | Put it inside the composition's root, or register the timeline                       |
 | Console warns the attribute is not JSON                                  | Single quotes, unquoted keys, a trailing comma                                                                      | Double-quoted JSON, or an empty attribute for defaults                               |
 | Console warns the attribute is not a JSON object                         | `null`, a bare number, a quoted string, an array                                                                    | An object, or an empty attribute for defaults                                        |
-| Console warns the attribute names no such option                         | A misspelled key, for example `samplesperframe`                                                                     | Use one of the four names above, case-sensitive                                      |
+| Console warns the attribute names no such option                         | A misspelled key, for example `samplesperframe`                                                                     | Use one of the five names above, case-sensitive                                      |
 | Console warns the attribute needs a number for an option                 | A quoted or unit-suffixed value, for example `"720deg"`                                                             | A bare JSON number                                                                   |
 | Console warns it cannot blur a target inside another target              | Both an element and one of its ancestors carry the attribute                                                        | Mark one of them, the one that moves                                                 |
 | Console warns one call cannot blur compositions at different frame rates | One `attachMotionBlur` call named elements in two compositions whose `data-fps` differ                              | One call per composition                                                             |

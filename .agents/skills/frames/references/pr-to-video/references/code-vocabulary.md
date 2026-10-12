@@ -1,9 +1,9 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/pr-to-video/references/code-vocabulary.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/pr-to-video/references/code-vocabulary.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Code vocabulary — the `code-*` animation blocks
 
 <!-- registry-items: allow=data-duration,number-lockup,dark-plus,light-plus,dark-modern,light-modern,dark-2026,light-2026,solarized-light,visual-studio-dark,visual-studio-light,high-contrast,high-contrast-light,clear-dark,clear-light,man-page,red-sands,silver-aerogel,solid-colors -->
 
-**The live search is the source of truth for what the registry has.** The table(s) below are a hand-maintained sample and under-cover by design: run `frames.catalog {"query": "<what you want>"}` — it needs nothing installed — before concluding the registry lacks something. Resolve item names against the local catalog before installing them.
+**The live upstream search is the source of truth for what the registry has.** The tables below are hand-maintained samples and under-cover by design: run `frames.catalog {"query": "<what you want>"}` before concluding the registry lacks something. The query needs network access. Resolve item names from search results, then fetch selected blocks with `frames.add`.
 
 PR videos run on two kinds of moving picture: **code** (the lines that changed) and **behavior** (what the change _does_ at runtime). This file is the vocabulary for both — the `code-*` blocks for code beats, and the **mechanism beat** (an invented animated diagram, or a `flowchart` / `data-chart`) for behavior beats. A video that is _all_ code reads flat; **alternate the two** (story-design plans the rhythm; see "Showing behavior" below).
 

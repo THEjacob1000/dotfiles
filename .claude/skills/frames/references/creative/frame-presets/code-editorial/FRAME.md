@@ -90,7 +90,7 @@ components:
     description: "The brand mark. Fades + scales 0.92→1 on a single emphasis beat; never spins."
 ---
 
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-creative/frame-presets/code-editorial/FRAME.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-creative/frame-presets/code-editorial/FRAME.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 # Code editorial — Frame (video / frame layer)
 
@@ -273,7 +273,7 @@ to the diff; commit/issue numbers are chrome.
 ## Known Gaps
 
 - **Motion intentionally out of scope.** frame.md specifies composition only. Code editorial's motion register — short cross-dissolves, no overshoot/bounce/elastic, coral the only "draw-on", numbers count up, code types on line by line — lives in the workflow's `motion-language.md` + `frames references/animation.md`, not here.
-- **EB Garamond + Inter + JetBrains Mono are not bundled with this Numen preset.** Supply licensed WOFF2 weights 400 + 700, retain their license notices, stage them into `assets/fonts/`, and append the matching `@font-face` declarations to the adopted `frame.md` so previews, snapshots, and renders resolve them offline. Author display at **weight 400** (700 reads as a heavy bold, off-register), and treat italic as the browser-synthesized slant (acceptable for the pull-quote register; add a real italic file only if a brief demands it).
+- **Font provisioning depends on workflow mode.** `frames.build_frame` with `mode: "pr-to-video"` and `preset: "code-editorial"` resolves pinned, hash-verified EB Garamond, Inter and JetBrains Mono WOFF2 faces at weights 400 + 700 (using local assets/cache or fetching missing assets), stages them with license notices into `assets/fonts/`, and appends matching `@font-face` declarations to `frame.md`. Other modes do not acquire preset-owned faces: supply licensed local files and append their loading declarations to the adopted `frame.md`. Author display at **weight 400** (700 reads as a heavy bold, off-register), and treat italic as the browser-synthesized slant (acceptable for the pull-quote register; add a real italic file only if a brief demands it).
 - **Syntax colors (teal `#5DB8A6` / amber `#E8A55A` / status) are fixed decoration**, declared in §Colors — they are NOT in the remixable `colors:` block, so a brand remix never repaints them.
 - **The code itself is the `code-*` registry blocks**, not this preset — this preset owns only the surrounding warm-navy surface + mono chrome.
 - **9:16 / 1:1 are guidance**; verify the legibility floor and that the cream/tile warmth + one-coral discipline hold per ratio.

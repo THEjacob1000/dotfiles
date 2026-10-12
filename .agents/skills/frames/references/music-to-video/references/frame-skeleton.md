@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/music-to-video/references/frame-skeleton.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/music-to-video/references/frame-skeleton.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Frame skeleton (Step 2) — read the music, lay out the frames
 
 At Step 2 **you (the orchestrator)** read `audiomap.json` and write the **skeleton** of
@@ -65,9 +65,9 @@ style: # blank — Step 3 fills it from the chosen frame.md preset
 build_notes: ["one paused timeline per frame", "no remote assets"]
 ---
 
-## Frame 1 — f1
+## Frame 1 — f01-build
 
-- src: compositions/frames/01-f1.html
+- src: compositions/frames/f01-build.html
 - duration: 7.198s # = span length; assembler sums these for cumulative data-start
 - span_sec: [0.0, 7.198] # track seconds; frames tile the track
 - pacing: beat_cut
@@ -78,9 +78,9 @@ build_notes: ["one paused timeline per frame", "no remote assets"]
 
 - TBD (Step 3)
 
-## Frame 2 — f2
+## Frame 2 — f02-hold
 
-- src: compositions/frames/02-f2.html
+- src: compositions/frames/f02-hold.html
 - duration: 10.4s
 - span_sec: [7.198, 17.598]
 - pacing: phrase_flow

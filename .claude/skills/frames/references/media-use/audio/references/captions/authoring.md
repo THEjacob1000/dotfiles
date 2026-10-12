@@ -1,9 +1,9 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/media-use/audio/references/captions/authoring.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/media-use/audio/references/captions/authoring.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Captions
 
 <!-- registry-items: allow=max-width,data-composition-src,frames references/registry.md,blend-mode,caption-style,font-family -->
 
-**The live search is the source of truth for what the registry has.** The table(s) below are a hand-maintained sample and under-cover by design: run `frames.catalog {"query": "<what you want>"}` — it needs nothing installed — before concluding the registry lacks something.
+**The live search is the source of truth for what the registry has.** The table(s) below are a hand-maintained sample and under-cover by design: run `frames.catalog {"query": "<what you want>"}` — it needs network access (or a warm registry cache) but no project; check `warnings` — before concluding the registry lacks something. Index/metadata-unavailable or cancellation/deadline warnings mean failed or incomplete lookup, not no matching item. Asset-origin/license provenance warnings do not mean discovery failed.
 
 Before authoring: confirm the transcript came from the right Whisper model. CLI default `small.en` silently translates non-English audio — see [`../transcribe.md`](../transcribe.md) → "Language Rule" and [`transcript-handling.md`](transcript-handling.md) for the mandatory quality check.
 

@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/media-use/references/grading.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/media-use/references/grading.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Color grading — grade blocks and LUTs
 
 Use `grade` when you need a canonical HyperFrames grading/effects payload for
@@ -80,8 +80,7 @@ on that same real media element with its registered paused GSAP timeline:
 | `--hf-color-grading-ascii`         | 0 to 1  |
 | `--hf-color-grading-dither`        | 0 to 1  |
 
-Author the initial value directly in the media element's inline `style`, then
-use finite `tl.to()` keyframes. Do not use a frame-zero `tl.set()`, CSS
+Once set (inline, in a stylesheet or on a parent), a property overrides the payload's value for that control. Set it only on media you animate: put the tween's first value in the element's inline `style`, then use finite `tl.to()` keyframes. Leave it unset for a static grade. Do not use a frame-zero `tl.set()`, CSS
 animation clocks, timers, random values, or `onUpdate` callbacks. The static
 `data-color-grading` payload remains the fallback and source of the other
 controls.

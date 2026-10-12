@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-animation/techniques.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-animation/techniques.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Visual Techniques Reference
 
 13 proven techniques from production HyperFrames videos. Use these in your storyboard and compositions to create visually rich, professional output. Each technique includes a minimal code pattern you can adapt.
@@ -419,6 +419,38 @@ A fixed window that content slides through — text or images enter from one sid
 ```
 
 Variations: `clip-path: circle(0% at 50% 50%)` → `circle(100%)` for iris reveals. `clip-path: polygon(...)` for custom shapes.
+
+---
+
+### Text masks need room for glyphs
+
+A line box is not the full painted extent of its text. With tight display typography (`line-height: 1` or less), an `overflow: hidden` line mask can cut descenders (`g`, `p`, `y`, `j`) and accents or umlauts even after the entrance has finished.
+
+Give the mask block padding and a compensating negative margin. Set the typography on the mask and inherit it on the line so the padding's `em` units use the text's font size:
+
+```html
+<div class="line-mask">
+  <div class="line">Betreuung</div>
+</div>
+<style>
+  .line-mask {
+    font-size: 200px;
+    line-height: 1;
+    overflow: hidden;
+    padding-block: 0.2em;
+    margin-block: -0.2em;
+  }
+  .line-mask > .line {
+    margin: 0;
+    font: inherit;
+    white-space: nowrap;
+  }
+</style>
+```
+
+Treat `0.2em` as a starting point: verify the actual font, weight, and text at a settled frame, including descenders and accented capitals. Keep the initial displaced line outside the enlarged mask so it remains hidden before the reveal. If the mask is no longer needed after the entrance, another option is to release its clipping properties (`overflow: visible` / `clip-path: none`) with `tl.set(...)` at the settle time.
+
+`data-layout-allow-overflow` suppresses overflow checks for the marked element and its descendants throughout the timeline, including the resting state. A passing `frames.check` does not establish that the glyphs are intact; inspect a settled snapshot of the mask before considering the reveal complete.
 
 ---
 

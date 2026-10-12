@@ -1,10 +1,10 @@
 # NOTICE
 
-The `frames` skill and its references are ported from HyperFrames (https://github.com/heygen-com/hyperframes), skills/ at commit 73489331114b89f42b5bc843765e610525188bcb.
+The `frames` skill and its references are ported from HyperFrames (https://github.com/heygen-com/hyperframes), skills/ at commit e1925d4317fcd13c0e5799cd4767a3e2dd4c9238.
 
 Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0 (see `LICENSE` beside this file).
 
-Modified for Numen: CLI commands and helper scripts were rewritten to the Numen `frames.*` MCP tools, skill names took a `frames-` prefix, remote services were removed, and helper scripts, tests and binary assets were not carried over.
+Modified for Numen: CLI commands and helper scripts map to the Numen `frames.*` MCP tools, separate upstream skills are consolidated into this skill's references, remote services are unavailable, and helper scripts, tests and binary assets are not carried over. Preset fonts are remotely staged from the pinned revision and SHA-256 verified; native Kokoro narration replaces upstream remote voice providers.
 
 Every ported text file carries this attribution in a leading comment, except the JSON files below, because JSON has no comment syntax:
 

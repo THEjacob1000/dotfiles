@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/music-to-video/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/music-to-video/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 
 The frames skill and its references ship with Numen and are projected by `numen sync`; read the ported skill files directly.
@@ -11,12 +11,12 @@ You are the **orchestrator**. Work in `videos/<project>/`. Run the steps in orde
 
 `SKILL_DIR` = this skill directory. `PROJECT_DIR` = `videos/<project-name>/`.
 
-Workflow: Step 0 setup → `hyperframes.json` + `assets/bgm.mp3`; Step 1 analyze → `audiomap.json`; Step 2 skeleton → `STORYBOARD.md` (frames, groups `TBD`); Step 3 plan → complete `STORYBOARD.md` + `frame.md`; Step 4 build → `compositions/frames/NN-*.html`; Step 5 assemble → `index.html`; Step 6 render → `renders/video.mp4`.
+Workflow: Step 0 setup → `hyperframes.json` + `assets/bgm.mp3`; Step 1 analyze → `audiomap.json`; Step 2 skeleton → `STORYBOARD.md` (frames, groups `TBD`); Step 3 plan → complete `STORYBOARD.md` + `frame.md`; Step 4 build → `compositions/frames/fNN-*.html`; Step 5 assemble → `index.html`; Step 6 render → `renders/video.mp4`.
 
 ## Two ideas that shape everything
 
 - **Use measured anchors, not invented annotations.** `frames.beats` is the beat analyzer. Its grid is useful for rhythmic tracks; for calm tracks, make listening-based phrasing decisions and record the chosen cut times explicitly rather than claiming the tool detected phrases or energy changes. Never fabricate unavailable energy, density, rolls, onsets, silence or hard-stop analysis fields.
-- **One frame = one file; groups live inside.** Step 2 cuts the track into **frames**, and each frame becomes one composition file `compositions/frames/NN-<frame_id>.html`, built by one frame-worker. A frame can subdivide into **groups** (each a template or a motion-primitives combo). Extra density goes _inside_ a group, so **frame count tracks distinct treatments, not beats** - a fast track does not blow up the number of sub-agents.
+- **One frame = one file; groups live inside.** Step 2 cuts the track into **frames**, and each frame becomes one composition file `compositions/frames/<frame_id>.html` (`frame_id` uses `fNN-short-name`), built by one frame-worker. A frame can subdivide into **groups** (each a template or a motion-primitives combo). Extra density goes _inside_ a group, so **frame count tracks distinct treatments, not beats** - a fast track does not blow up the number of sub-agents.
 
 ---
 
@@ -71,7 +71,7 @@ Goal: Turn the skeleton into an approved, complete `STORYBOARD.md`.
 Read [`music-to-video/references/planning.md`](music-to-video/references/planning.md), [`storyboard-format.md`](music-to-video/references/storyboard-format.md), [`template-catalog.md`](music-to-video/references/template-catalog.md), [`motion-primitive-catalog.md`](music-to-video/references/motion-primitive-catalog.md), and [`montage.md`](music-to-video/references/montage.md) (only if the user supplied assets). Editing the same file in place, do two things:
 
 1. **Pick the brand.** Choose one preset from `creative/frame-presets` using `creative/references/design-spec.md` (match the track's mood; **only its fonts and colors matter** - templates own composition). Adopt it with `frames.build_frame {"project": "/absolute/path/to/project", "mode": "music-to-video", "preset": "<preset>"}` without brand-token remix, and fill frontmatter `style` (font + a ≤4–6 swatch palette) from the unchanged preset.
-2. **Fill every frame.** Decide its groups and give each a treatment: a matched template from the catalog (with bound params and real audiomap anchors), a free-compose from the primitive catalog, or an asset treatment that **obeys `pacing`**. **Before you free-compose a named look, search the live catalog for it**: for every look, effect, treatment or transition the user asked for - "CRT scanlines", "glitch", "film grain", "shimmer sweep" - run `frames.catalog {"query": "<the look, in plain English>"}` and read the top results. `template-catalog.md` and `motion-primitive-catalog.md` list only this skill's own local materials; the search uses Numen's local catalog registry and needs **nothing installed** - no project, no prior `add`, no account. Free-compose a look only after a search for it came back with nothing that fits. Write the copy. You own WHAT (template / primitives + content + anchors); the frame-worker owns HOW - **never write millisecond tweens into the storyboard**.
+2. **Fill every frame.** Decide its groups and give each a treatment: a matched template from the catalog (with bound params and real audiomap anchors), a free-compose from the primitive catalog, or an asset treatment that **obeys `pacing`**. Before free-composing any named look, search the upstream registry with `frames.catalog {"query": "<the look, in plain English>"}`; the query needs network access but not a project. `template-catalog.md` and `motion-primitive-catalog.md` cover this skill's local materials. Use a suitable result through `frames.add`; hand-author only when the upstream registry has no suitable block. For beat-cut, anchor groups to `audiomap`; for phrase-flow, use music-aware editorial timing.
 
 Call `frames.validate_plan {"project": "/absolute/path/to/project", "mode": "music-to-video", "storyboard": "STORYBOARD.md", "audiomap": "audiomap.json", "templates": "/absolute/path/to/frames/references/music-to-video/references/templates"}` before building. Use the installed skill's actual absolute templates directory. It checks measured duration within 0.05s, nonempty frames, `src`, positive duration, filled groups, track tiling within 0.1s and mutually exclusive treatments. Missing template IDs and beat-cut treatments on phrase-flow frames are warnings; resolve missing templates before building. `frames.check` and `frames.lint` validate compositions later, not this plan.
 
@@ -89,7 +89,7 @@ Create `compositions/frames/`. Read [`music-to-video/sub-agents/frame-worker.md`
 
 ```text
 PROJECT_DIR: <abs path>
-frame_id: <NN-frame_id>              # = the frame file stem, e.g. 02-f2; the composition id
+frame_id: <fNN-short-name>           # = the frame file stem, e.g. f02-build; the composition id
 Your block: the `## Frame N - <frame_id>` block in PROJECT_DIR/STORYBOARD.md
 audiomap: PROJECT_DIR/audiomap.json
 frame.md: PROJECT_DIR/frame.md
@@ -102,7 +102,7 @@ Write to: PROJECT_DIR/compositions/frames/<frame_id>.html
 
 The worker forks the cited materials, converts every anchor to frame-local seconds (`local_t = track_t − span_sec[0]`), gates its groups with 0ms cuts, and writes one seek-safe frame file. **The worker never calls project gates such as `frames.lint`, `frames.check`, `frames.snapshot` or `frames.render`** - those commands operate on the assembled project, which doesn't exist yet, so they'd report on the wrong files. The worker just writes to the contract and stops; you verify after assembly (Step 6). As each worker returns, you can confirm its file landed on disk.
 
-**Gate:** every frame has its `compositions/frames/NN-*.html` on disk.
+**Gate:** every frame has its `compositions/frames/fNN-*.html` on disk.
 
 ---
 
@@ -128,7 +128,7 @@ Run tools on the **assembled project**, not individual frame files:
 
 `frames.snapshot {"project": "/absolute/path/to/project", "at": [0.5, 1.5, 3.0]}`
 
-Inspect at `t=0`, each frame start, the selected measured beats/downbeats and authored phrase-flow cuts, and the final frame. On failure, make the **cheapest safe fix** yourself: edit the offending `compositions/frames/NN-*.html`. Never change duration or audio timing to hide a sync issue. Once the gates pass, pause for user review, then render only on approval (autonomous mode: ask the one kept question - "preview first, or render?" - then deliver the MP4 with the contact sheet):
+Inspect at `t=0`, each frame start, the selected measured beats/downbeats and authored phrase-flow cuts, and the final frame. On failure, make the **cheapest safe fix** yourself: edit the offending `compositions/frames/fNN-*.html`. Never change duration or audio timing to hide a sync issue. Once the gates pass, open `frames.preview {"project": "/absolute/path/to/project"}` and ask whether to render now or what to change; opening the preview does not authorize rendering. This applies in autonomous mode too. Render only after approval:
 
 `frames.render {"project": "/absolute/path/to/project", "quality": "delivery", "output": "renders/video.mp4", "fps": 30}`
 

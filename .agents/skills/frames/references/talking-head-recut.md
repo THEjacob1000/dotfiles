@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/talking-head-recut/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/talking-head-recut/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 
 # Talking Head Recut
@@ -239,8 +239,8 @@ where many cards exceed 30s, consider **chunking the timeline into
 sub-compositions** (one .html per chapter, mounted with
 `data-composition-src`) so the GSAP timeline per file stays manageable - see the `timeline_track_too_dense` HyperFrames lint warning.
 
-`content` can be a plain string ("Title: annualized 5.69%\nNotes: ...") or any JSON
-shape that captures the data. The agent decides the shape per card.
+`contentHints` is a free-form object; its keys and nesting can take whatever
+shape captures the data. The agent decides the shape per card.
 
 **Optional outro.** This skill ships **no fixed brand outro**. If the user wants a closing card, design a neutral one yourself (wordmark + one-line tagline, ~1.5-2s, fade in -> short hold -> fade out), append it to `cards[]`, and extend `composition.durationSeconds` to its `endSec`. Otherwise end on the last content card.
 
@@ -528,15 +528,12 @@ style / layout / frame, Read the corresponding file:
   the data-card-id to your card's id, swap the placeholder content for the
   real takeaway, and you're done.
 - `talking-head-recut/references/layouts/<key>.html` - exact `videoBounds` + `cardBounds` for
-  both landscape and portrait, with a copy-paste JSON snippet for
-  `storyboard.json`'s per-card `layout` field.
+  both landscape and portrait. The storyboard records only `card.zone`.
 - `talking-head-recut/references/frames/<key>.html` - decorative HTML to add as a sibling of
   `#video-wrap`, plus placement instructions for the composition CSS.
 
-Pick `style × layout × frame` **per card** - you can change all three
-between cards as long as the transitions read smoothly. A common rhythm:
-open `editorial × overlay × clean`, switch to `audit × split × hairline`
-for the data card, close on `whiteboard × pip × polaroid`.
+Within the user's chosen style group you may vary the style per card, and
+pick `layout × frame` per card, as long as the transitions read smoothly.
 
 The 10 styles are skill-side design tokens, **not composition-level themes** - they don't need to be declared in `storyboard.composition`; they live
 inside each card's HTML. The `themeId` field can still pick a
@@ -555,11 +552,10 @@ the source video:
   imperatively in the composition's GSAP timeline) - the agent tweens
   `#video-wrap` to a target rect for each layout transition.
 
-Schema does NOT store per-card video bounds. `videoTrack.bounds` is
+Schema does not store per-card video bounds. `videoTrack.bounds` is
 **one-time** at composition level (defaults to full canvas). Video
 "moving" between cards is purely a GSAP animation authored in
-`index.html`. There is no `card.layout` field - earlier versions of this
-doc invented one; the real schema only has `card.zone`.
+`index.html`. The schema only has `card.zone`, not `card.layout`.
 
 **4 composition layouts** (from `talking-head-recut/references/layouts/`) - each is a
 recipe pairing a `zone` with a `#video-wrap` tween target:
@@ -1088,8 +1084,8 @@ clashes with chrome); PiP layouts already have their own pill treatment
 top of `split` / `stack`.
 
 **GSAP target lookup table** for `#video-wrap` per composition layout
-(landscape 1920×1080 - for portrait & 4:5 see `talking-head-recut/references/layouts/*.html`
-which list all three ratios):
+(landscape 1920×1080; portrait is in `talking-head-recut/references/layouts/*.html`, and 4:5 is
+derived from portrait by the proportional scaling described above):
 
 | composition layout                   | typical card.zone | `#video-wrap` GSAP target                                                 | extra css class                            |
 | ------------------------------------ | ----------------- | ------------------------------------------------------------------------- | ------------------------------------------ |
