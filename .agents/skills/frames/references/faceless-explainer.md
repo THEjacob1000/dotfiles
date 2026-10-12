@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/faceless-explainer/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/faceless-explainer/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 
 > **frames references/media-use.md**: Asset resolution (BGM/SFX/images from the HeyGen catalog, brand logos from their official sources) is not available in Numen. Use audio, images and logos the user supplies, and follow `/frames → faceless-explainer/references/media-use.md` for placing and treating them.
@@ -11,7 +11,7 @@ Use this skill to turn a body of text into an explainer video: pick a design sys
 
 You are the orchestrator. Work in `videos/<project>/`. Run steps in order and pass each gate before continuing. User-gated steps are Step 0, Step 3, and Step 6. Read `brief-contract.md` before Step 0 - it defines the gate types and how `BRIEF.md`'s `flow`/`storyboard` derive the mode that governs the Step 3/4/6 gates. Do every step yourself except Step 5, where you dispatch one sub-agent per frame. Do not put design or motion rules here; those live in the frame-worker sub-agent, this skill's local `animation/rules` + `animation/blueprints`, and `frames references/creative.md`.
 
-Workflow: Step 0 setup → `hyperframes.json`; Step 1 brief → `capture/extracted/`; Step 2 design system → `frame.md`; Step 3 storyboard/script → `STORYBOARD.md` and `SCRIPT.md`; Step 3.1 audio → `audio_meta.json`; Step 4 visual design → enriched `STORYBOARD.md`; Step 5 frames → `compositions/frames/NN-*.html` and `index.html`; Step 6 final render → `renders/video.mp4`.
+Workflow: Step 0 setup → `hyperframes.json`; Step 1 brief → `capture/extracted/`; Step 2 design system → `frame.md`; Step 3 storyboard/script → `STORYBOARD.md` and `SCRIPT.md`; Step 3.1 audio → `audio_meta.json`; Step 4 visual design → enriched `STORYBOARD.md`; Step 5 frames → `compositions/frames/fNN-*.html` and `index.html`; Step 6 final render → `renders/video.mp4`.
 
 ---
 
@@ -23,7 +23,7 @@ Goal: Enter with a confirmed brief, create the HyperFrames project, and make the
 
 Initialize only if `hyperframes.json` is missing. Name `<project>` from the topic in kebab-case, such as `compound-interest-explained`; never use workspace name or timestamp.
 
-`frames.init {"project": "/absolute/path/to/project", "example": "blank", "skill": "frames references/faceless-explainer.md"}`
+`frames.init {"project": "/absolute/path/to/project", "example": "blank", "skill": "faceless-explainer"}`
 
 After init, let `<PROJECT_ROOT>` be `videos/<project>` and use it as the working directory for subsequent project-relative paths. In commands below, `.` means `<PROJECT_ROOT>`; never write `.media`, `capture`, or output files in the caller directory.
 
@@ -46,7 +46,7 @@ Save the user's full input verbatim, then create the synthetic capture package b
 
 If the user pasted a script or wants their wording kept, save it verbatim as `user_script.txt`; `VO_MODE` (verbatim or restructured) comes from `BRIEF.md` - the intent layer asks it when a script arrives. Ask once here only if the brief somehow lacks it, and store the answer for Step 3.
 
-Do **not** run `frames.capture` (there is no URL). Do not create `asset-descriptions.md` or populate `capture/assets/` - faceless visuals are invented in Steps 4-5, not captured. The one exception: if the user supplied a real image, place it under `public/<basename>` and note it for Step 3.
+Do **not** run `frames.capture` (there is no URL). Do not create `asset-descriptions.md` or populate `capture/assets/` - faceless visuals are invented in Steps 4-5, not captured. Supplied images belong under `public/<basename>`; supplied local font files belong under `assets/fonts/` (see Step 2).
 
 **Gate:** `capture/extracted/visible-text.txt` and `capture/extracted/tokens.json` exist; you can state the explainer's topic and audience in one clear sentence.
 
@@ -54,9 +54,22 @@ Do **not** run `frames.capture` (there is no URL). Do not create `asset-descript
 
 ## Step 2: Design System
 
-When `BRIEF.md` names a `style_preset`, use it; otherwise read `creative/references/design-spec.md` and choose the preset whose look best fits the topic, tone, and audience. Adopt it with `frames.build_frame {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "preset": "<preset>", "tokens": "capture/extracted/tokens.json"}`. The tool writes `frame.md`, stages a supplied caption skin and local fonts, remixes colors by semantic role and display/body font families from tokens, clamps supported font weights, and checks contrast without changing preset keys, geometry or components. Empty brand colors/fonts retain the corresponding preset values; do not hand-edit unrelated parts.
+When `BRIEF.md` names a `style_preset`, use it; otherwise read `creative/references/design-spec.md` and choose the preset whose look best fits the topic, tone, and audience. Adopt it with `frames.build_frame {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "preset": "<preset>", "tokens": "capture/extracted/tokens.json"}`. The tool writes `frame.md`, stages a supplied caption skin, remixes colors by semantic role and display/body font families from tokens, clamps supported font weights, and checks contrast without changing preset keys, geometry or components. Empty brand colors/fonts retain the corresponding preset values; do not hand-edit unrelated parts.
 
-**Gate:** `frame.md` exists from a named preset, and (when the preset ships one) `.hyperframes/caption-skin.html` exists; the chosen preset is recorded in `BRIEF.md`.
+**Font provisioning:** In faceless mode, `build_frame` stages existing local faces only for families named in `tokens.json`; it does not acquire preset fonts. An empty `staged_fonts` is expected when `fonts` is empty. For preset-only typography, keep `fonts` empty to preserve the preset's roles and weights, then provision its local faces after adopting the design. Broadside needs Barlow weights 400, 600, 700, 800 and 900, plus IBM Plex Mono 500, but supplies no font files. Numen has no general font-search/acquisition tool; use supplied licensed files or an authorized download from the font's official source, retaining license notices. Place the six faces under `assets/fonts/` with the filenames below and append this loading block to the adopted `frame.md`. Workers paste it inside their templates. If `build_frame` is rerun, reappend the block because it regenerates `frame.md`. For explicitly supplied brand fonts, the existing tokens-based staging path remains available. Font names alone do not provision files, and the worker cannot fetch missing faces.
+
+```html
+<style>
+@font-face{font-family:"Barlow";font-weight:400;font-style:normal;font-display:block;src:url("assets/fonts/Barlow-400.woff2") format("woff2");}
+@font-face{font-family:"Barlow";font-weight:600;font-style:normal;font-display:block;src:url("assets/fonts/Barlow-600.woff2") format("woff2");}
+@font-face{font-family:"Barlow";font-weight:700;font-style:normal;font-display:block;src:url("assets/fonts/Barlow-700.woff2") format("woff2");}
+@font-face{font-family:"Barlow";font-weight:800;font-style:normal;font-display:block;src:url("assets/fonts/Barlow-800.woff2") format("woff2");}
+@font-face{font-family:"Barlow";font-weight:900;font-style:normal;font-display:block;src:url("assets/fonts/Barlow-900.woff2") format("woff2");}
+@font-face{font-family:"IBM Plex Mono";font-weight:500;font-style:normal;font-display:block;src:url("assets/fonts/IBMPlexMono-500.woff2") format("woff2");}
+</style>
+```
+
+**Gate:** `frame.md` exists from a named preset, and (when the preset ships one) `.hyperframes/caption-skin.html` exists; the chosen preset is recorded in `BRIEF.md`. Every font family/weight/style selected for workers has a real local file and a matching loading declaration in `frame.md`.
 
 ---
 
@@ -66,7 +79,7 @@ Goal: Turn the text into an approved frame-by-frame teaching plan.
 
 Read `creative/references/story-spine.md` (hook language, value-before-evidence, storyboard-as-proposal, source-traceable visuals), `faceless-explainer/references/story-design.md`, `animation/blueprints-index.md`, `storyboard-format.md`, and `script-format.md`. Use them to write `STORYBOARD.md` and, when narration is needed, `SCRIPT.md`. Set the frontmatter `duration:` from the brief's `length` - a rough expectation; assembly reports where the cut lands against it.
 
-Before writing a script or narration about code or a technical topic from a repository, ground it. For every symbol, file, or behaviour shown or narrated, write a lesson spec whose steps carry `code_refs` (`{"path": "<file relative to the workspace root>", "item_path": "<module, type or method path>"}`) and pass it to `frames.init` with the authored lesson object as `spec` and the absolute repository path as `workspace_root`. The lesson tool resolves each ref against the workspace and fails on any it cannot ground; write script narration and show code only from the grounded source it returns. Fix or drop a ref that fails rather than narrating from memory.
+Before scripting about repository code, read the exact files and symbols the video explains. Show code verbatim from those files and narrate only behaviour the source shows. Fetch a needed revision into a separate workspace without modifying the caller's tree.
 
 Use `story-design.md` for the explainer structure (concept / how-to / listicle / story), hook strategy, clarity techniques, emotional beats, the type-enum mapping, and `VO_MODE`. The video's sequence comes from **narrative design, not the input text's paragraph order** - reorder, merge, omit, compress. As a **soft guide**, consult the role→blueprint menu in `animation/blueprints-index.md`: for each beat, write the voiceover in the shape its candidate blueprint implies and tag that candidate `blueprint:` id when one fits. Teaching truth still decides which beats exist - never force a beat to fit a blueprint, and never invent a beat just because a proven shape is available. Faceless visuals are invented downstream, so frames do **not** carry an asset inventory: leave `asset_candidates` empty unless the user supplied a real `public/<basename>` image. Use the exact required fields from the storyboard and script references.
 Parse the draft with `frames.storyboard {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "storyboard": "STORYBOARD.md"}` and resolve malformed fields before review. The tool reads the authored plan; it does not invent the teaching story or replace source grounding.
@@ -82,13 +95,14 @@ After drafting, run the review loop's plan pass - `review-loop.md` § 1: present
 
 Goal: Generate narration, word timings, music, and audio metadata from the approved script.
 
-Narration uses the host's configured Numen voice engine, not a provider login or voice download. Optional `bgm` names supplied local audio; `sfx_library` names a supplied local SFX manifest and audio directory for the later pass.
+Narration uses native Kokoro v1.0 with 54 voice IDs (default `af_heart`, speed `1.0`), not a provider login or voice download. `frames.narrate` normalizes each take to -16 LUFS by default (`target_lufs` overrides), transcribes the resulting audio to obtain word timestamps, and records measured durations. For generated script lines, it aligns the script's words to those transcript timestamps; supplied audio uses transcript words and timings directly. Kokoro synthesis produces mono 24 kHz WAV; supplied `audio` lines keep their sample rate and channels, and need `language` for non-English recordings rather than the default voice's language. Optional `bgm` names supplied local audio; `sfx_library` names a supplied local SFX manifest and audio directory for the later pass.
 
-Start audio after Step 3 approval; let it run alongside Step 4 when the host supports background calls. **Choose the narration voice from the user's ask before invoking.** Numen has one voice, `numen` (see `media-use/audio/references/tts.md`). If the request named another voice, gender or tone, say it is unavailable and offer a recorded take instead. Call `frames.narrate {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "command": "generate", "script": "SCRIPT.md", "storyboard": "STORYBOARD.md", "out": "audio_meta.json", "voice": "numen", "speed": 1.0}` to generate, normalize and transcribe narration and write measured voice/word metadata. Use only supplied BGM/SFX; hosted catalog retrieval and HeyGen audio remain unavailable.
+Start audio after Step 3 approval; let it run alongside Step 4 when the host supports background calls. Choose a Kokoro voice from the user's ask; otherwise read the remembered `voice` with `frames.media_prefs` before falling back to `af_heart`. Say which voice was used and record an explicit pick with `frames.media_prefs`. Call `frames.narrate {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "command": "generate", "script": "SCRIPT.md", "storyboard": "STORYBOARD.md", "out": "audio_meta.json", "voice": "<kokoro-voice-id>", "speed": 1.0}`. Transcription language defaults from the voice prefix: a/b→en, e→es, f→fr, h→hi, i→it, j→ja, p→pt, z→zh; `language` overrides it. Use only supplied BGM/SFX; hosted catalog retrieval and HeyGen audio remain unavailable.
+Use a remembered voice only if it is one of the 54 Kokoro IDs; otherwise use `af_heart` and say so.
 
-Use `music: none` in the STORYBOARD.md top YAML block to turn BGM off. Combined with no `SCRIPT.md`, treat the project as fully silent: no narration, BGM, or SFX. With narration, `music: none` turns off only BGM.
+Use `music: none` in the STORYBOARD.md top YAML block to turn BGM off. The fully-silent marker additionally requires no `SCRIPT.md`, no `sfx:` cues and no host audio; together these mean no narration, BGM or SFX. With narration, `music: none` turns off only BGM.
 
-**Gate:** narration and any needed timings are ready, or the project is marked silent (`music: none` + no `SCRIPT.md`).
+**Gate:** narration and any needed timings are ready, or the project is marked silent (`music: none`, no `SCRIPT.md`, and no `sfx:` cues or host audio).
 
 ---
 
@@ -107,7 +121,7 @@ Edit `STORYBOARD.md` in place. Do not create another storyboard. Use `frame.md` 
 
 Read `faceless-explainer/references/visual-design.md`, `animation/blueprints-index.md`, `faceless-explainer/references/motion-language.md`, and `animation/rules-index.md`. Use `visual-design.md` for the method (the time-coded shot sequence, the inline Layout vocabulary, and the invented-visual treatment), plus the required `## Video direction` block. Use `animation/blueprints-index.md` to pick each frame's shot shape. Use `motion-language.md` (the motion vocabulary + the motion doctrine) and `animation/rules-index.md` (valid rule names) for motion - do not invent motion names.
 
-**Search the live catalog before you invent any named look.** A faceless explainer invents every visual, which is exactly when a hand-authored rebuild of an existing block is most likely. For every look, effect, treatment or transition the brief names - "CRT scanlines", "glitch", "film grain", "shimmer sweep", "confetti burst" - run `frames.catalog {"query": "<the look, in plain English>"}` and read the top results BEFORE you write that look into `STORYBOARD.md`. The search needs **nothing installed**: no project, no prior `add`, no account. It ranks the local catalog registry (~400 blocks and components) from any directory. A block that already does the job becomes the frame's `focal` - name it here so Step 5's workers install and customize it. Invent a visual only after a search for it came back with nothing that fits.
+**Search the upstream registry before inventing any named look.** For each requested look, effect, treatment or transition, run `frames.catalog {"query": "<the look, in plain English>"}` and read the top results before writing it into `STORYBOARD.md`. The query needs network access; it does not need a project. A block that fits becomes the frame's `focal`; Step 5 pre-installs it once before dispatch with `frames.add {"name": "<block>", "project": "/absolute/path/to/project"}`, and its worker customizes it. Hand-author only when the registry has no suitable result.
 
 For every frame, write a **time-coded shot sequence** into `STORYBOARD.md` per `visual-design.md`'s method: pick the frame's blueprint (or compose), instantiate it with THIS frame's **invented** content, and pace each Scene's reveal to the voiceover so the frame develops across its full duration instead of front-loading then freezing. Because the explainer is faceless, `focal`/`roles` name the **invented visual elements** (a hero word, a diagram node, a data-viz series) - you are designing them, not selecting captured assets. State layout and motion **inline** per Scene (vocabularies in `visual-design.md` and `motion-language.md`). Add one video-wide `## Video direction` block.
 
@@ -123,20 +137,29 @@ Goal: Build every storyboard frame as an HTML composition and assemble the playa
 
 Wait for narration to finish, then call `frames.narrate {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "command": "sync-durations", "audio_meta": "audio_meta.json", "storyboard": "STORYBOARD.md"}`. Real voice duration wins; silent frames keep estimates. After storyboard SFX cues exist, call `frames.narrate {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "command": "fetch-sfx", "audio_meta": "audio_meta.json", "storyboard": "STORYBOARD.md"}` to merge supplied local SFX while preserving voice/BGM metadata. Skip both calls for fully silent projects; never alter measured timing to fit estimates.
 
-Before dispatch, read `subagent-dispatch.md` and call `frames.frame_packets {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "storyboard": "STORYBOARD.md", "out_dir": ".hyperframes/frame-packets"}`. It writes bounded per-frame packets containing project/design paths, the exact frame block, full selected blueprint and cited rule recipes, plus `_role.md` with shared worker core and this workflow's delta. Keep the 48,000-byte bound; reduce selected material rather than truncating source. Dispatch one sub-agent per frame, in parallel or waves. Each gets `_role.md`, its packet, `PROJECT_DIR`, `frame_id`, confirmed-sketch status and canvas size.
+The synchronization report returns usable numeric-frame, nonzero-duration `voices` and their summed `total_duration_s`, plus `updated` duration-row count and `missing` frame numbers without a matching row. Partial or malformed voice entries remain skippable; missing paths and transcripts are represented as empty values, and discarded malformed transcript words produce warnings. Supported music/SFX records and the pending-music flag are preserved in the summary, including default gain/timing for host-authored tracks. The sum includes voices whose storyboard rows are missing; it is narration duration, not the assembled video's total. Synchronization rewrites the storyboard, not `audio_meta.json`.
 
+**Pre-install registry blocks** named across `STORYBOARD.md` before dispatch so parallel workers do not race. For each distinct block name, call `frames.add {"name": "<block>", "project": "/absolute/path/to/project"}` once. Use `frames.catalog {"query": "<block or visual>"}` first. Index/metadata-unavailable and cancellation/deadline `warnings` mean discovery failed or is incomplete; asset-origin/license warnings concern provenance, not lookup completeness. Only an empty result without lookup-failure warnings proves no match. Report installation fetch failures rather than treating them as empty search results.
 
-Workers read only their packet and `frame.md`; they never open `STORYBOARD.md` or the skill documents (the packet inlines what was selected upstream). Each worker writes only `compositions/frames/NN-*.html`. Workers must never edit `STORYBOARD.md`.
+Read [subagent-dispatch.md](subagent-dispatch.md), then call `frames.frame_packets {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "storyboard": "STORYBOARD.md", "out_dir": ".hyperframes/frame-packets"}` to write exact frame blocks, selected blueprint bodies, cited motion recipes and project/design paths into bounded packets, plus `_role.md` from shared worker core and workflow delta. The default 48,000-byte limit is an upstream parity gate: an oversized packet aborts the whole operation before any packets are written. Keep every recipe needed by the approved shot. If that complete context exceeds the default, pass an explicit `max_packet_bytes` large enough for it (for example `80000` for a 61 KB packet); the supplied limit still gates every packet. Do not truncate recipes or remove required citations just to fit.
 
-**Full-bleed backgrounds ride on a `class="clip"` layer, never the `#root`.** A frame's ground (color field / gradient / grid) is its own full-duration background clip - a `background` set on the `#root` / `data-composition-id` element is clip-gated to the frame's window and is not a dependable ground, so dark content can land on the black host `body` and render invisible. The video's base ground is painted by the assembler from `frame.md`'s `canvas` color onto the index `#root`. (Full rule + self-check: `frame-worker-core.md`.)
+Dispatch one sub-agent per frame, in parallel if possible or in waves. Each receives `_role.md`, its one packet and dispatch context with `PROJECT_DIR`, `frame_id`, confirmed-sketch status and `RULES_DIR`. Pass only that frame's confirmed sketch cell, never the whole storyboard sheet.
+
+Workers read only their packet and `frame.md`; they never open `STORYBOARD.md` or the skill documents (the packet inlines what was selected upstream). Each worker writes only `compositions/frames/fNN-*.html`. Workers must never edit `STORYBOARD.md`.
+
+**Full-bleed backgrounds ride on a `class="clip"` layer, never the `#root`.** A frame's ground (color field / gradient / grid) is its own full-duration background clip - a `background` set on the `#root` / `data-composition-id` element is clip-gated to the frame's window and is not a dependable ground, so dark content can land on the black host `body` and render invisible. The video's base ground is painted by the assembler from `frame.md`'s semantic canvas mapping onto the index `#root`. (Full rule + self-check: `frame-worker-core.md`.)
 
 As each worker returns, the orchestrator marks that frame as `animated` in `STORYBOARD.md`.
 
 After audio timings exist, call `frames.captions {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "command": "build", "storyboard": "STORYBOARD.md", "audio_meta": "audio_meta.json", "out": "caption_groups.json"}`. It builds absolute-time caption groups and seek-safe `compositions/captions.html`, using the preset skin and `frame.md` tokens or the built-in pill, and writes empty caption overrides. With no narration words, captions are skipped; honor an explicit caption skip.
 
-Call `frames.assemble {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "storyboard": "STORYBOARD.md", "audio_meta": "audio_meta.json"}` to build standalone `index.html`. It validates frame files and composition ids, supplies root dimensions and canvas ground, mounts frames in order on track 1, captions on 2, voices on 10, BGM on 11 and SFX on 20+, and registers a paused main timeline. Absent audio metadata means silent assembly. BGM volume defaults to 0.12 under narration or 0.9 without it. Leave transitions for the next step; do not hand-rebuild timing or media mounts.
+Call `frames.assemble {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "storyboard": "STORYBOARD.md", "audio_meta": "audio_meta.json"}` to build standalone `index.html`. It validates frame files and composition ids, supplies root dimensions and canvas ground, mounts frames in order on track 1, the captions composition on track 2 with `data-track-kind="captions"`, voices on 10, BGM on 11 and SFX on 20+, and registers a paused main timeline. Absent audio metadata means silent assembly. BGM volume defaults to 0.12 under narration or 0.9 without it. Leave transitions for the next step; do not hand-rebuild timing or media mounts.
 
-The caption skin copied in Step 2 supplies the visual style; when absent use the built-in pill style. Captions may be skipped when there are no narration words or they are explicitly skipped.
+Voice slots use their storyboard frame's duration, not `audio_meta.json`'s measured media duration, matching upstream assembly. An intentional silent frame hold can therefore produce `clip_media_fit` warnings for a shorter voice source without implying that assembly used the wrong frame duration.
+
+The base ground uses the shared semantic palette mapping: the first color key matching cream, paper, canvas, white, bg, ground, surface, base, sand, parchment or bone wins; otherwise it uses the lightest six-digit hex color. With no palette, the root remains transparent over black. Register descriptions are not parsed: Broadside's `cream` token currently maps to the base ground even though its frame contract permits only dark and orange registers. Keep those frame grounds on full-duration background clips.
+
+The caption skin copied in Step 2 supplies the visual style; when absent use the built-in pill style. Bundled preset skins retain the last caption group until the storyboard's composition end, including any silent end hold; the built-in pill instead fades out at the group's word-derived end. This preserves upstream timing behavior. Captions may be skipped when there are no narration words or they are explicitly skipped.
 
 **Gate:** every frame is marked `animated` (collaborative: the sketch sheet was confirmed at Step 4), `index.html` exists, and captions are built or explicitly skipped.
 
@@ -148,6 +171,8 @@ Goal: Verify the assembled video, get user approval, and render the final MP4.
 
 Call `frames.transitions {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "command": "inject", "storyboard": "STORYBOARD.md"}`, then `frames.transitions {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "command": "verify", "storyboard": "STORYBOARD.md", "index": "index.html"}`. The registry supports `crossfade`, `blur-crossfade`, `push-slide`, `zoom-through` and `squeeze`; `cut`, `none` or empty is a hard cut. Direction/duration modifiers are allowed. Injection pads the outgoing wrapper and its internal duration, alternates overlap lanes and stamps the paused main timeline without shifting starts or voice/caption/BGM/SFX timing. Verification must pass before checks.
 
+Injection extends each outgoing frame's root and non-audio timed elements that reach its original boundary by the overlap duration (for example, 0.5s for the default crossfade). Those frame-file duration changes are expected. The inject report lists `applied` boundaries but leaves `verified: 0` because verification is a separate command; use the subsequent verify report's `verified` count as the gate.
+
 `frames.lint {"project": "/absolute/path/to/project"}`
 
 `frames.check {"project": "/absolute/path/to/project"}`
@@ -156,15 +181,14 @@ Call `frames.transitions {"project": "/absolute/path/to/project", "mode": "facel
 
 `snapshot` stitches the captured frames into one contact sheet (`snapshots/contact-sheet.jpg`). Glance at it; if nothing is obviously broken, move on - don't linger here.
 
-If a command fails, surface stderr and stop - don't pile on recovery commands. Fix it yourself: the cheapest safe edit to `compositions/frames/NN-*.html`, then rerun the failed check.
+If a command fails, surface stderr and stop - don't pile on recovery commands. Fix it yourself: the cheapest safe edit to `compositions/frames/fNN-*.html`, then rerun the failed check.
 
-**Known false-positive - do not chase it.** `check` may report a handful of `text_box_overflow` findings of ~1–4px on the **caption** highlight words (selector `#caption-word-*` / `.caption-line`). The caption pill uses a deliberately snug `line-height` and has **no `overflow:hidden`**, so a heavy display glyph's ink spills a few px into the pill's own padding - nothing is actually clipped. Treat these as expected and proceed. Do **not** inflate the caption `line-height` (it balloons the pill, which is worse). Only act on a `text_box_overflow` when it names a **frame** element (`#el-NN-*`), not a caption word.
+**Known false-positive - do not chase it.** `check` may report a handful of `text_box_overflow` findings of ~1–4px on the **caption** highlight words (selector `#caption-word-*` / `.caption-line`). The caption pill uses a deliberately snug `line-height` and has **no `overflow:hidden`**, so a heavy display glyph's ink spills a few px into the pill's own padding - nothing is actually clipped. Treat these as expected and proceed. Do **not** inflate the caption `line-height` (it balloons the pill, which is worse). Only act on a `text_box_overflow` when it names a **frame** element (`#el-fNN-*`), not a caption word.
 
-After checks pass, pause for user review - the review loop's final look (`review-loop.md` § 4): one question, on the final live preview - render now, or what changes? (Autonomous: the one kept question, preview first or render.) Then deliver the MP4 with the contact sheet and the frame ids so revisions can target a single frame.
+After checks pass, open `frames.preview {"project": "/absolute/path/to/project"}` and ask one question: render now, or what changes? This also applies in autonomous mode; opening the preview is not render approval. Render only on explicit approval, including autonomous mode.
 
-Preview: `frames.preview {"project": "/absolute/path/to/project"}`
 
-Render only after user approval (autonomous mode: after the preview-or-render question):
+Render only after explicit user approval:
 
 `frames.render {"project": "/absolute/path/to/project", "quality": "high", "output": "renders/video.mp4"}`
 
@@ -178,7 +202,7 @@ Do not rerun `lint`, `check`, or `snapshot` after rendering unless the user asks
 
 **Formats:** landscape `1920x1080`; portrait `1080x1920`; square `1080x1080` - derived from the destination (brief contract § 2). Set the format once in the storyboard frontmatter.
 
-**Faceless deltas vs a captured-asset workflow:** no Step 1 capture (synthetic `tokens.json` + `visible-text.txt`); no `asset-descriptions.md` and no `capture/assets/`; no asset-staging in Step 4; `asset_candidates` empty by default; every visual is invented by the Step 5 workers (typography / abstract graphics / diagrams / data-viz). A user-supplied `public/<basename>` image is the only real asset path.
+**Faceless deltas vs a captured-asset workflow:** no Step 1 capture (synthetic `tokens.json` + `visible-text.txt`); no `asset-descriptions.md` and no `capture/assets/`; no asset-staging in Step 4; `asset_candidates` empty by default; every visual is invented by the Step 5 workers (typography / abstract graphics / diagrams / data-viz). Supplied images live under `public/<basename>`; local fonts are provisioned in Step 2 under `assets/fonts/`.
 
 **Workflow tools:** `frames.storyboard`, `frames.build_frame`, `frames.narrate` (`generate`, `sync-durations`, `fetch-sfx`), `frames.frame_packets`, `frames.captions`, `frames.assemble` and `frames.transitions` replace upstream helpers. Pass the explicit `faceless-explainer` mode and project root; hyphenated CLI flags become snake_case fields. These local workflow tools do not enable hosted media catalogs, authentication or remote mutations.
 

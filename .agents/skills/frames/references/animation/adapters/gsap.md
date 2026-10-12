@@ -3,7 +3,7 @@ name: hyperframes-gsap-adapter
 description: GSAP animation API reference for HyperFrames. Use when writing seekable GSAP timelines in HyperFrames compositions, including gsap.to(), from(), fromTo(), set(), timeline position parameters, labels, easing, stagger, finite repeats, and transform performance.
 ---
 
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-animation/adapters/gsap.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-animation/adapters/gsap.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 # HyperFrames GSAP
 
@@ -11,7 +11,7 @@ GSAP usage scoped to HyperFrames' seek-driven render model. This skill is the GS
 
 ## HyperFrames Contract
 
-HyperFrames controls GSAP through its `gsap` runtime adapter. Create a paused timeline synchronously, register it on `window.__timelines` with the exact `data-composition-id`, and let HyperFrames seek it.
+HyperFrames controls GSAP through its `gsap` runtime adapter. Create a paused timeline, register it on `window.__timelines` with the exact `data-composition-id` after adding its tweens, and let HyperFrames seek it. Setup may run inside an async callback; register the completed timeline at the end of that callback.
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>

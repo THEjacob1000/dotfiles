@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/media-use/audio/references/captions/transcript-handling.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/media-use/audio/references/captions/transcript-handling.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Transcript Guide
 
 For the `transcribe` CLI invocation, the `.en`-translates-non-English rule, and whisper model selection, see [`../transcribe.md`](../transcribe.md). This file covers what to do with the resulting transcript when authoring captions: input formats, mandatory quality checks, cleaning code, external-API fallbacks.
@@ -37,7 +37,7 @@ After every transcription, **read the transcript and check for quality issues be
 
 1. **Retry with `medium.en`** if the original used `small.en` or smaller:
    ```bash
-   frames.transcribe {"input": "audio.mp3", "model": "medium.en"}
+   frames.transcribe {"project": "/absolute/path/to/project", "input": "audio.mp3", "model": "medium.en"}
    ```
 2. **If `medium.en` also fails** (still >20% music tokens or garbled), tell the user the audio is too noisy for local transcription and suggest:
    - Providing lyrics manually as an SRT/VTT file
@@ -75,7 +75,7 @@ curl https://api.openai.com/v1/audio/transcriptions \
   -F "timestamp_granularities[]=word" \
   -o transcript-openai.json
 
-frames.transcribe {"input": "transcript-openai.json"}
+frames.transcribe {"project": "/absolute/path/to/project", "input": "transcript-openai.json"}
 ```
 
 **Groq Whisper API** (fast, free tier available):
@@ -88,7 +88,7 @@ curl https://api.groq.com/openai/v1/audio/transcriptions \
   -F "timestamp_granularities[]=word" \
   -o transcript-groq.json
 
-frames.transcribe {"input": "transcript-groq.json"}
+frames.transcribe {"project": "/absolute/path/to/project", "input": "transcript-groq.json"}
 ```
 
 ## If No Transcript Exists

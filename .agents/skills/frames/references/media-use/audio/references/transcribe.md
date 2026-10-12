@@ -1,15 +1,15 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/media-use/audio/references/transcribe.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/media-use/audio/references/transcribe.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Transcription
 
 Create normalized word-level timestamps. **Always specify `--model` explicitly** — the CLI default is `small.en`, which silently translates non-English audio into English.
 
 ```bash
-frames.transcribe {"input": "audio.mp3", "model": "small.en"}             # known English
-frames.transcribe {"input": "video.mp4", "model": "small", "language": "es"}  # known Spanish
-frames.transcribe {"input": "audio.mp3", "model": "small"}                # unknown language (auto-detect)
-frames.transcribe {"input": "subtitles.srt"}                           # import existing
-frames.transcribe {"input": "subtitles.vtt"}
-frames.transcribe {"input": "openai-response.json"}
+frames.transcribe {"project": "/absolute/path/to/project", "input": "audio.mp3", "model": "small.en"}             # known English
+frames.transcribe {"project": "/absolute/path/to/project", "input": "video.mp4", "model": "small", "language": "es"}  # known Spanish
+frames.transcribe {"project": "/absolute/path/to/project", "input": "audio.mp3", "model": "small"}                # unknown language (auto-detect)
+frames.transcribe {"project": "/absolute/path/to/project", "input": "subtitles.srt"}                           # import existing
+frames.transcribe {"project": "/absolute/path/to/project", "input": "subtitles.vtt"}
+frames.transcribe {"project": "/absolute/path/to/project", "input": "openai-response.json"}
 ```
 
 ## Language Rule (Non-Negotiable)

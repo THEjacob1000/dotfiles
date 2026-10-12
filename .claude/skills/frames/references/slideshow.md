@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/slideshow/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/slideshow/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 
 Figma import is unavailable in Numen. Use user-exported local assets and supplied brand values; route by the requested deliverable.
@@ -154,7 +154,7 @@ These are hard constraints, not suggestions. A slide that violates them will be 
 - **Lead with the punchline.** The strongest point goes first - on the slide and in the deck order. Investors read left-to-right, top-to-bottom, and they stop.
 - **Bottom-up market sizing only.** Never write "$50B TAM" without showing the math. Build from unit economics up: accounts × ACV, or transactions × take-rate.
 - **Font minimum 30pt equivalent.** At 1920×1080, a headline is 72–96px; body copy is 48px. Never go below 40px for any text the audience must read.
-- **Search the live catalog before hand-building any named visual.** For every look, effect, chart, treatment or transition a slide needs - "CRT scanlines", "glitch", "bar chart race", "shimmer sweep", "terminal window" - run `frames.catalog {"query": "<the visual, in plain English>"}` and read the top results before you author the slide's clips. The search needs **nothing installed**: no project, no prior `add`, no account. It ranks the local catalog registry (~400 blocks and components) from any directory. `frames.add {"project": "/absolute/path/to/project", "name": "<name>"}` drops the block's source into the deck, where you customize it in place. This applies with extra force when porting a source page: a real block beats the simplified approximation the porting rules below forbid.
+- **Search the upstream registry before hand-building a named visual.** For every requested look, effect, chart, treatment or transition, run `frames.catalog {"query": "<the visual, in plain English>"}` and read the top results before authoring slide clips. The query needs network access; it does not need a project. `frames.add {"project": "/absolute/path/to/project", "name": "<name>"}` fetches a selected block into the project for customization. Prefer a suitable block over a simplified approximation when porting a source page.
 
 ## Porting source pages
 
@@ -472,17 +472,15 @@ At handoff, include the local presenter URL printed by the command and the minim
 
 ## Validation
 
-After authoring or editing a slideshow composition, run `frames.lint {"project": "/absolute/path/to/project"}`.
-
 Then run runtime validation with `frames.check {"project": "/absolute/path/to/project"}`.
 
-Treat lint errors and validation `StaticGuard` contract messages as blockers even if a command exits successfully. Fix the file and rerun until lint reports `0 error(s)` and validation reports no runtime errors.
+Treat validation `StaticGuard` contract messages as blockers even if a command exits successfully. Fix the file and rerun `frames.check {"project": "/absolute/path/to/project"}` until it returns `ok: true`.
 
-The slideshow lint rule checks:
+The slideshow validation checks:
 
 - Every `slide.sceneId` resolves to an existing scene (by `data-composition-id`).
 - Every `hotspot.target` slideshow/references a defined `slideSequence` id.
 - Fragment times fall within each slide's `[start, end]` range.
 - No two main-line slides overlap in time.
 
-Fix all violations before previewing. A composition that fails lint will not parse correctly in the player.
+Fix all violations before previewing. A composition that fails validation will not parse correctly in the player.

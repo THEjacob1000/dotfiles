@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-cli/references/compare-and-batch.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-cli/references/compare-and-batch.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Compare and batch rendering
 
 Use these commands for deliberate visual comparison or variable-driven template output. They do not replace `lint`, `check`, final preview approval, or output verification.
@@ -19,12 +19,11 @@ frames.compare {"inputs": ["<path-a>", "<path-b>", "<path-c>"], "at": "<seconds>
 
 Useful options:
 
-- `--at <seconds>` selects the shared comparison time.
-- `--labels <a,b,...>` labels cells in input order.
-- `--out <file>` chooses the sheet path.
-- `--cols <n>` controls its grid.
-- `--json` returns machine-readable results.
-- `--timeout <ms>` changes the per-variant render-ready timeout.
+- `at` selects the shared comparison time.
+- `labels` labels cells in input order.
+- `out` chooses the sheet path.
+- `cols` controls its grid.
+- `timeout` changes the per-variant render-ready timeout in milliseconds.
 
 One sheet accepts at most 16 variants. Extra inputs are truncated with a warning; split larger comparisons into several runs.
 
@@ -50,18 +49,18 @@ Or compare explicit LUT files:
 frames.grade_compare {"project": "/absolute/path/to/project", "for": "source.mp4", "luts": "warm.cube,cool.cube", "out": "grade-compare.png"}
 ```
 
-- `--for` accepts an image or a video. For video input, the command extracts the first frame.
-- Supply exactly one candidate source: `--grades <json>` or `--luts <a.cube,b.cube>`.
-- A neutral baseline is included by default; pass `--no-baseline` only when the baseline is not a useful reference.
-- The command accepts at most 16 candidate grades. With the default neutral baseline, the sheet may contain 17 cells. Extra candidates are truncated with a warning; split larger sets into several runs.
-- `--timeout <ms>` changes the render-ready timeout for the generated comparison composition.
-- Use `--json` for machine-readable output.
+- `for` accepts an image or a video. For video input, the tool extracts the first frame.
+- Supply exactly one candidate source: `grades` (JSON file) or `luts` (comma-separated LUT files).
+- A neutral baseline is always included.
+- The tool accepts at most 16 candidate grades; with the neutral baseline, the sheet may contain 17 cells. Extra candidates are truncated with a warning; split larger sets into several runs.
+- `timeout` changes the render-ready timeout in milliseconds for the generated comparison composition.
+- Output is always machine-readable JSON.
 
 This command helps select a grade. It does not apply the selected grade to the composition or replace `/frames → references/media-use.md` provenance and LUT validation.
 
 ## Batch template renders
 
-`render --batch` accepts either a JSON array of variable objects or an object with a `rows` array:
+`frames.render {"project": "/absolute/path/to/project", "batch": "rows.json"}` reads a batch file containing either a JSON array of variable objects or an object with a `rows` array:
 
 ```json
 {

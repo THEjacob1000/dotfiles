@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-audio/references/attributes.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-audio/references/attributes.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # The three audio attributes
 
 All three go on the `<audio>` / `<video>` element itself, JSON-encoded, so a
@@ -94,9 +94,17 @@ Write these attributes double-quoted, with the JSON's own quotes as `&quot;`. Th
 **A lane on a non-automatable parameter is silently inert.** Automation is
 delivered as native `AudioParam` scheduling, so a knob that no `AudioParam` backs
 cannot move: worklet processor options, a WaveShaper curve and a convolution
-impulse are all set wholesale. `fx-registry.md` marks each parameter; the four
-worklet effects (`compressor`, `limiter`, `gate`, `bitcrush`) have none at all.
+impulse are all set wholesale. `fx-registry.md` marks each parameter; the
+worklet effects (`compressor`, `limiter`, `truepeak`, `gate`, `bitcrush`) have none at all.
 
+## `data-fx-chain` on the root — the master bus
+
+The `data-fx-chain` JSON on the top-level composition root (the element with
+`data-composition-id` that no other composition contains) is the master bus. It
+runs once over the sum of every clip and group, after each group's own chain and
+fader. On a clip or a group `data-fx-chain` keeps its own meaning, and on a
+sub-composition root inside a parent composition it is not applied. The master bus has no
+automation lanes.
 ## `data-fx-carve` — the carve's settings
 
 ```json

@@ -1,11 +1,11 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes/references/routes/faceless-explainer.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes/references/routes/faceless-explainer.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Route: frames references/faceless-explainer.md
 
 - **Input:** A topic, article, notes, or arbitrary text being explained, with no product being marketed and no website to capture.
 - **Output:** A faceless explainer MP4 with invented typography, abstract graphics, diagrams, or data visualization. Sweet spot 30–90s; hard cap about 3 minutes.
 - **Triggers:** "faceless explainer about X", "explain how DNS works as a video", "turn this article into an explainer".
 
-Before writing scripts or narration, ground every shown or narrated symbol, file, and behaviour. Write a lesson spec whose steps carry `code_refs` (`{"path": "<file relative to the workspace root>", "item_path": "<module, type or method path>"}`), then pass it to `frames.init` with the authored lesson object as `spec` and the absolute repository path as `workspace_root`. The lesson tool resolves each ref against the workspace and fails on any it cannot ground; script narration and code on screen only from the grounded source it returns. Fix or drop a ref that fails rather than narrating from memory.
+Before scripting about repository code, read the exact files and symbols the video explains. Show code verbatim from those files and narrate only behaviour the source shows. Fetch a needed revision into a separate workspace without modifying the caller's tree.
 
 ## Interview
 

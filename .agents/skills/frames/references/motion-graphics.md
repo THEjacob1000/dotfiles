@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/motion-graphics/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/motion-graphics/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 
 Figma import is unavailable in Numen. Use user-exported local assets and supplied brand values; route by the requested deliverable.
@@ -63,13 +63,13 @@ Upstream's optional provider keys are not used: asset search and image generatio
 
 The agent workspace is the repository root. Store artifacts under `PROJECT_DIR = videos/<project-name>/`. Use the directory the user supplied, or a short kebab-case name from the intent (`<subject>-motion`); do not use the workspace basename or a timestamp.
 
-Only initialize when `$PROJECT_DIR/hyperframes.json` is absent: `frames.init {"project": "/absolute/path/to/project", "example": "blank", "skill": "frames references/motion-graphics.md"}`. `frames.init` creates the project; it does not update the installed skills.
+Only initialize when `$PROJECT_DIR/hyperframes.json` is absent: `frames.init {"project": "/absolute/path/to/project", "example": "blank", "skill": "motion-graphics"}`. `frames.init` creates the project; it does not update the installed skills.
 
 Never initialize in the workspace root or nest another `hyperframes/` inside `PROJECT_DIR`. Include `project: <PROJECT_DIR>` in project-scoped tool calls.
 
 ### Step 1 - Plan (subagent: Director Part 1)
 
-Before planning any code or technical topic from a repository, ground it. For every symbol, file, or behaviour shown on screen, write a lesson spec whose steps carry `code_refs` (`{"path": "<file relative to the workspace root>", "item_path": "<module, type or method path>"}`) and pass it to `frames.init` with the authored lesson object as `spec` and the absolute repository path as `workspace_root`. The lesson tool resolves each ref against the workspace and fails on any it cannot ground; show code and describe behaviour only from the grounded source it returns. Fix or drop a ref that fails rather than relying on memory.
+Before planning visuals about repository code, read the exact files and symbols the piece explains. Show code verbatim from those files and describe only behaviour the source shows. Fetch a needed revision into a separate workspace without modifying the caller's tree.
 
 Dispatch one subagent. Its prompt is the full `motion-graphics/agents/director.md` plus dispatch context (`SKILL_DIR`, `PROJECT_DIR`, the user's request, and schema path `motion-graphics/references/shot-plan-ir.md`). It decides whether the piece requires a search, classifies it, writes `shot-plan.json`, and returns. Validate that the file exists and is non-empty before continuing.
 
@@ -93,7 +93,7 @@ Choose proof times that show the opening state, signature move, and final hold. 
 
 ### Step 6 - Approve and render
 
-Ask one question: “preview first, or render?” If the user chooses preview, run `frames.preview {"project": "/absolute/path/to/project"}` and return to the same approval gate after revisions.
+Open `frames.preview {"project": "/absolute/path/to/project"}` before asking one question: “render now, or what changes?” This applies in both interaction modes. After requested changes, reopen the preview and repeat the same approval gate.
 
 Render only after an explicit render answer: `frames.render {"project": "/absolute/path/to/project", "quality": "high", "output": "./renders/video.mp4", "format": "webm"}` for a transparent overlay, or use `"format": "mov"` as appropriate. Omit `format` for the default MP4.
 
@@ -115,6 +115,8 @@ Verify the output exists, is non-empty, and has the intended duration. The final
 - **Asset-first rationale:** sourcing is front-loaded and informs shot design (the RWA flow: analyze → search → review → compose). the search-driven motion-graphics/categories (`webpage`/`news`/`tweet`) and `asset-fusion` both lean on frames references/media-use.md search (news/web/tweet/image), which is frames references/media-use.md's documented RWA lineage.
 - **Reuse-first:** the in-ecosystem analog of LLM-generated templates is "compose catalog blocks + `frames references/animation.md` rules". HF's paused GSAP timeline ≙ Remotion's `useCurrentFrame`.
 - **Category module contract:** one `motion-graphics/categories/<id>/module.md` (planning + build), sharing `motion-graphics/references/motion-vocabulary.md` (+ optional eval). Adding a category = drop the folder + register its classifier line in `motion-graphics/agents/director.md` + its row in `motion-graphics/catalog-map.md`; the phase pipeline is untouched.
+Include the shared [motion principles](creative/references/motion-principles.md) in the Builder's dispatch context. For `charts` and `stat`, also include [data in motion](creative/references/data-in-motion.md). The Builder reads these guides before writing the timeline.
+
 - **Directory shape:**
   ```
   videos/<project-name>/

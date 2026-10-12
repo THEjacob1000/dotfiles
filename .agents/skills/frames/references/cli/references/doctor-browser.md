@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-cli/references/doctor-browser.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-cli/references/doctor-browser.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # doctor, browser
 
 Environment diagnosis and bundled-Chrome management. Run these first when a render or preview fails.
@@ -60,3 +60,9 @@ explicitly; changing the process environment after startup does not change a
 running service. Rendering, caption gates, transcription model/language, and
 timeouts are explicit per-call options, not environment-triggered behavior.
 PR fetching is read-only: it uses `gh pr view` and `gh pr diff`, never `jj`.
+## FFmpeg without a package manager
+
+Obtain FFmpeg and FFprobe for the host OS/architecture from [the FFmpeg download page](https://ffmpeg.org/download.html), make both executable, and place their directory on the PATH used to launch the Numen MCP server. On Windows these are `ffmpeg.exe` and `ffprobe.exe`. Run `frames.doctor` and inspect both encoding-dependency statuses and reported version banners; check Chrome independently with `frames.browser`. Optional dependency failures do not by themselves establish that local encoding is blocked.
+
+Upstream `HYPERFRAMES_FFMPEG_PATH`, `HYPERFRAMES_FFPROBE_PATH` and `.hyperframes/bin` fallback discovery are not frames tool arguments. Do not prescribe those upstream settings as a Numen workaround; use the actual native executable discovery documented by the runtime.
+

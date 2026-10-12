@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/motion-graphics/agents/builder.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/motion-graphics/agents/builder.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Motion-Graphics Builder
 
 Turn `shot-plan.json` into one renderable HyperFrames composition (`compositions/index.html`). Everything stays in the HF ecosystem — HTML is the source of truth; a single **paused** GSAP timeline carries all motion; the engine seeks it. Category-specific build rules live in `categories/<id>/module.md`; this file is the shared contract.
@@ -7,8 +7,8 @@ Turn `shot-plan.json` into one renderable HyperFrames composition (`compositions
 
 Default = **compose existing catalog capabilities, not hand-author**:
 
-- **Search first, for every named effect** - `frames.catalog {"query": "<the move, in plain English>"}`, including an effect the user names after the plan is written. It needs nothing installed and no project. Author by hand only after a search came back with nothing that does the job; state that no suitable catalog block was found.
-- `frames.add {"project": "/absolute/path/to/project", "name": "<block>"}` (registry) → customize in place. Most blocks bake content/data into their own script (only a few expose CSS-var params), so reuse = **add + edit**.
+- **Search first, for every named effect** - `frames.catalog {"query": "<the move, in plain English>"}`, including effects named after the plan is written. The query needs network access. Author by hand only after the search finds no suitable result; state that no suitable catalog block was found.
+- `frames.add {"project": "/absolute/path/to/project", "name": "<block>"}` fetches the registry block into the project → customize in place. Most blocks bake content/data into their own script (only a few expose CSS-var params), so reuse = **add + edit**.
 - `frames references/animation.md` rules / blueprints / transitions for motion; runtime adapters (GSAP default).
 
 Hand-author only (a) gaps no block/rule covers, (b) the `asset-fusion` affordance binding. The Director named the block(s) + customizations in `shot-plan.json` (`content.block` + `content.customize`); see `catalog-map.md`.

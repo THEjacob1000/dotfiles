@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/product-launch-video/references/story-design.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/product-launch-video/references/story-design.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Story design — product launch video
 
 Step 3 of the product-launch flow. Output: `STORYBOARD.md` (the narrative plan, one frame per beat) and `SCRIPT.md` (the locked spoken narration).
@@ -466,7 +466,7 @@ Pick a small set and repeat them: default to `crossfade` (or `blur-crossfade` wh
 The storyboard's top YAML block carries a `music:` field — the BGM mood the audio step retrieves against (e.g. `music: confident minimal tech underscore`). Omitting it falls back to `message:` → `arc:` → a neutral default, so BGM plays unless turned off explicitly.
 
 - **`music: none`** — BGM off (narration, if any, still runs).
-- **`music: none` + no `SCRIPT.md`** — the canonical **fully-silent marker**: no narration, no BGM, no SFX. The local audio procedure generates nothing and Step 3.1 is a clean skip. Use exactly this spelling when the user asks for a silent / music-free video.
+- **`music: none` + no `SCRIPT.md` + no `sfx:` cues or host audio** — the canonical **fully-silent marker**: no narration, no BGM, no SFX. The local audio procedure generates nothing and Step 3.1 is a clean skip. Use exactly this spelling when the user asks for a silent / music-free video.
 
 ## Frame template
 
@@ -480,7 +480,7 @@ Use the exact fields required by the core storyboard format. The narrative shape
 - duration: rough estimate in seconds
 - transition_in: crossfade
 - status: outline
-- src: compositions/frames/NN-short-name.html
+- src: compositions/frames/fNN-short-name.html
 - type: hook
 - persuasion: Pain validation
 - beat: urgency

@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/media-use/references/operations.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/media-use/references/operations.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Media operations: agent guidance
 
 frames references/media-use.md does not wrap every operation on an asset (cutting,
@@ -73,7 +73,7 @@ languages) and returns word timestamps (`[{ id, text, start, end }]`), feeding
 transcript cuts, captions, and the audio engine directly.
 
 ```bash
-frames.transcribe {"input": "talk.mp4"}
+frames.transcribe {"project": "/absolute/path/to/project", "input": "talk.mp4"}
 ```
 
 Upstream's Parakeet engine and its `models install` download are not available in Numen.

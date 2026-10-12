@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes/references/storyboard-format.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes/references/storyboard-format.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Storyboard format — `STORYBOARD.md` + parsed manifest
 
 Defines the storyboard's **base data format** only: the `STORYBOARD.md` file shape and the `StoryboardManifest` it parses into. How a workflow _generates_ a storyboard lives in that workflow; the optional narration/TTS file (`SCRIPT.md`) is a separate concern owned by the TTS step, not here.
@@ -76,7 +76,7 @@ audience: indie devs on X
 - transition_in: cut
 - status: animated
 - voiceover: "Ship a launch video in an afternoon."
-- src: compositions/frames/01-hook.html
+- src: compositions/frames/f01-hook.html
 
 Open cold on the promise. This is the thesis — everything after pays it off.
 
@@ -87,7 +87,7 @@ Open cold on the promise. This is the thesis — everything after pays it off.
 - transition_in: crossfade
 - status: built
 - voiceover: "The old way? Prompt, wait twenty minutes, get something that misses."
-- src: compositions/frames/02-problem.html
+- src: compositions/frames/f02-problem.html
 
 The old way: prompt, wait, get something that misses. Establish the pain we remove.
 ```

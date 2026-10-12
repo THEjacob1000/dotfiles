@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-keyframes/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-keyframes/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 
 # HyperFrames Keyframes
@@ -43,8 +43,8 @@ For copyable combined picture/sound recipes, use `/frames → keyframes/referenc
 
 1. Identify the animated subject, visible states, final state, and runtime.
 2. Choose the smallest mechanism that proves the prompt. Read `keyframes/references/keyframe-patterns.md` only if the mechanism is unclear.
-3. Author seek-safe keyframes in the declared runtime. Build synchronously and register the runtime instance.
-4. Verify with `frames.lint`, `frames.check` and snapshots at proof times; statically indexed GSAP, CSS and Anime subjects also need `frames.keyframes` and a focused `screenshots` capture. WAAPI-only subjects use snapshots instead.
+3. Author seek-safe keyframes in the declared runtime. Register the runtime instance only after the build completes; building inside `document.fonts.ready` is fine.
+4. Verify with `frames.check` (it runs lint) and snapshots at proof times; statically indexed GSAP, CSS and Anime subjects also need `frames.keyframes` and a focused `screenshots` capture. WAAPI-only subjects use snapshots instead.
 5. If proof fails, fix the source keyframes and rerun the smallest failing diagnostic before rendering.
 
 ## Contract
@@ -64,7 +64,7 @@ For copyable combined picture/sound recipes, use `/frames → keyframes/referenc
 
 GSAP:
 
-- build synchronously at page load
+- build at page load or inside `document.fonts.ready`, and register only after the build completes
 - use `gsap.timeline({ paused: true })`
 - register as `window.__timelines[compositionId]`
 - registry key must match `data-composition-id`
@@ -99,7 +99,7 @@ Never use for render-critical motion:
 - unseeded `Math.random()`
 - hover/scroll triggers
 - timers
-- async-created timelines
+- a timeline registered before its async build finishes
 - unregistered `requestAnimationFrame`
 - infinite loops
 
@@ -217,9 +217,9 @@ Choose `<selector>` for the real animated subject. Choose `<times>` for first fr
 | ---------------- | --------------------------------------------------------------------------------------------------- |
 | `keyframes`      | targets, explicit stops, paths, traces, composed parent/child motion, CSS stops, Anime registration |
 | `screenshots`         | ghosts, route shape, time spacing, DOM 3D projection, focused selector proof                        |
-| `--layout strip` | in-place motion, overlaps, contact, subtle scale/opacity, text waves                                |
-| `--ghost`        | canvas, WebGL, shader motion, rendered 3D                                                           |
-| `snapshot --at`  | masks, text readability, full state, final lockup, black/reset tails                                |
+| `frames.keyframes {"project": "/absolute/path/to/project", "screenshots": ".keyframes/strip.png", "layout": "strip"}` | in-place motion, overlaps, contact, subtle scale/opacity, text waves |
+| `frames.keyframes {"project": "/absolute/path/to/project", "screenshots": ".keyframes/ghost.png", "ghost": true}` | canvas, WebGL, shader motion, rendered 3D |
+| `frames.snapshot {"project": "/absolute/path/to/project", "at": [0.5, 1.5, 3.0]}` | masks, text readability, full state, final lockup, black/reset tails |
 
 If selector proof looks wrong:
 
@@ -245,9 +245,9 @@ A helper-selector shot is not proof. An onion shot over a broken full frame is n
 | identity break     | keep one element alive, use shared source/final boxes, remove substitute crossfade |
 | fake 3D            | add z/camera travel, occlusion, angled proof                                       |
 | wrong final        | add final hold, snapshot final-minus-hold and exact final                          |
-| unseekable runtime | pause autoplay, register instance, remove timers, build synchronously              |
+| unseekable runtime | pause autoplay, remove timers, register the instance after the build completes              |
 | unreadable text    | preserve line boxes, reduce displacement, add final hold, snapshot text frames     |
 
 ## Done
 
-Run `frames.lint`, `frames.check` and proof-time snapshots. For statically indexed GSAP, CSS and Anime subjects, also run `frames.keyframes` and one focused `screenshots` capture. WAAPI-only subjects use full-frame snapshots instead. Confirm first frame, proof poses, final-minus-hold, exact final, subject-owned motion, and no debug overlays.
+Run `frames.check` (it runs lint) and proof-time snapshots. For statically indexed GSAP, CSS and Anime subjects, also run `frames.keyframes` and one focused `screenshots` capture. WAAPI-only subjects use full-frame snapshots instead. Confirm first frame, proof poses, final-minus-hold, exact final, subject-owned motion, and no debug overlays.

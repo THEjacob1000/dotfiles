@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-cli/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-cli/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 
 **Installation:** the frames skill and its references ship with Numen and are projected by `numen sync`; the `frames.*` tools are served by Numen's MCP server. There is nothing to install or update.
@@ -76,7 +76,7 @@ Treat tiny unstyled content, canvas-sized icons, missing hero elements, or timel
 
 ## Agent conventions
 
-- **Search the catalog before writing motion by hand.** `frames.catalog {"query": "<the beat, in plain English>"}` searches the local catalog's names, titles, descriptions and tags.
+- **Search the catalog before writing motion by hand.** `frames.catalog {"query": "<the beat, in plain English>"}` fetches and searches the pinned upstream GitHub registry's names, titles, descriptions and tags. It needs network access but no project, account or separate installation; `frames.add` fetches item files into the project.
 - **Query in English even when the video is not.** Describe the move in English; the on-screen copy stays in whatever language the video needs.
 - **Read the result envelope and warnings.** Word ranking is the available tier. `on_device` is unavailable: requesting it produces a warning, not an error, and leaves word ranking active. Do not offer a model download or promise semantic search.
 - **When a search comes back with nothing worth installing, say so**, naming the query and move needed. Try the catalog's own vocabulary before hand-authoring.
@@ -102,7 +102,7 @@ Studio selection and editing are unavailable. Identify the target from the user'
 | Final local delivery                     | `frames.render {"project": "/absolute/path/to/project", "quality": "delivery", "output": "out.mp4"}`                  |
 | Local variable-driven batch render       | `frames.render {"project": "/absolute/path/to/project", "batch": "rows.json", "output": "renders/{name}.mp4"}`      |
 
-A project scaffolded by a workflow (`frames.init {"project": "/absolute/path/to/project", "skill": "<workflow>"}`) records its owning skill in `hyperframes.json`. Lesson-mode init (`spec` plus `workspace_root`) rejects `example`, `video`, `audio`, `tailwind` and `resolution`; use those only for standalone scaffolding.
+A project scaffolded by a workflow (`frames.init {"project": "/absolute/path/to/project", "skill": "<workflow>"}`) records its owning skill in `hyperframes.json`.
 
 `frames.render` renders locally. When a render fails, give the user a rerunnable tool call, expected versus actual behavior, exact error, outcome and workaround. Redact personal paths before sharing. The packet format lives in `cli/references/preview-render.md`.
 
@@ -114,7 +114,7 @@ The following cli/references and owning skills are mandatory command contracts, 
 | -------------------------------------------------------------------------------------------------- | ------------------------------------- |
 | `init`, `capture`                                                                      | `cli/references/init-and-scaffold.md`     |
 | `lint`, `check`, motion sidecars, `snapshot`                                                       | `cli/references/lint-validate-inspect.md` |
-| `compare`, `grade-compare`, variable-driven `render --batch`                                       | `cli/references/compare-and-batch.md`     |
+| `frames.compare`, `frames.grade_compare`, variable-driven `frames.render {"project": "/absolute/path/to/project", "batch": "rows.json"}` | `cli/references/compare-and-batch.md` |
 | `beats` for an existing project's beat grid | `cli/references/beats.md` |
 | `preview`, `play`, `render`, bug reports | `cli/references/preview-render.md` |
 | `doctor`, browser management                                                                       | `cli/references/doctor-browser.md`        |
@@ -134,4 +134,12 @@ frames.media_treatment {"capabilities": true}
 ```
 
 `present` serves a navigable deck with presenter and audience synchronization. `lesson` serves one grounded, narrated browser lesson and blocks until it ends, returning the learner event log; `lesson_plan` orders a caller-authored lesson dependency graph. `beats` is the project beat-grid utility defined in `cli/references/beats.md`. `keyframes` surfaces seek-safe animation and motion-path diagnostics. `media-treatment` discovers, applies, and clears deterministic looks on local footage; start with `"capabilities": true` for the overview and `"capability": "<name>"` for one family. `/frames → cli/references/media-use.md` owns which treatment a brief is asking for. Figma import is unavailable; use exported local assets.
+
+## Upstream desktop and reporting routes
+
+The HyperFrames desktop app handoff (`open`), conversation pickup and `catch-up` are unavailable in Numen. `frames.preview` is a retained live player, not Studio or an editor; keep it alive for review and use `frames.render` for approved delivery. If the user returns after external edits, read changed composition files before acting on their new request; an edit record is not itself authorization.
+
+Upstream anonymous `feedback` ratings, ratingless `MISSING FEATURE:` / `HOST APP:` reports and catalog `search-miss` telemetry have no frames tool. Report the missing capability and actual workaround to the user without claiming a public report was sent. Record a privacy-safe reproduction with the exact frames tool and arguments, expected versus actual behavior, exact error, output status, workaround, and whether a minimal repro exists. Strip absolute paths, usernames, client names and private content before any externally authorized report.
+
+Native `frames.render` owns browser shutdown and the tool request lifetime; the upstream shell process-group recipe and `HYPERFRAMES_RENDER_DETACHED` are not MCP options. Keep a long-running tool call alive rather than launching the upstream CLI.
 

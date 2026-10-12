@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes/references/review-loop.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes/references/review-loop.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # The review loop — plan, sketch, build
 
 How a `storyboard: yes` run earns fidelity one pass at a time: the plan is reviewed as text in chat, the layouts as a sketched `storyboard.html` the user opens in a browser, and the finished piece as the assembled video. Collaborative mode waits at each checkpoint. Autonomous mode posts the same checkpoint summaries and continues, keeping exactly one question before render.
@@ -33,6 +33,6 @@ Mark each frame `animated` as it lands. The build gate carries the loop's condit
 
 ## § 4 — The final look
 
-After the workflow's checks pass, use the **final composition preview**. In collaborative mode open the live preview, hand the timeline URL and ask one thing: render now, or what changes? In autonomous mode this is the one question the mode keeps: ask “preview first, or render?” Open the final preview on yes; render on an explicit render answer. Render only on approval.
+After the workflow's checks pass, open the final composition preview using `frames.preview {"project": "/absolute/path/to/project"}` and ask one thing: “render now, or what changes?” Opening the preview asks nothing and does not grant render approval. In autonomous mode, this is the one question the mode keeps; render only on explicit approval.
 
 **After approval, offer the recipe - once.** An approved run is a proven bundle. At delivery, offer to freeze it: manually copy the design spec, the storyboard skeleton (structure kept, content blanked), the brief skeleton, and the confirmed brief values into `.media/recipes/<name>/`. Read the workflow from `BRIEF.md`; if there is no brief, ask the user for the workflow. If the recipe name already exists, archive the old folder as `<name>@v<N>` and increment its version. Make the recipe available under the user's `~/.media/recipes/` as well. When saved, confirm its name and version and explain how to ask for it next time.

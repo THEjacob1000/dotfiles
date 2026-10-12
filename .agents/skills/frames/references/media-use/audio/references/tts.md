@@ -1,66 +1,72 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/media-use/audio/references/tts.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/media-use/audio/references/tts.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands mapped to frames tools; native Kokoro replaces remote providers. -->
 # Text To Speech
 
-`frames.tts` synthesizes locally with the Numen voice: native Rust Candle CUDA Qwen3-TTS-12Hz-1.7B-Base full in-context cloning. It generates each scene in one call using reference audio plus the exact reference transcript, without a Python sidecar. It has one voice, `numen`, which is also the default, and returns no word timestamps; run `frames.transcribe` on its output when you need timings.
+`frames.tts` synthesizes locally with Kokoro-82M v1.0 using native ONNX Runtime CPU inference and Rust phonemization. Choose any of the 54 pinned v1.0 voice ids; default `af_heart`, speed `1.0`. Synthesis writes mono 24 kHz PCM16 WAV. It returns no native word timestamps: measure the final audio and transcribe it for word timing. No Python sidecar or remote API is used.
 
-```bash
-frames.tts {"text": "Welcome to HyperFrames", "output": "narration.wav"}
-frames.tts {"text": "script.txt", "voice": "numen", "speed": 1.1, "output": "narration.wav"}
+```json
+{"text":"Welcome to HyperFrames.","output":"/absolute/path/to/narration.wav"}
+{"project":"/absolute/path/to/project","text":"script.txt","voice":"bf_emma","speed":1.1,"output":"narration.wav"}
+{"text":"Bonjour.","voice":"ff_siwis","lang":"fr","output":"/absolute/path/to/narration-fr.wav"}
 ```
 
-Provision with `assets/voice/fetch.sh`, then configure `models/qwen3-voice.json`
-under the supplied voice asset root (`model_dir`, `codec_dir`,
-`reference_audio`, exact `reference_text`, `language`, `seed`). The approved
-default is round3 variant a: Son of the Exiles, full ICL, seed 42. Reference
-WAVs are mono 24 kHz PCM16 or float. The acquisition manifest records model
-and recording checksums, durable source URLs and reuse-rights limits.
+Send these arguments to `frames.tts`. With `project`, script and output paths can be relative; without it output must be absolute. A whitespace-free `.txt` path is read as a script. From the repository root, provision the pinned model and voices with `bash assets/voice/fetch.sh`: it places SHA-256-verified `kokoro-v1.0.onnx` and `voices-v1.0.bin` under `assets/voice/models` from the pinned `model-files-v1.0` release. Native phonemization needs the system `espeak-ng-data` dictionary/phoneme files (the Debian `espeak-ng-data` package), not an executable or shared-library sidecar. Set their directory with `[frames].espeak_data_dir` in the Numen config (default `/usr/lib/x86_64-linux-gnu/espeak-ng-data`); `numen sync` passes it to `numen-mcp` via `--config`, and standalone servers take `numen-mcp --config <path>`. GPU/CUDA and reference recordings are not required.
 
-Build with `cargo build --release -p numen-mcp --features cuda` using the
-system CUDA 13 toolkit from NVIDIA's apt repository (`cuda-toolkit-13-0`),
-not pip toolkit wheels. Runtime requires a supported NVIDIA GPU/driver,
-CUDA libraries and `ffmpeg` on PATH; no CPU or alternative-voice fallback.
-Without the toolkit, `cargo check -p numen-voice --features qwen-model` only
-typechecks the model path and does not enable synthesis.
+## Voice selection
 
-Publication requires strict zero-mismatched-word verification. Up to four
-deterministic takes use fixed seeds 42, 43, 44, 45. Config `seed` must be 42
-as a validation/identity contract, not a tunable setting. Exhaustion reports
-the mismatched words rather than publishing a bad take. Successful audio uses
-measured gain plus true-peak limiting, targeting -16 LUFS and -1.5 dB true
-peak with mono 24 kHz PCM16 output.
+| Content | Curated voices |
+| --- | --- |
+| Product demo | `af_heart`, `af_nova` |
+| Tutorial | `am_adam`, `bf_emma` |
+| Marketing | `af_sky`, `am_michael` |
+| Documentation | `bf_emma`, `bm_george` |
+| Casual/social | `af_heart`, `af_sky` |
 
-Upstream's other routes are not available in Numen: HeyGen (Starfish) TTS with native word timestamps and its bundled `heygen-tts` helper, ElevenLabs, and Gemini narration through the shared audio engine all call remote provider APIs, and Numen has no tool for them. Kokoro's 54 voices, its voice-prefix language selection and `espeak-ng` multilingual phonemization do not apply to the Numen voice. Upstream's docs-site narrator rule (one ElevenLabs voice for every video on hyperframes.heygen.com) applies only to HeyGen's own docs and is dropped.
+The complete accepted set (there is no separate voice-list tool):
 
-## When the Numen voice fits
+```text
+af_alloy af_aoede af_bella af_heart af_jessica af_kore af_nicole af_nova
+af_river af_sarah af_sky am_adam am_echo am_eric am_fenrir am_liam
+am_michael am_onyx am_puck am_santa bf_alice bf_emma bf_isabella bf_lily
+bm_daniel bm_fable bm_george bm_lewis ef_dora em_alex em_santa ff_siwis
+hf_alpha hf_beta hm_omega hm_psi if_sara im_nicola jf_alpha jf_gongitsune
+jf_nezumi jf_tebukuro jm_kumo pf_dora pm_alex pm_santa zf_xiaobei zf_xiaoni
+zf_xiaoxiao zf_xiaoyi zm_yunjian zm_yunxi zm_yunxia zm_yunyang
+```
 
-| Goal                                   | Use                                                         |
-| -------------------------------------- | ----------------------------------------------------------- |
-| Offline, no API key, fast iteration    | `frames.tts`                                                |
-| A voice the user recorded or supplied  | Place their file directly; transcribe it for timings        |
-| A specific provider voice or language  | Not available in Numen; ask the user for a recorded take    |
+The first letter selects phonemization language: `a` American English, `b` British English, `e` Spanish, `f` French, `h` Hindi, `i` Italian, `j` Japanese, `p` Brazilian Portuguese, `z` Mandarin. Optional `lang` on `frames.tts` overrides the phonemizer language, like upstream `--lang`. Listen to the actual result. Phonemes match kokoro-onnx: raw eSpeak IPA retains stress and punctuation, filters to the Kokoro vocabulary and collapses whitespace. Audio uses kokoro-onnx trimming with a 0.25-second sentence pause and a 0.1-second clause pause.
 
-## Speed
+## Speakable scripts and pacing
 
-- `0.7-0.8` — tutorial, complex content, accessibility
-- `1.0` — natural pace (default)
-- `1.1-1.2` — intros, transitions, upbeat content
-- `1.5+` — rarely appropriate, test carefully
+Keep delivery directions out of spoken text. Write the transcript as sentences a person would say, not slide headings or visual instructions; spell out ambiguous acronyms, symbols, figures and units where necessary. Preview the actual pronunciation rather than assuming the display spelling is speakable. Provider-specific Gemini `style` and per-line delivery instructions have no Kokoro tool argument; express pacing through sentence structure, punctuation and supported `speed`.
 
-`frames.tts` honors `speed` (greater than 0, at most 3).
+For instructional narration, upstream's 145–155 words-per-minute guidance is a useful starting target, with breathing room between sentences. Measure the produced audio rather than treating word count as timing. Place the visual payoff on the spoken beat, leave a readable final hold, and carve any music bed against the voice. Upstream's approximate −31 LUFS music level is a starting reference, not a substitute for listening or the measured mix.
 
-## Long scripts
+- `0.7–0.8`: tutorials, complex material, accessibility.
+- `1.0`: natural pace, default.
+- `1.1–1.2`: intros, transitions, upbeat delivery.
+- `1.5+`: rarely appropriate; listen carefully.
 
-Past a few paragraphs, write the text to a `.txt` file and pass the path. Inputs over ~5 minutes of speech may benefit from splitting into segments.
+Native Kokoro accepts speed `0.5..2.0`. For scripts past a few paragraphs, pass a `.txt` file; split long narration into scene segments when useful. Measure every segment and base scene timing on those measurements.
 
-## Word-timestamp shape
+## Normalization and word timing
 
-Run `frames.transcribe {"input": "narration.wav", "model": "small.en"}` on the narration to get the flat shape the captions pipeline expects:
+`frames.normalize_audio` measures loudness and returns safe authored gain without rewriting source media. `frames.narrate` bakes each take to -16 LUFS by default (`target_lufs` overrides). Kokoro synthesis produces mono 24 kHz WAV; supplied `audio` lines keep their sample rate and channels. It transcribes the normalized take and records measured durations and word timings; Whisper's temporary 16 kHz analysis copy is not the delivered WAV. Its transcription language defaults from the voice prefix: a/b→en, e→es, f→fr, h→hi, i→it, j→ja, p→pt, z→zh. `language` overrides this; set it for non-English supplied recordings, and non-English languages use a multilingual Whisper model. `frames.tts` synthesizes only; pass the matching `language` to a separate `frames.transcribe` call for its output.
+
+```json
+{"input":"/absolute/path/to/narration.wav","model":"small.en"}
+```
+
+Send this to `frames.transcribe` for English. Use an appropriate multilingual model/language for other voices. Word records have the flat caption shape:
 
 ```json
 [
-  { "id": "w0", "text": "Hi", "start": 0.0, "end": 0.21 },
-  { "id": "w1", "text": "there", "start": 0.22, "end": 0.55 }
+  {"id":"w0","text":"Hi","start":0.0,"end":0.21},
+  {"id":"w1","text":"there","start":0.22,"end":0.55}
 ]
 ```
 
-Review the timings against the actual audio; transcription is estimated alignment, not native TTS timestamps. Do not distribute words evenly across a clip.
+Review timings against the actual audio. Transcription is estimated alignment, not native TTS timestamps; never distribute words evenly across a clip.
+
+## Unavailable remote routes
+
+HeyGen Starfish TTS (including OAuth or a host gateway), its native word timestamps, cloned-voice creation/listing/deletion, ElevenLabs and Gemini narration are unavailable in Numen. A request explicitly selecting one of these providers does not authorize substituting Kokoro: state the missing route and use a supplied recording only when that meets the request. Upstream's fixed ElevenLabs River narrator for hyperframes.heygen.com is a HeyGen docs-site policy, not a Numen default. Custom voice cloning is not a Kokoro feature.

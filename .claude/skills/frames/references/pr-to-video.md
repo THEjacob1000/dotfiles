@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/pr-to-video/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/pr-to-video/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 
 The frames skill and its references ship with Numen and are projected by `numen sync`; read the ported skill files directly.
@@ -13,7 +13,7 @@ Use this skill to ingest a GitHub pull request, understand the change, plan a co
 
 You are the orchestrator. Work in the resolved external `PROJECT_DIR`, never in the caller repository by default. Run steps in order and pass each gate before continuing. User-gated steps are Step 0, Step 3, and Step 6. Read `brief-contract.md` before Step 0 - it defines the gate types and how `BRIEF.md`'s `flow`/`storyboard` derive the mode that governs the Step 3/4/6 gates. Do every step yourself except Step 5, where you dispatch a bounded pool of frame workers. Do not put design or motion rules here; those live in the frame-worker sub-agent, this skill's local `animation/rules` + `animation/blueprints`, and `frames references/creative.md`.
 
-Workflow: Step 0 setup → `hyperframes.json`; Step 1 ingest → `capture/extracted/` + `assets/<login>.png`; Step 2 design system → `frame.md`; Step 3 storyboard/script → `STORYBOARD.md` and `SCRIPT.md`; Step 3.1 audio → `audio_meta.json`; Step 4 visual design → enriched `STORYBOARD.md`; Step 5 frames → `compositions/frames/NN-*.html` and `index.html`; Step 6 final render → `renders/video.mp4`.
+Workflow: Step 0 setup → `hyperframes.json`; Step 1 ingest → `capture/extracted/` + `assets/<login>.png`; Step 2 design system → `frame.md`; Step 3 storyboard/script → `STORYBOARD.md` and `SCRIPT.md`; Step 3.1 audio → `audio_meta.json`; Step 4 visual design → enriched `STORYBOARD.md`; Step 5 frames → `compositions/frames/fNN-*.html` and `index.html`; Step 6 final render → `renders/video.mp4`.
 
 ---
 
@@ -59,7 +59,7 @@ Call `frames.fetch_avatars {"project": "/absolute/path/to/project", "mode": "pr-
 
 Goal: Adopt the code-editorial preset as this video's `frame.md` + caption skin.
 
-Call `frames.build_frame {"project": "/absolute/path/to/project", "mode": "pr-to-video", "preset": "code-editorial", "tokens": "capture/extracted/tokens.json"}` to write `frame.md` and stage its supplied caption skin and preset fonts. When the six preset WOFF2 files and their three OFL license files are absent locally, the tool downloads only those pinned upstream files from commit `73489331114b89f42b5bc843765e610525188bcb`, checks fixed SHA-256 digests, caches them under `~/.cache/numen/frames/presets/<commit>/code-editorial/fonts`, and stages them under `assets/fonts/`. This read-only download is not provider authentication or a remote mutation. Empty PR brand tokens preserve the complete palette/fonts. Review tool warnings and check caption color/font keys map to `frame.md`.
+Call `frames.build_frame {"project": "/absolute/path/to/project", "mode": "pr-to-video", "preset": "code-editorial", "tokens": "capture/extracted/tokens.json"}` to write `frame.md` and stage its supplied caption skin and preset fonts. When the six preset WOFF2 files and their three OFL license files are absent locally, the tool downloads only those pinned upstream files from commit `e1925d4317fcd13c0e5799cd4767a3e2dd4c9238`, checks fixed SHA-256 digests, caches them under `~/.cache/numen/frames/presets/<commit>/code-editorial/fonts`, and stages them under `assets/fonts/`. This read-only download is not provider authentication or a remote mutation. Empty PR brand tokens preserve the complete palette/fonts. Review tool warnings and check caption color/font mapping; do not hand-edit unrelated preset parts.
 
 **Gate:** `frame.md` exists from the code-editorial preset, and the preset's caption skin exists when supplied.
 
@@ -69,7 +69,7 @@ Call `frames.build_frame {"project": "/absolute/path/to/project", "mode": "pr-to
 
 Goal: Turn the PR into an approved frame-by-frame explanation plan.
 
-**Ground code before scripting.** For every symbol, file or behaviour the video shows or narrates, write a lesson spec whose steps carry `code_refs` (`{"path": "<file relative to the workspace root>", "item_path": "<module, type or method path>"}`) and pass it to `frames.init` with absolute `project` and `workspace_root` paths and the authored lesson object as `spec`. The lesson tool resolves each ref against the workspace and fails on any it cannot ground; script narration and code on screen only from the grounded source it returns. Fix or drop a ref that fails rather than narrating from memory. Fetch the relevant revision into a separate workspace when needed without modifying the caller's tree.
+**Read source before scripting.** Read the exact repository files and symbols the video explains. Show code verbatim from those files and narrate only behaviour the source shows. Fetch a needed revision into a separate workspace without modifying the caller's tree.
 
 Read `creative/references/story-spine.md` (hook language, value-before-evidence, storyboard-as-proposal, source-traceable visuals), `pr-to-video/references/story-design.md`, `animation/blueprints-index.md`, `storyboard-format.md`, and `script-format.md`. Use them to write `STORYBOARD.md` and, when narration is needed, `SCRIPT.md`. Set the frontmatter `duration:` from the brief's `length` - a rough expectation; assembly reports where the cut lands against it.
 
@@ -87,13 +87,14 @@ After drafting, run the review loop's plan pass - `review-loop.md` § 1: present
 
 Goal: Generate narration, word timings, music, and audio metadata from the approved script.
 
-Narration uses the host's configured Numen voice engine, not a provider login or voice download. Optional `bgm` names supplied local audio; `sfx_library` names a supplied local SFX manifest and audio directory for the later pass.
+Narration uses native Kokoro v1.0 with 54 voice IDs (default `af_heart`, speed `1.0`), not a provider login or voice download. `frames.narrate` normalizes each take to -16 LUFS by default (`target_lufs` overrides), transcribes it and records measured durations and word timings. Kokoro synthesis produces mono 24 kHz WAV; supplied `audio` lines keep their sample rate and channels, and need `language` for non-English recordings rather than the default voice's language. Optional `bgm` names supplied local audio; `sfx_library` names a supplied local SFX manifest and audio directory for the later pass.
 
-Start audio after Step 3 approval, alongside Step 4 when background calls are supported. **Numen has one voice, `numen`.** If another voice, gender or tone was requested, say it is unavailable and offer a recorded take instead. Call `frames.narrate {"project": "/absolute/path/to/project", "mode": "pr-to-video", "command": "generate", "script": "SCRIPT.md", "storyboard": "STORYBOARD.md", "out": "audio_meta.json", "voice": "numen", "speed": 1.0}`. The tool generates, normalizes and transcribes narration and writes measured voice durations and local word timings. Use only supplied BGM/SFX; hosted music lookup remains excluded. No narration means no voice generation.
+Start audio after Step 3 approval, alongside Step 4 when background calls are supported. Choose a Kokoro voice from the user's ask; otherwise read the remembered `voice` with `frames.media_prefs` before falling back to `af_heart`. Say which voice was used and record an explicit pick with `frames.media_prefs`. Call `frames.narrate {"project": "/absolute/path/to/project", "mode": "pr-to-video", "command": "generate", "script": "SCRIPT.md", "storyboard": "STORYBOARD.md", "out": "audio_meta.json", "voice": "<kokoro-voice-id>", "speed": 1.0}`. Transcription language defaults from the voice prefix: a/b→en, e→es, f→fr, h→hi, i→it, j→ja, p→pt, z→zh; `language` overrides it. Use only supplied BGM/SFX; hosted music lookup remains excluded. No narration means no voice generation.
+Use a remembered voice only if it is one of the 54 Kokoro IDs; otherwise use `af_heart` and say so.
 
-**The canonical fully-silent marker:** `music: none` in the STORYBOARD.md top YAML block **and** no `SCRIPT.md`: no narration, BGM or SFX. Remove stale `audio_meta.json` in that case; absent audio metadata means silent assembly. `music: none` with narration turns only BGM off.
+**The canonical fully-silent marker:** `music: none` in the STORYBOARD.md top YAML block, no `SCRIPT.md`, no `sfx:` cues and no host audio. Remove stale `audio_meta.json` in that case; absent audio metadata means silent assembly. With narration or supplied host audio, `music: none` turns off only BGM.
 
-**Gate:** audio job has started, or the project is marked silent (`music: none` + no `SCRIPT.md`).
+**Gate:** audio job has started, or the project is marked silent (`music: none`, no `SCRIPT.md`, and no `sfx:` cues or host audio).
 
 ---
 
@@ -107,7 +108,7 @@ Edit `STORYBOARD.md` in place. Do not create another storyboard. Use `frame.md` 
 
 Read `pr-to-video/references/visual-design.md`, `animation/blueprints-index.md`, `pr-to-video/references/motion-language.md`, `pr-to-video/references/code-vocabulary.md`, and `animation/rules-index.md`. Use `visual-design.md` for the method (the time-coded shot sequence, the inline Layout vocabulary, and the code-beat treatment), plus the required `## Video direction` block. Use `animation/blueprints-index.md` to pick each frame's shot shape. Use `code-vocabulary.md` to pick the right `code-*` block per code beat (diff = `code-diff`, refactor = `code-morph`, new code = `code-typing`, …). Use `motion-language.md` (the motion vocabulary + the motion doctrine) and `animation/rules-index.md` (valid rule names) for motion - do not invent motion or block/blueprint names.
 
-**Search the live catalog before you design any named look.** `code-vocabulary.md` covers the code beats; it does not cover the rest. For every other look, effect, treatment or transition the brief names - "CRT scanlines", "glitch", "film grain", "shimmer sweep", "confetti burst" - run `frames.catalog {"query": "<the look, in plain English>"}` and read the top results BEFORE you write that look into `STORYBOARD.md`. The search needs **nothing installed**: no project, no prior `add`, no account. It searches Numen's local catalog registry. Name the block you found here; Step 5 pre-installs every block the storyboard names. Hand-author a look only after a search for it came back with nothing that fits.
+**Search the upstream registry before designing any named look.** `code-vocabulary.md` covers code beats; for other requested looks, effects, treatments or transitions, run `frames.catalog {"query": "<the look, in plain English>"}` and read the top results before writing it into `STORYBOARD.md`. The query needs network access; it does not need a project. Name a suitable block; Step 5 fetches it with `frames.add`. Hand-author only when the registry has no suitable result.
 
 For every frame, write a **time-coded shot sequence** into `STORYBOARD.md` per `visual-design.md`'s method: pick the frame's blueprint (or compose), instantiate it with THIS frame's content, and pace each Scene's reveal to the voiceover so the frame develops across its full duration instead of front-loading then freezing. **For a code beat, the `code-*` block is the frame's `focal`** and the Scenes choreograph the surrounding code-editorial Code Surface (the entry of the file/header, the camera onto the hunk, the landing line) - **not** the code animation itself, which the block owns. Immediately after each code frame's fields, add a `### Source excerpt` fenced `diff` block containing only the exact real hunk the worker must render (12 lines maximum). Select it here from `capture/diff.patch`; workers are forbidden from reopening that full diff. State layout and motion **inline** per Scene (vocabularies in `visual-design.md` and `motion-language.md`). Add one video-wide `## Video direction` block.
 
@@ -167,15 +168,13 @@ Call `frames.transitions {"project": "/absolute/path/to/project", "mode": "pr-to
 
 `snapshot` stitches the captured frames into one contact sheet (`snapshots/contact-sheet.jpg`). Glance at it; if nothing is obviously broken, move on - don't linger here.
 
-If a command fails, surface stderr and stop - don't pile on recovery commands. Fix it yourself: the cheapest safe edit to `compositions/frames/NN-*.html`, then rerun the failed check.
+If a command fails, surface stderr and stop - don't pile on recovery commands. Fix it yourself: the cheapest safe edit to `compositions/frames/fNN-*.html`, then rerun the failed check.
 
 Caption highlight ink can extend slightly into a snug pill's padding when it is not clipped. Inspect reported caption overflow before changing line-height; fix actual clipping and any frame-element overflow.
 
-After checks pass, pause for user review - the review loop's final look (`review-loop.md` § 4): one question, on the final live preview - render now, or what changes? (Autonomous: the one kept question, preview first or render - open the preview with the command below on a yes.) Then deliver the MP4 with the contact sheet and the frame ids so revisions can target a single frame.
+After checks pass, open `frames.preview {"project": "/absolute/path/to/project"}` in both interaction modes, then ask whether to render or what to change. Opening a preview asks nothing and does not authorize rendering. Deliver the MP4 with the contact sheet and frame ids so revisions can target a single frame.
 
-Preview: `frames.preview {"project": "/absolute/path/to/project"}`
-
-Render only after user approval (autonomous mode: after the preview-or-render question):
+Render only after explicit user approval:
 
 `frames.render {"project": "/absolute/path/to/project", "quality": "high", "output": "renders/video.mp4"}`
 

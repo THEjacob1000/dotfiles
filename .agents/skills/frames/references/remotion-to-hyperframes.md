@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/remotion-to-hyperframes/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/remotion-to-hyperframes/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 
 # Remotion to HyperFrames
@@ -31,9 +31,9 @@ The skill includes a **tiered fixture corpus** (T1–T4) with upstream measured 
 **NOT SUPPORTED (decline - this is not what this skill does):**
 
 - **The reverse direction.** Exporting a HyperFrames composition back out _to_ Remotion (or to any other framework) is not a workflow - the translation is Remotion → HyperFrames only. Say so plainly.
-- **Non-Remotion sources.** An After Effects project (`.aep`), a Framer Motion / plain-React / CSS animation, or any other tool's source is not a Remotion composition - there is no Remotion source to translate. Re-create it natively via `/frames → remotion-to-hyperframes/references/general-video.md`, or decline if HyperFrames can't represent it.
+- **Non-Remotion sources.** An After Effects project (`.aep`), a Framer Motion / plain-React / CSS animation, or any other tool's source is not a Remotion composition - there is no Remotion source to translate. Re-create it natively via `/frames → references/general-video.md`, or decline if HyperFrames can't represent it.
 
-When in doubt, default to authoring a native HyperFrames composition with `/frames → remotion-to-hyperframes/references/general-video.md` (the general HyperFrames authoring flow) instead.
+When in doubt, default to authoring a native HyperFrames composition with `/frames → references/general-video.md` (the general HyperFrames authoring flow) instead.
 
 ## Workflow
 
@@ -70,7 +70,7 @@ Read [`remotion-to-hyperframes/references/api-map.md`](remotion-to-hyperframes/r
 
 Don't load all of them - load only what the specific source needs.
 
-**Search the live catalog for any visual effect the table does not map.** When the source paints a look with no HF API equivalent - a scanline/CRT overlay, a glitch or chromatic-aberration pass, a shader wipe, a film-grain treatment - run `frames.catalog {"query": "<the effect, in plain English>"}` before hand-writing it in GSAP. The search needs **nothing installed**: no project, no prior `add`, no account. It ranks the local catalog registry (~400 blocks and components) from any directory, and `transitions.md` already takes this route for `clockWipe()` / `iris()` via `frames.add {"project": "/absolute/path/to/project", "name": "sdf-iris"}`. A real component is closer to the source than a hand-approximation, so it usually raises the SSIM rather than lowering it - but the render diff in Step 4 is still the arbiter. Hand-write the effect when a search returns nothing that fits, and record the substitution in `TRANSLATION_NOTES.md` either way.
+**Search the upstream registry for visual effects the table does not map.** For a requested effect without a HyperFrames API equivalent, run `frames.catalog {"query": "<the effect, in plain English>"}` before hand-writing it. This query needs network access and does not need a project; `frames.add` fetches a suitable block into the project. Prefer a real component over a hand approximation when it fits.
 
 ### Step 3: Generate the HF composition
 

@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes/references/brief-contract.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes/references/brief-contract.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Brief contract
 
 The intent layer (`/frames` → `references/intent-interview.md`) asks creation questions once. The executing workflow writes the confirmed result to `BRIEF.md` and does not ask those questions again. This contract defines the canonical run-shape fields, shared brief fields, and question rules. Route-specific options live in `/frames` → `references/routes/<workflow>.md`.
@@ -49,7 +49,7 @@ Default to `collaborative` only when a legacy project lacks enough state to deri
 
 Autonomous mode never silently drops a required capability. If the selected workflow has no local, cached, or offline provider for it, surface the blocker instead of omitting the capability. A credential problem does not relax the quality gates.
 
-Rendering remains user-gated in both modes. After checks pass, collaborative runs ask “render now, or what changes?” Autonomous runs ask “preview first, or render?” Render only after the answer.
+Rendering remains user-gated in both modes. After checks pass, open the final preview in both modes, then ask “render now, or what changes?” Opening the preview asks nothing and does not grant render approval. Render only after explicit approval.
 
 ### Checkpoint feedback
 

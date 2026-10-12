@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-animation/adapters/animate-text.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-animation/adapters/animate-text.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Text Effects — Reference
 
 For deterministic text-animation specs (e.g., `typewriter` at exact `240ms / 46ms stagger / steps(1, end) easing`), this skill defers to the separate **`animate-text`** skill maintained by Pixel Point at [github.com/pixel-point/animate-text](https://github.com/pixel-point/animate-text). It provides a catalog of 24 named text effects with portable contracts and per-library implementation recipes (GSAP, Anime.js, WAAPI).
@@ -31,6 +31,8 @@ For convenience while writing storyboards: the upstream skill provides 24 effect
 - **Whole element (7):** micro-scale-fade, shimmer-sweep, fade-through, shared-axis-z, scale-down-fade, focus-blur-resolve, shared-axis-x
 
 For descriptions, durations, easing curves, and the per-library recipes: read the upstream catalog or the user-supplied files.
+
+For `mask-reveal-up` and other line-mask effects, leave room for the font's painted glyphs at rest. Tight line-height plus `overflow: hidden` can cut descenders and accents after the reveal finishes. Follow the [text mask guidance](../techniques.md#12-clip-path-reveal-masks): start with block padding of `0.2em` at the text's font size and a compensating negative margin, or release the clip on the timeline once the entrance settles. Inspect a settled snapshot using the actual font and text; `data-layout-allow-overflow` also waives checks in the resting state.
 
 ## In the storyboard
 

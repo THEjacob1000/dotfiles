@@ -1,8 +1,10 @@
 ---
 name: frames
-description: Create, edit, animate, inspect, validate, preview, or render HyperFrames HTML video compositions, interactive decks, and interactive browser lessons with Numen's frames tools. Covers custom videos, product promos, PR and topic explainers, interactive concept lessons, music-driven videos, captions, talking-head overlays, motion graphics, Remotion ports, composition structure, animation, keyframes, creative direction, media, audio mixing, and local catalog components. Read this entry first, then load only the references needed for the task. Figma import, Studio, hosted publishing, and remote asset services are unavailable.
+description: Create, edit, animate, inspect, validate, preview, or render HyperFrames HTML video compositions, interactive decks, and interactive browser lessons with Numen's frames tools. Covers custom videos, product promos, PR and topic explainers, interactive concept lessons, music-driven videos, captions, talking-head overlays, motion graphics, Remotion ports, composition structure, animation, keyframes, creative direction, media, audio mixing, and upstream registry components. Read this entry first, then load only the references needed for the task. Figma import, Studio, hosted publishing, and remote asset services are unavailable.
 generated-by: numen-sync
 ---
+
+<!-- Adapted from HyperFrames (https://github.com/heygen-com/hyperframes/tree/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills). Copyright 2026 HeyGen, Inc. Licensed under Apache-2.0; see frames/LICENSE. Modified for Numen: consolidated references and local frames.* MCP tool workflows. -->
 
 # Frames
 
@@ -11,8 +13,8 @@ Frames renders video from HTML. A composition declares clip timing and tracks wi
 ## Core workflow: init → lint → render
 
 1. **Start from state.** For an existing project, read its `BRIEF.md` and `STORYBOARD.md` when relevant. Perform the requested edit or operation without restarting intake. Use `frames.timeline` to inspect what plays, where, and when. For a fresh creation request, read [the intent interview](references/intent-interview.md), choose the deliverable workflow below, and read its intake contract in `references/routes/`. An explicit Remotion port or interactive lesson goes directly to its guide. A question or hold does not authorize an edit.
-2. **Init and author.** Read [the composition contract](references/core.md) before writing HTML. Use `frames.init` to initialize a new project, then write the confirmed `BRIEF.md`; initialization requires an empty destination. Follow the selected workflow and load domain references only as needed. For code explainer videos, supply grounded `code_refs` in the lesson `spec` and the absolute repository `workspace_root` to `frames.init`. Narrate only symbols and behavior resolved from that source.
-3. **Lint and inspect.** Run `frames.lint`, then `frames.check`; fix reported defects. Inspect `frames.snapshot` output at representative times and use `frames.preview` for the live player. Follow the [review loop](references/review-loop.md) for storyboard and final-look approvals. A plan or sketch approval is not final-video approval.
+2. **Init and author.** Read [the composition contract](references/core.md) before writing HTML. Use `frames.init` to initialize a new project, then write the confirmed `BRIEF.md`; initialization requires an empty destination. Follow the selected workflow and load domain references only as needed. Before scripting about code, read the exact repository files and symbols. Show code verbatim from those files and narrate only behaviour the source shows. Fetch a needed revision into a separate workspace without modifying the caller's tree.
+3. **Lint and inspect.** Use `frames.lint` for fast feedback while authoring; gate with `frames.check` (it runs lint) and fix reported defects. Inspect `frames.snapshot` output at representative times and use `frames.preview` for the live player. Follow the [review loop](references/review-loop.md) for storyboard and final-look approvals. A plan or sketch approval is not final-video approval.
 4. **Render.** After the final approval required by the review contract, call `frames.render` and deliver the local output. For an interactive deck, use `frames.present`; for an interactive lesson, use `frames.lesson`. Do not assume an MP4 is the deliverable. Tool arguments and diagnostics live in [the CLI guide](references/cli.md).
 
 ## Deliverable workflows
@@ -44,9 +46,9 @@ Choose by the requested output, not an incidental input format. A caption or ove
 | Supplied assets, captions, local voiceover, grading, media treatments | [references/media-use.md](references/media-use.md) |
 | Placed-track gain, fades, automation, ducking, effects, submix buses | [references/audio.md](references/audio.md) |
 | Init, inspection, history, lint, checks, snapshots, preview, render | [references/cli.md](references/cli.md) |
-| Discover and install local catalog blocks, components, named effects | [references/registry.md](references/registry.md) |
+| Discover and install pinned upstream registry blocks, components, named effects | [references/registry.md](references/registry.md) |
 
-Search the local catalog before hand-building a named effect or transition. For combined picture and sound edits, load core plus keyframes for camera motion and audio for mixing. Domain guides support the chosen deliverable; they do not replace its workflow.
+Search the pinned upstream registry with `frames.catalog` before hand-building a named effect or transition; install matching items with `frames.add`. For combined picture and sound edits, load core plus keyframes for camera motion and audio for mixing. Domain guides support the chosen deliverable; they do not replace its workflow.
 
 ## Shared process
 

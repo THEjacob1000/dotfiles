@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/product-launch-video/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/product-launch-video/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 
 The frames skill and its references ship with Numen and are projected by `numen sync`; read the ported skill files directly.
@@ -15,7 +15,7 @@ Use this skill to capture a product, understand its brand, plan a launch video, 
 
 You are the orchestrator. Work in `videos/<project>/`. Run steps in order and pass each gate before continuing. User-gated steps are Step 0, Step 3, and Step 6. Read `brief-contract.md` before Step 0 - it defines the gate types and how `BRIEF.md`'s `flow`/`storyboard` derive the mode that governs the Step 3/4/6 gates. Do every step yourself except Step 5, where you dispatch one sub-agent per frame. Do not put design or motion rules here; those live in the frame-worker sub-agent, this skill's local `animation/rules` + `animation/blueprints`, and `frames references/creative.md`.
 
-Workflow: Step 0 setup -> `hyperframes.json`; Step 1 capture -> `capture/`; Step 2 design system -> `frame.md`; Step 3 storyboard/script -> `STORYBOARD.md` and `SCRIPT.md`; Step 3.1 audio -> `audio_meta.json`; Step 4 visual design -> enriched `STORYBOARD.md`; Step 5 frames -> `compositions/frames/NN-*.html` and `index.html`; Step 6 final render -> `renders/video.mp4`.
+Workflow: Step 0 setup -> `hyperframes.json`; Step 1 capture -> `capture/`; Step 2 design system -> `frame.md`; Step 3 storyboard/script -> `STORYBOARD.md` and `SCRIPT.md`; Step 3.1 audio -> `audio_meta.json`; Step 4 visual design -> enriched `STORYBOARD.md`; Step 5 frames -> `compositions/frames/fNN-*.html` and `index.html`; Step 6 final render -> `renders/video.mp4`.
 
 ---
 
@@ -105,13 +105,14 @@ After drafting, run the review loop's plan pass - `review-loop.md` § 1: present
 
 Goal: Generate narration, word timings, music, and audio metadata from the approved script.
 
-Narration uses the host's configured Numen voice engine, not a provider login or voice download. Optional `bgm` names supplied local audio; `sfx_library` names a supplied local SFX manifest and audio directory for the later pass.
+Narration uses native Kokoro v1.0 with 54 voice IDs (default `af_heart`, speed `1.0`), not a provider login or voice download. `frames.narrate` normalizes each take to -16 LUFS by default (`target_lufs` overrides), transcribes it and records measured durations and word timings. Kokoro synthesis produces mono 24 kHz WAV; supplied `audio` lines keep their sample rate and channels, and need `language` for non-English recordings rather than the default voice's language. Optional `bgm` names supplied local audio; `sfx_library` names a supplied local SFX manifest and audio directory for the later pass.
 
-Start audio after Step 3 approval, alongside Step 4 when background calls are supported. **Numen has one voice, `numen`.** If another voice, gender or tone was requested, say it is unavailable and offer a recorded take instead. Call `frames.narrate {"project": "/absolute/path/to/project", "mode": "product-launch-video", "command": "generate", "script": "SCRIPT.md", "storyboard": "STORYBOARD.md", "out": "audio_meta.json", "voice": "numen", "speed": 1.0}` to generate, normalize and transcribe narration and write measured voice durations/word timings. Use only supplied BGM/SFX; hosted music lookup remains excluded.
+Start audio after Step 3 approval, alongside Step 4 when background calls are supported. Choose a Kokoro voice from the user's ask; otherwise read the remembered `voice` with `frames.media_prefs` before falling back to `af_heart`. Say which voice was used and record an explicit pick with `frames.media_prefs`. Call `frames.narrate {"project": "/absolute/path/to/project", "mode": "product-launch-video", "command": "generate", "script": "SCRIPT.md", "storyboard": "STORYBOARD.md", "out": "audio_meta.json", "voice": "<kokoro-voice-id>", "speed": 1.0}`. Transcription language defaults from the voice prefix: a/b→en, e→es, f→fr, h→hi, i→it, j→ja, p→pt, z→zh; `language` overrides it. Use only supplied BGM/SFX; hosted music lookup remains excluded.
+Use a remembered voice only if it is one of the 54 Kokoro IDs; otherwise use `af_heart` and say so.
 
-**The canonical fully-silent marker:** `music: none` in the STORYBOARD.md top YAML block **and** no `SCRIPT.md`: no narration, BGM or SFX. Remove stale `audio_meta.json` in that case; absent metadata means silent assembly. `music: none` with narration turns only BGM off.
+**The canonical fully-silent marker:** `music: none` in the STORYBOARD.md top YAML block, no `SCRIPT.md`, no `sfx:` cues and no host audio. Remove stale `audio_meta.json` in that case; absent metadata means silent assembly. With narration or supplied host audio, `music: none` turns off only BGM.
 
-**Gate:** audio job has started, or the project is marked silent (`music: none` + no `SCRIPT.md`).
+**Gate:** audio job has started, or the project is marked silent (`music: none`, no `SCRIPT.md`, and no `sfx:` cues or host audio).
 
 ---
 
@@ -125,7 +126,7 @@ Edit `STORYBOARD.md` in place. Do not create another storyboard. Use `frame.md` 
 
 Read `product-launch-video/references/visual-design.md`, `animation/blueprints-index.md`, `product-launch-video/references/motion-language.md`, and `animation/rules-index.md`. Use `visual-design.md` for the method (the time-coded shot sequence, the inline Layout vocabulary, and the required `## Video direction` block). Use `animation/blueprints-index.md` to pick each frame's shot shape. Use `motion-language.md` (the motion vocabulary + the motion doctrine) and `animation/rules-index.md` (valid rule names) for motion - do not invent motion names.
 
-**Search the live catalog before you design any named look.** For every look, effect, treatment or transition the brief names - "CRT scanlines", "glitch", "film grain", "shimmer sweep", "confetti burst" - run `frames.catalog {"query": "<the look, in plain English>"}` and read the top results BEFORE you write that look into `STORYBOARD.md`. The search needs **nothing installed**: no project, no prior `add`, no account. It searches Numen's local catalog registry. A block that already does the job becomes the frame's `focal` - name it here, so Step 5's workers install and customize it instead of rebuilding it. Hand-author a look only after a search for it came back with nothing that fits.
+**Search the upstream registry before designing any named look.** For each requested look, effect, treatment or transition, run `frames.catalog {"query": "<the look, in plain English>"}` and read the top results before writing it into `STORYBOARD.md`. The query needs network access; it does not need a project. Name a suitable block; Step 5 fetches it with `frames.add`. Hand-author only when the registry has no suitable result.
 
 For every visual frame, write a **time-coded shot sequence** into `STORYBOARD.md` per `visual-design.md`'s method: pick the frame's blueprint (or compose), instantiate it with THIS product's content, and pace each Scene's reveal to the voiceover so the frame develops across its full duration instead of front-loading then freezing. State layout and motion **inline** per Scene (vocabularies in `visual-design.md` and `motion-language.md`). Add one video-wide `## Video direction` block.
 
@@ -151,13 +152,13 @@ Call `frames.narrate {"project": "/absolute/path/to/project", "mode": "product-l
 
 Check the music against the final cut before assembly. A library track can match the requested mood but open on a quiet build that drains the first seconds of a short launch video. Compare the opening with later five-second sections; when a later section has a stronger, musically clean start, trim from there and keep a short fade-in plus a longer fade-out. If frame or narration timing changes, redo this check against the new final duration so the music never ends early or leaves silence at the tail.
 
-Before dispatch, read `subagent-dispatch.md`. Build the per-frame packets and the worker role payload:
+**Pre-install registry blocks** named across `STORYBOARD.md` before dispatch so parallel workers do not race. For each distinct block name, call `frames.add {"name": "<block>", "project": "/absolute/path/to/project"}` once. Use `frames.catalog {"query": "<block or visual>"}` first. Index/metadata-unavailable and cancellation/deadline `warnings` mean discovery failed or is incomplete; asset-origin/license warnings concern provenance, not lookup completeness. Only an empty result without lookup-failure warnings proves no match. Report installation fetch failures rather than treating them as empty search results.
 
-Call `frames.frame_packets {"project": "/absolute/path/to/project", "mode": "product-launch-video", "storyboard": "STORYBOARD.md", "out_dir": ".hyperframes/frame-packets"}` to write exact frame blocks, selected blueprint bodies, cited motion recipes and project/design paths into bounded packets, plus `_role.md` from shared worker core and workflow delta. The 48,000-byte bound remains a gate; select less context rather than truncate source.
+Read [subagent-dispatch.md](subagent-dispatch.md), then call `frames.frame_packets {"project": "/absolute/path/to/project", "mode": "product-launch-video", "storyboard": "STORYBOARD.md", "out_dir": ".hyperframes/frame-packets"}` to write exact frame blocks, selected blueprint bodies, cited motion recipes and project/design paths into bounded packets, plus `_role.md` from shared worker core and workflow delta. The 48,000-byte bound remains a gate; select less context rather than truncate source.
 
 Dispatch one sub-agent per frame, in parallel if possible or in waves. Each receives `_role.md`, its one packet and dispatch context with `PROJECT_DIR`, `frame_id`, confirmed-sketch status and `RULES_DIR`. Pass only that frame's confirmed sketch cell, never the whole storyboard sheet.
 
-Workers read only their packet and `frame.md`; they never open `STORYBOARD.md` or the skill documents (the packet inlines what was selected upstream). Each worker writes only `compositions/frames/NN-*.html`. Workers must never edit `STORYBOARD.md`.
+Workers read only their packet and `frame.md`; they never open `STORYBOARD.md` or the skill documents (the packet inlines what was selected upstream). Each worker writes only `compositions/frames/fNN-*.html`. Workers must never edit `STORYBOARD.md`.
 
 **Full-bleed backgrounds ride on a `class="clip"` layer, never the `#root`.** A frame's ground (color field / gradient / grid) is its own full-duration background clip - a `background` set on the `#root` / `data-composition-id` element is clip-gated to the frame's window and is not a dependable ground, so dark content can land on the black host `body` and render invisible. The video's base ground is painted by the assembler from `frame.md`'s `canvas` color onto the index `#root`. (Full rule + self-check: `frame-worker-core.md`.)
 
@@ -181,21 +182,18 @@ Inject transitions, run checks, pause for review, then render.
 
 Call `frames.transitions {"project": "/absolute/path/to/project", "mode": "product-launch-video", "command": "inject", "storyboard": "STORYBOARD.md"}`, then `frames.transitions {"project": "/absolute/path/to/project", "mode": "product-launch-video", "command": "verify", "storyboard": "STORYBOARD.md", "index": "index.html"}`. Registered recipes pad only outgoing wrapper/internal durations and alternate overlap lanes without shifting starts or voice/caption/SFX timing. `cut`, `none` or empty stays a hard cut. Verification must pass before checks.
 
-`frames.lint`
-
-`frames.check`
+`frames.check {"project": "/absolute/path/to/project"}` runs lint and deterministic browser checks. Fix failures until `ok` is true.
 
 `frames.snapshot {"project": "/absolute/path/to/project", "at": [0.5, 1.5, 3.0]}`
 
 `snapshot` stitches the captured frames into one contact sheet (`snapshots/contact-sheet.jpg`). Inspect the midpoint frames for layout failures, then compare the two images around every cut. A continuing element must keep the promised position, scale, opacity, and direction; fix any visible pop before rendering.
 
-If a command fails, surface stderr and stop - don't pile on recovery commands. Fix it yourself: the cheapest safe edit to `compositions/frames/NN-*.html`, then rerun the failed check.
+If a command fails, surface stderr and stop - don't pile on recovery commands. Fix it yourself: the cheapest safe edit to `compositions/frames/fNN-*.html`, then rerun the failed check.
 
-After checks pass, pause for user review - the review loop's final look (`review-loop.md` § 4): one question, on the final live preview - render now, or what changes? (Autonomous: the one kept question, preview first or render.) Then deliver the MP4 with the contact sheet and the frame ids so revisions can target a single frame.
+After checks pass, open `frames.preview {"project": "/absolute/path/to/project"}` and ask one question: render now, or what changes? This also applies in autonomous mode; opening the preview is not render approval. Then deliver the MP4 with the contact sheet and frame ids so revisions can target a single frame.
 
-Preview: `frames.preview`
 
-Render only after user approval (autonomous mode: after the preview-or-render question):
+Render only after explicit user approval:
 
 `frames.render {"project": "/absolute/path/to/project", "quality": "high", "output": "renders/video.mp4"}`
 

@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/music-to-video/references/storyboard-format.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/music-to-video/references/storyboard-format.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # STORYBOARD.md format — frames → groups
 
 `STORYBOARD.md` is the single reviewable plan the user approves at Step 3 and the **manual**
@@ -7,7 +7,7 @@ as a `## Frame N — <frame_id>` heading (the parser recognizes `Frame`). **One 
 scene = one composition file.** Inside each frame block are its **groups** (the treatment
 units). The assembler reads the frame level (`duration` → `data-start`, `src`); the worker
 reads its own frame block. A frame's **composition id = its `src` file stem**
-(`compositions/frames/01-f1.html` → `01-f1`), which the worker uses as `data-composition-id`
+(`compositions/frames/f01-build.html` → `f01-build`), which the worker uses as `data-composition-id`
 and the `window.__timelines` key.
 
 Step 2 writes the skeleton (frame fields, groups `TBD`); Step 3 fills the groups + brand. It
@@ -31,9 +31,9 @@ build_notes: ["one paused timeline per frame", "no remote assets"]
 avoid: ["generic slideshow", "tiny unreadable hero text"]
 ---
 
-## Frame 1 — f1
+## Frame 1 — f01-build
 
-- src: compositions/frames/01-f1.html # worker writes here; assembler refs it; stem (01-f1) = composition id
+- src: compositions/frames/f01-build.html # worker writes here; assembler refs it; stem (f01-build) = composition id
 - duration: 7.198s # = span length; the assembler reads this for cumulative data-start
 - span_sec: [0.0, 7.198] # track seconds; frames tile the track
 - pacing: beat_cut # beat_cut | phrase_flow (from the skeleton; obey it)
@@ -63,7 +63,7 @@ avoid: ["generic slideshow", "tiny unreadable hero text"]
 | field                             | meaning                                                                                                                        |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | heading `## Frame N — <frame_id>` | `frame_id` matches the `src` stem; `N` = the 1-based index.                                                                    |
-| `src`                             | `compositions/frames/NN-<frame_id>.html` — where the worker writes; the assembler references it. Stem = `data-composition-id`. |
+| `src`                             | `compositions/frames/<frame_id>.html` — where the worker writes; use an `fNN-short-name` stem matching `data-composition-id`. |
 | `duration`                        | the frame span length in seconds (e.g. `7.198s`) — **required**; the assembler sums these for cumulative `data-start`.         |
 | `span_sec`                        | `[start, end]` track seconds. `duration = end − start`.                                                                        |
 | `pacing`                          | `beat_cut` \| `phrase_flow` — from the skeleton; the worker must obey (no hard-cut on `phrase_flow`).                          |

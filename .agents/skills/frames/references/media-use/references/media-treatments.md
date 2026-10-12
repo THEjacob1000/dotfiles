@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/media-use/references/media-treatments.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/media-use/references/media-treatments.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Media treatments
 
 A media treatment is a source-aware plan that composes existing HyperFrames
@@ -152,15 +152,17 @@ drops frames. Do not impose or claim a universal hard cap from one machine.
    contact sheet justifies it. Do not invent keys, exceed reported ranges, or
    stack effects without a visual reason. Do not run the generic grade/LUT
    resolver first; it adds irrelevant candidates and may download an unused
-   LUT. Use `media-treatment --selector "#hero" --analyze --json` only when
+   LUT. Use `frames.media_treatment {"project": "/absolute/path/to/project", "selector": "#hero", "analyze": true}` only when
    correction needs measured signal evidence.
 4. Persist pixel settings with `frames.media_treatment`; it validates and
    merges a patch into the existing nested `data-color-grading` contract. Use registered
    GSAP only for supported animated values and Registry overlay blocks only
    for authored dressing.
    ```bash
-   frames.media_treatment {"selector": "<unique selector>", "grading": "<nested JSON patch>", "apply": true}
+   frames.media_treatment {"project": "/absolute/path/to/project", "selector": "<selector>", "grading": {"adjust": {"exposure": 0.2}}, "apply": true}
    ```
+   A selector matching several images or videos patches every match, each merged into its own current grading. The result reports `count` and each target. Use `clear: true` first for an identical look, or `selector_index` to patch only one.
+
    For a temporal reveal, use the focused capability result's `animation`
    contract. If it is `null`, the capability is static. Author the starting CSS
    property inline on the real media element and return temporary treatment
@@ -195,7 +197,7 @@ drops frames. Do not impose or claim a universal hard cap from one machine.
    composed controls, optional overlays, and the frames/render that were
    actually checked. Do not report visual quality from command success alone.
 
-`media-treatment --analyze` provides deterministic clipping and signal
+`frames.media_treatment {"project": "/absolute/path/to/project", "selector": "#hero", "analyze": true}` provides deterministic clipping and signal
 evidence for local composition media, not subject recognition or automatic
 taste. It reports HDR/metadata caveats and a bounded primary-correction patch;
 it does not invent wheels, curves, or HSL selections from statistics.

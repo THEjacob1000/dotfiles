@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/media-use/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/media-use/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 
 # frames references/media-use.md
@@ -18,7 +18,7 @@ Remote asset search (upstream `resolve`) remains unavailable. Use supplied local
 | `image` | user-supplied photos and backgrounds |
 | `icon` | user-supplied icons and symbols |
 | `logo` | supplied official brand marks; never redrawn |
-| `voice` | TTS voiceover (local Numen voice through `frames.tts`)                           |
+| `voice` | TTS voiceover (local Kokoro voice through `frames.tts`)                           |
 | `grade` | measured correction candidate; broad polish/stylization follows Media Treatments |
 | `lut`   | local parametric generation or supplied validated `.cube` through `frames.lut` |
 
@@ -68,7 +68,7 @@ Surface an opportunity only when a concrete signal is present:
 | Image that is a placeholder, tiny, or upscaled-looking | Offer to replace it with a user-supplied image |
 | Hard scene cuts / transitions with no sound | Offer to use a user-supplied SFX |
 | A piece over ~10s with no music bed | Offer to use user-supplied BGM |
-| Footage that reads under/over-exposed or color-cast      | a corrective grade (inspect it with `frames.media_treatment {"selector": "#hero", "analyze": true}`) |
+| Footage that reads under/over-exposed or color-cast      | a corrective grade (inspect it with `frames.media_treatment {"project": "/absolute/path/to/project", "selector": "#hero", "analyze": true}`) |
 | Photographic media that feels visually flat or off-topic | one specific source-appropriate preset or custom treatment, with the intended target named             |
 | A meaningful media entrance/reveal that feels static     | one supported seek-safe treatment animation; preserve color unless the request also justifies a preset |
 
@@ -83,3 +83,7 @@ Rules that keep this a help, not nagware: **grounded, not generic** (no signal â
 | Local voiceover / TTS, captions, transcription | `media-use/references/audio.md` |
 | Source-aware creative treatments, realtime effects, overlays, reveals | `media-use/references/media-treatments.md` |
 | Remembered preferences and frozen recipes | `media-use/references/memory.md` |
+Remote host-gateway and OAuth access, HeyGen catalog/avatars/voice clones, ElevenLabs, and Gemini remain unavailable even when upstream provider environment variables are set; see `media-use/references/setup-providers.md`. Use an available host music/sound tool before proposing remote catalog search, or use supplied files.
+
+Maintainer boundaries: [ownership and unavailable resolver statistics](media-use/references/meta.md) and [upstream telemetry dashboard availability](media-use/references/telemetry-dashboard.md).
+

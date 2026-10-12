@@ -1,19 +1,23 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/motion-graphics/catalog-map.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/motion-graphics/catalog-map.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Director → catalog block map (reuse-first)
 
 <!-- registry-items: allow=geo-highlight,geo-flow,flag-borders,pin-rollout,stat-motion,data-composition-src -->
 <!-- allow= entries above are deliberately NOT registry items: geo-*/flag-borders/pin-rollout and stat-motion are hand-authored gaps this file names in order to say they are gaps. -->
 
-**Search the live catalog before you use this table, and again before any hand-authored effect.** Run
-`frames.catalog {"query": "<the move, in plain English>"}` — once per named look or effect the
-user asks for ("CRT scanlines", "glitch", "film grain", "shimmer sweep"), including effects asked for
-mid-build. **The search needs nothing installed**: it ranks the local catalog registry (~400 items) from any
-directory, with no project, no prior `add`, and no account. The table below is a hand-maintained snapshot of
-part of that registry and it under-covers by design — treat a miss here as unproven, and only the search's
-own empty result as evidence the catalog lacks the move. When it does, tell the user
-before hand-authoring. Full flags and tiers: `/frames → references/registry.md` → § Discovery.
+**Search the upstream registry before using this table or hand-authoring an effect.** Run
+`frames.catalog {"query": "<the move, in plain English>"}` for each requested look or effect,
+including mid-build requests. The query needs network access; the table below is a partial,
+hand-maintained snapshot, so a miss here proves nothing. Treat only an empty search result
+without lookup-failure `warnings` as evidence the registry lacks the move. Index/metadata-unavailable
+or cancellation/deadline warnings mean incomplete lookup; asset-origin/license warnings concern
+provenance, not lookup completeness. If no suitable block exists, tell the user before
+hand-authoring. Full flags and tiers: `/frames → references/registry.md` → § Discovery.
 
-The Builder's **default is to compose existing HF catalog blocks, not hand-author.** `frames.add {"project": "/absolute/path/to/project", "name": "<block>"}` drops a block's source into `compositions/`; the Builder then **customizes in place** - most blocks bake their content/data into their own script (only a few expose CSS-var `params`), so reuse = **add + edit**, not pure variable injection. Hand-author only gaps no block covers and the asset-fusion affordance binding.
+The Builder's **default is to compose existing HF catalog blocks, not hand-author.**
+`frames.add {"project": "/absolute/path/to/project", "name": "<block>"}` fetches a block's
+source into `compositions/`; then customize it in place. Most blocks bake content/data into
+their own script, so reuse = **add + edit**, not pure variable injection. Hand-author only
+gaps no block covers and the asset-fusion affordance binding.
 
 After classifying intent → category, the **Director names the block(s) + what to customize** in the shot-plan IR:
 

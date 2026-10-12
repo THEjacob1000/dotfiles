@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/embedded-captions/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/embedded-captions/SKILL.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 
 
 Use the merged frames reference guides directly; no plugin installation or refresh
@@ -102,7 +102,7 @@ Read the samples. Refuse if:
 
 ## Pipeline - 5 steps
 
-1. `frames.init {"project": "/absolute/path/to/project", "video": "/absolute/path/to/clip.mp4", "skill": "frames references/embedded-captions.md"}`
+1. `frames.init {"project": "/absolute/path/to/project", "video": "/absolute/path/to/clip.mp4", "skill": "embedded-captions"}`
 2. `frames.transcribe {"project": "/absolute/path/to/project"}` → inspect `<project>/transcript.json` and sample the source video. If supplied `<project>/frames_fg/` mattes exist, run `frames.caption_safe_zones {"project": "/absolute/path/to/project"}` and inspect `safe-zones.json`. This is heuristic analysis, not automatic matting.
 3. [AGENT STEP - authoring] author creative choices, then compile:
    Cinematic: `cinematic.json` → `frames.caption_cinematic {"project": "/absolute/path/to/project"}`.

@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes/references/frame-worker-core.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes/references/frame-worker-core.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Frame worker — core contract (shared by the narrative video workflows)
 
 The workflow-agnostic half of every frame worker's role. Assemble the worker packet by hand: prepend this file to the selected workflow's `sub-agents/frame-worker.md` (the **delta**) to form `.hyperframes/frame-packets/_role.md`; the worker reads the two as one role. The workflow-specific packet then adds the assigned frame details. Editing guidance: a rule that applies to any frame worker belongs here, once; a workflow-specific rule belongs in that workflow's delta. (`frames references/music-to-video.md` has its own composition model and does not use this contract.)
@@ -8,10 +8,11 @@ You build the frame composition file(s) assigned in your dispatch and nothing el
 **INPUT** — your dispatch provides this role, your frame packet(s), and:
 
 - `PROJECT_DIR` — the project root; all paths are relative to it.
-- `frame_id` — e.g. `03-feature`. Use it **verbatim** as the composition id, the `window.__timelines` key, and the file name (`compositions/frames/03-feature.html`) — that path **is** the frame's `src` in `STORYBOARD.md` (the orchestrator derived `frame_id` from it), so writing there is how the assembler finds your frame.
+- Name each frame `fNN-short-name`, where `NN` is its zero-padded ordinal (for example, `f03-feature`). The letter prefix keeps authored ids safe for unescaped CSS and GSAP selectors.
+- `frame_id` — e.g. `f03-feature`. Use it **verbatim** as the composition id, the `window.__timelines` key, and the file name (`compositions/frames/f03-feature.html`) — that path **is** the frame's `src` in `STORYBOARD.md` (the orchestrator derived `frame_id` from it), so writing there is how the assembler finds your frame.
 - Your **packet** (`.hyperframes/frame-packets/<frame_id>.md`) — everything selected upstream for this frame. You never open the shared `STORYBOARD.md` (see below); the packet carries your exact **`## Frame N` block**:
   - `scene` — a one-line contact-sheet caption. **Design intent, never visible DOM text.**
-  - `voiceover` — the narration line. **Timing reference only** (sync entrances to the voice); **never** rendered as text — captions are a separate root track (see constraints).
+  - `voiceover` — the narration line. **Timing reference only** (sync entrances to the voice); **never** rendered as text — captions are a separate root track marked `data-track-kind="captions"` (see constraints).
   - `duration` — your render length in seconds. **Fixed upstream; never change it or tween to fill a different length.**
   - `transition_in` — informational. The injector stamps it at the root; **you do not author transitions.**
   - the **time-coded shot sequence** — your build spec. A sequence of Scene lines (`Scene 1 (0.0–Xs): … → Scene 2: … → Scene N`), each stating what's on screen, what enters / moves / reveals, and the layout inline. Build it faithfully, beat for beat — every Scene window is a phase you must realize, and each reveal lands on its `voiceover` cue (this is what keeps the shot from freezing).

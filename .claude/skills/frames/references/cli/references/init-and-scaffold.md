@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes-cli/references/init-and-scaffold.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-cli/references/init-and-scaffold.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # init, capture
 
 <!-- registry-items: allow=blank,landscape-4k,portrait-4k,square-4k,frames references/product-launch-video.md,frames references/core.md,frames references/media-use.md -->
@@ -24,7 +24,7 @@ Templates: `blank`, `warm-grain`, `play-mode`, `swiss-grid`, `vignelli`, `decisi
 Other useful flags:
 
 - `--resolution` — preset: `landscape` (1920×1080), `portrait` (1080×1920), `landscape-4k`, `portrait-4k`, `square` (1080×1080), `square-4k`. Aliases: `1080p`, `4k`, `uhd`, `1080p-square`, `4k-square`.
-- `skill` records the owning authoring workflow in `hyperframes.json`, for example `frames references/product-launch-video.md`.
+- `skill` records the owning authoring workflow in `hyperframes.json`, for example `"skill": "product-launch-video"`; use a bare lowercase/digit/hyphen slug.
 - `--skip-transcribe` — don't auto-transcribe `--audio` / `--video` with Whisper.
 - `--model`, `--language` — Whisper model / language for the auto-transcription.
 
@@ -32,7 +32,7 @@ When using `tailwind`, read the `frames references/core.md` Tailwind reference b
 
 When `--audio` or `--video` is supplied, `init` transcribes the file with Whisper. For voice/model selection see the `frames references/media-use.md` skill.
 
-All project and input media paths must be absolute. Lesson-mode init (`spec` with `workspace_root`) rejects `example`, `video`, `audio`, `tailwind` and `resolution`; those options belong only to standalone scaffolding.
+All project and input media paths must be absolute.
 
 ## capture
 

@@ -1,4 +1,4 @@
-<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/73489331114b89f42b5bc843765e610525188bcb/skills/hyperframes/references/script-format.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
+<!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes/references/script-format.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # `SCRIPT.md` — locked narration (optional)
 
 The **locked narration** for a project: the final spoken lines + voice + delivery. It is an _optional_ plan-layer file — a video with no narration (bgm-only, silent overlay) has none. The storyboard's per-frame `voiceover` is the lighter, editable _guide_; `SCRIPT.md` is the _commit_. (Storyboard format → `references/storyboard-format.md`.)
@@ -13,9 +13,9 @@ A header block, then one section per spoken line.
 
 | Part                            | Holds                                                                                                                                   |
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Header                          | `**Voice:**` (provider + voice), `**Voice settings:**` (e.g. stability / similarity / style), `**Voice direction:**` (overall delivery) |
+| Header                          | `**Voice:**` (Kokoro voice ID), `**Voice direction:**` (overall delivery) |
 | `## Line N — <label> (Frame N)` | one spoken line, tied to its storyboard frame                                                                                           |
-| `**Time:**`                     | the frame's rough window — a _guide_, not authoritative (real timing comes from TTS word timestamps)                                    |
+| `**Time:**`                     | the frame's rough window — a _guide_, not authoritative (real timing comes from transcribing the generated audio) |
 | `**Delivery:**`                 | per-line delivery note                                                                                                                  |
 | indented block                  | the **spoken text** — the only part fed to TTS                                                                                          |
 
@@ -24,8 +24,7 @@ A header block, then one section per spoken line.
 ```markdown
 # SCRIPT — acme-launch
 
-**Voice:** Rachel (ElevenLabs)
-**Voice settings:** stability 0.35 · similarity 0.75 · style 0.20
+**Voice:** af_heart (Kokoro)
 **Voice direction:** Confident, warm, a little playful.
 
 ---
@@ -47,7 +46,9 @@ A header block, then one section per spoken line.
 
 ## To TTS
 
-Feed each line's spoken text to the provider documented in
-`frames/references/media-use/audio/references/tts.md`. `frames.tts` speaks with the Numen
-voice and returns no word timestamps; run `frames.transcribe` on its output for
-them. Real per-word timing replaces the `**Time:**` guides.
+Feed each line's spoken text to the engine documented in
+`frames/references/media-use/audio/references/tts.md`. `frames.tts` speaks with
+the selected Kokoro voice (default `af_heart`) and returns no word timestamps;
+run `frames.transcribe` on its output for them. Pass the voice id as `voice`
+to `frames.narrate`/`frames.tts`; the `**Voice:**` header does not select it.
+Real per-word timing replaces the `**Time:**` guides.
