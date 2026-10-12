@@ -1,4 +1,4 @@
-# Open a local repo in a dedicated tmux window running Neovim
+# Open a local repo in a dedicated tmux window: Neovim on the left, a shell on the right
 function o
     set -l base "$HOME/Documents/Developer"
     if test (count $argv) -eq 0
@@ -22,5 +22,7 @@ function o
     # Scope to the current session: a bare "=$name" also matches a *session*
     # of that name (this box runs session-per-repo) and would silently no-op.
     set -l session (tmux display-message -p '#S')
-    tmux select-window -t "$session:=$name" 2>/dev/null; or tmux new-window -n $name -c $dir nvim .
+    tmux select-window -t "$session:=$name" 2>/dev/null; and return
+    set -l win (tmux new-window -P -F '#{window_id}' -n $name -c $dir nvim .)
+    tmux split-window -h -t $win -c $dir
 end
