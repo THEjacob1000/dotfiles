@@ -39,3 +39,4 @@ settings.local.json
 
 **/.DS_Store
 .ripwire_*
+.numen-refine
