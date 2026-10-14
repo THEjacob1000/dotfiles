@@ -69,6 +69,7 @@ fastfetch = "latest"
 tealdeer = "latest"
 dua = "latest"
 usage = "latest"
+ffmpeg = "latest"
 
 [tool_alias]
 loke = "http:loke"
