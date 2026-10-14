@@ -34,6 +34,32 @@ return {
             javascript = { updateImportsOnFileMove = { enabled = "always" } },
           },
         },
+        eslint = {
+          -- eslintrc-only projects on ESLint 9 need flat config off; decided per root so flat-config repos keep working
+          on_init = function(client)
+            local root = client.config.root_dir
+            if not root then
+              return
+            end
+            for _, name in ipairs({
+              "eslint.config.js",
+              "eslint.config.mjs",
+              "eslint.config.cjs",
+              "eslint.config.ts",
+              "eslint.config.mts",
+              "eslint.config.cts",
+            }) do
+              if vim.uv.fs_stat(root .. "/" .. name) then
+                return
+              end
+            end
+            -- newer eslint-lsp reads the top-level key, older ones the experimental one
+            client.settings.useFlatConfig = false
+            client.settings.experimental =
+              vim.tbl_extend("force", client.settings.experimental or {}, { useFlatConfig = false })
+            client:notify("workspace/didChangeConfiguration", { settings = client.settings })
+          end,
+        },
       },
     },
   },

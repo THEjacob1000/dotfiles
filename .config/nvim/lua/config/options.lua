@@ -72,3 +72,6 @@ vim.api.nvim_create_autocmd("TermOpen", {
     end)
   end,
 })
+
+-- eslint only reports diagnostics; formatting stays with prettier/biome
+vim.g.lazyvim_eslint_auto_format = false
