@@ -197,17 +197,18 @@ local function show_blame()
       end
       state.process = nil
       if result.code ~= 0 then
+        state.lines = {}
         local message = vim.trim(result.stderr or "")
+        -- jj auto-tracks new files, so a missing path at @ means it's ignored
+        if message:match("^Error: No such path") then
+          return
+        end
         if message == "" then
           message = "jj file annotate failed with exit code " .. result.code
         end
-        if state.error ~= message then
-          state.error = message
-          vim.notify("JJ blame: " .. message, vim.log.levels.ERROR)
-        end
+        vim.notify("JJ blame: " .. message, vim.log.levels.ERROR)
         return
       end
-      state.error = nil
       state.lines = vim.split(result.stdout or "", "\n", { plain = true })
       render_blame(buf, state, state.request_display, state.row)
     end)
