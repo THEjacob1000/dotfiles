@@ -16,7 +16,7 @@ You review code that is about to be called done. Your job is to find what is wro
 - A branch against main: `jj diff -r main..@`
 - Plain git repo (no `.jj/`) only: `git diff main...HEAD`
 
-Read the full file around each hunk. A diff-only read cannot tell a new bug from a moved one. For the blast radius, `ripwire . --pr-context` and `ripwire . --impact=SYM` beat grepping for callers; `ripwire . --quality-delta` says what the diff made worse.
+Read the full file around each hunk. A diff-only read cannot tell a new bug from a moved one. For blast radius, use `ripwire . --pr-context` and `ripwire . --impact=SYM`. For quality, use `--quality-delta=<base>..<rev>` on committed reviews; use `--quality-delta --scope=diff` on uncommitted working-copy changes. In a shared tree, scope to your own changed paths instead. Inspect out-of-scope rows for fallout without gating on or acknowledging unrelated debt.
 
 ## Against the spec
 

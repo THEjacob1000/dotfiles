@@ -11,7 +11,9 @@ numen refine next
 numen refine backlog --count 100 --json
 ```
 
-Take the selected native or strict gate baseline separately. Inspect the scan's coverage and errors: an incomplete scan is not a clean inventory. `next` is the execution queue shaped by the living plan; `backlog` exposes work outside that queue. Use `show PATTERN --code` to inspect a finding and its evidence. A scoped request stays scoped: `next --scope RELPATH` selects an exact file or directory subtree, not a glob, while `--lang LANG` selects scan inputs/report views. Neither licenses unrelated changes. Keep a whole-inventory baseline for a sweep, then route findings by real component ownership. A scanner hit is a lead, not proof of a defect or permission to delete code.
+Take the selected native or strict gate baseline separately. Inspect the scan's coverage and errors: an incomplete scan is not a clean inventory. `scan` writes a scorecard badge only when opted in with `--badge-path FILE` or config `scorecard=FILE`, inside the scanned root. `next` is the execution queue shaped by the living plan; `backlog` exposes work outside that queue. Use `next` (not `plan next`); `show` has `--top` and `--no-budget`, not `--limit` or `--noise-budget`. Use `show PATTERN --code` to inspect a finding and its evidence. `show` applies per-detector noise budgets (default 10) before `--top` caps the result (default 20, `0` unlimited); `--no-budget` lifts only the budgets, and JSON reports `hidden_by_budget`, `hidden_by_detector`, and `hidden_by_top`. A scoped request stays scoped: `next --scope RELPATH` selects an exact file or directory subtree, not a glob, while `--lang LANG` selects scan inputs/report views. Neither licenses unrelated changes. Keep a whole-inventory baseline for a sweep, then route findings by real component ownership. A scanner hit is a lead, not proof of a defect or permission to delete code.
+
+An empty Python analyzer report accompanied by `No module named` (for example, `python3 -m bandit` reporting `No module named bandit`) is an adapter `tool_not_found` failure rather than a malformed report. Bandit security coverage is skipped; Ruff's unused-item checks can instead fall back to Pyflakes with reduced coverage. Inspect coverage alongside tool-unavailable warnings and install or repair the analyzer before relying on full detector coverage.
 
 Read the score channels separately: overall penalizes unresolved findings (`open`, `deferred`, and `triaged_out`), objective covers mechanical checks only, and strict additionally penalizes `wontfix` and `auto_resolved`. Verified strict uses the mechanical pool only and penalizes unresolved findings plus `wontfix`, `fixed`, and `false_positive`, so its gap from strict is not solely a verification gap. Only findings still open can become `auto_resolved` when they disappear in a scan; operator-closed findings retain their status and verified-strict penalty after a confirming scan. Zero wontfix findings therefore does not make overall and strict equal.
 
@@ -22,19 +24,22 @@ numen refine resolve ID --status fixed --note 'Concrete change and observed veri
 numen refine plan resolve CLUSTER --status fixed --note 'Concrete change and observed verification' --attest 'I have actually fixed and verified this cluster; I am not gaming the score.'
 ```
 
-Replace the example evidence with what actually happened. Both resolution paths require an explicit attestation text containing `I have actually` and `not gaming` (case/spacing insensitive) when closing real findings; `--confirm` does not manufacture one. `wontfix` and `false_positive` require a concrete `--note` justification of at least 50 characters; they are dispositions, not verified fixes. Wontfix batches over ten require `--confirm` as well. Reopen mistaken resolutions with `--status open`; don't use forced resolution to bypass unfinished work. Inspect the matched set before bulk mutation and respect cluster guards.
+Replace the example evidence with what actually happened. Closing matched findings with any status except `open` requires `--attest TEXT` containing `I have actually` and `not gaming` (case/spacing insensitive) on both resolution paths; `--confirm` does not manufacture one. `wontfix` and `false_positive` require a concrete `--note` justification of at least 50 characters; they are dispositions, not verified fixes. Wontfix batches over ten require `--confirm` as well. Reopen mistaken resolutions with `--status open`; don't use forced resolution to bypass unfinished work. Inspect the matched set before bulk mutation and respect cluster guards.
 
 Finish the coherent execution stage, then run `scan`, `status`, and `next` again to confirm disappearance, detect recurrence/cascades, and refresh priorities. A completed subjective assessment import permits one follow-up rescan even while imported findings remain open; importing and completing triage does not resolve those findings. After that refresh, the scan gate may refuse another rescan while planned work remains. A source-only audit leaves accepted defects open rather than claiming fixes. If a later audit scan needs to bypass outstanding work, use an explicitly authorized `scan --force-rescan --attest TEXT` with text containing `I understand`, explain the intentionally unfixed work, and disclose the recorded bypass. For focused work, explicitly defer unrelated queued findings with `plan skip PATTERN --note TEXT`, explaining their ownership and why they remain outside this request; keep them in the backlog, not falsely fixed or wontfix. Never replace the verification baseline or use `--profile ci` to evade the execution gate. A resolution is an operator claim until the rescan confirms the detector's result; neither proves the native checks passed. End only with the requested scope covered and the entrypoint's verification/closure evidence, not merely an improved score or empty filtered queue.
 
 ## Living plan and triage
 
 ```sh
+numen refine plan
 numen refine plan show
 numen refine plan queue
 numen refine plan triage --start
 numen refine plan triage --show-requirements
 numen refine plan triage --stage-prompt STAGE --json
 ```
+
+`plan show` displays the whole plan and takes no pattern; use `show PATTERN` for findings.
 
 The stage order is strategize → observe → reflect → organize → enrich → sense-check, followed by `--complete`. Strategize has no prerequisites; observe requires strategize. Follow the reported dependencies and gates within that order, not a shortcut. `--stage-prompt STAGE --json` provides stage-specific guidance; use it with the current requirements and live findings to prepare the report. Read the relevant source, then record and explicitly confirm each stage, including strategize: recording is not confirmation. `plan triage STAGE` is not a recording command. These templates require actual evidence in `REPORT`, `stage_attestation`, and `strategy`:
 
