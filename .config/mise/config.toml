@@ -35,6 +35,7 @@ cargo-llvm-cov = "latest"
 cargo-make = "latest"
 cargo-nextest = { version = "latest", version_prefix = "cargo-nextest-" }
 cargo-watch = "latest"
+cargo-generate = "latest"
 cargo-deny = "latest"
 cargo-insta = "latest"
 "cargo:wasm-opt" = "latest"
@@ -67,6 +68,7 @@ loke = "http:loke"
 cargo-nextest = "github:nextest-rs/nextest"
 cargo-llvm-cov = "aqua:taiki-e/cargo-llvm-cov"
 cargo-watch = "github:watchexec/cargo-watch"
+cargo-generate = "github:cargo-generate/cargo-generate"
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
