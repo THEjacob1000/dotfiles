@@ -69,6 +69,8 @@ loke = "http:loke"
 idiomatic_version_file_enable_tools = ["node"]
 trusted_config_paths = ["/home/jacob/Documents/Codex/loke-workspaces"]
 experimental = true
+# Shims on PATH expose every project's pinned tools in every directory.
+activate_shims = false
 cargo.binstall_quickinstall = true
 npm.package_manager = "bun"
 pypi.uvx = true

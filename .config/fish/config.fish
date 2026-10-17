@@ -57,18 +57,16 @@ function __remove_mise_paths --description 'Remove all mise-managed paths from P
 end
 
 # direnv's IN_NIX_SHELL survives `exec fish`; stripping then loses mise-only tools like zoxide and tmux.
-if set -q IN_NIX_SHELL; and not set -q DIRENV_DIR
-    __remove_mise_paths
-else
-    if test -d $HOME/.local/share/mise/shims
-        fish_add_path $HOME/.local/share/mise/shims
+# Outside nix, `mise activate` scopes PATH per project; global shims would expose every pinned tool everywhere.
+if set -q IN_NIX_SHELL
+    if not set -q DIRENV_DIR
+        __remove_mise_paths
+    else if test -d $HOME/.local/share/mise/shims
+        fish_add_path -g $HOME/.local/share/mise/shims
     end
 end
 
-# gh and jj completions are cached as static files in ~/.config/fish/completions/
-# Regenerate with:
-#   gh completion -s fish > ~/.config/fish/completions/gh.fish
-#   jj util completion fish > ~/.config/fish/completions/jj.fish
+# Completions for tools that print their own fish script live in conf.d/tool-completions.fish.
 
 # -----------------------------
 # Aliases (fish 3.x `alias` is built-in)
