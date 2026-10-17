@@ -60,6 +60,7 @@ tealdeer = "latest"
 dua = "latest"
 usage = "latest"
 ffmpeg = "latest"
+"aqua:buildkite/cli" = "latest"
 
 [tool_alias]
 loke = "http:loke"
@@ -71,7 +72,12 @@ experimental = true
 cargo.binstall_quickinstall = true
 npm.package_manager = "bun"
 pypi.uvx = true
-minimum_release_age_excludes = ["npm:@oh-my-pi/pi-coding-agent", "npm:@openai/codex", "bun", "claude"]
+minimum_release_age_excludes = [
+  "npm:@oh-my-pi/pi-coding-agent",
+  "npm:@openai/codex",
+  "bun",
+  "claude",
+]
 
 [settings.node]
 gpg_verify = false
