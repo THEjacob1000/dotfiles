@@ -31,9 +31,9 @@ taplo = "latest"
 prettier = "latest"
 cargo-binstall = "latest"
 "cargo:bacon" = "latest"
-"cargo:cargo-llvm-cov" = "latest"
-"cargo:cargo-make" = "latest"
-"cargo:cargo-nextest" = "latest"
+cargo-llvm-cov = "latest"
+cargo-make = "latest"
+cargo-nextest = { version = "latest", version_prefix = "cargo-nextest-" }
 "cargo:cargo-watch" = "latest"
 cargo-deny = "latest"
 cargo-insta = "latest"
@@ -64,6 +64,8 @@ ffmpeg = "latest"
 
 [tool_alias]
 loke = "http:loke"
+cargo-nextest = "github:nextest-rs/nextest"
+cargo-llvm-cov = "aqua:taiki-e/cargo-llvm-cov"
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
