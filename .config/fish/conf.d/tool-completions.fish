@@ -6,32 +6,44 @@ end
 
 # tool:command that prints its fish completions
 set -g __tc_specs \
+    'axiom:axiom completion fish' \
+    'bacon:env COMPLETE=fish bacon' \
     'buf:buf completion fish' \
     'codex:codex completion fish' \
     'copilot:copilot completion fish' \
     'doppler:doppler completion fish' \
     'dua:dua completions fish' \
     'fly:fly completion fish' \
+    'flyctl:flyctl completion fish' \
     'gh:gh completion -s fish' \
+    'gitleaks:gitleaks completion fish' \
     'golangci-lint:golangci-lint completion fish' \
     'helm:helm completion fish' \
     'jfit:jfit completion fish' \
     'jj:env COMPLETE=fish jj' \
     'just:just --completions fish' \
     'loke:loke completion fish' \
+    'lychee:lychee --generate complete-fish' \
     'mbx:mbx completion fish' \
     'mise:mise completion fish' \
     'numen:numen completions fish' \
     'omp:omp completions fish' \
     'railway:railway completion fish' \
+    'rg:rg --generate complete-fish' \
+    'rumdl:rumdl completions fish' \
+    'sentry-cli:sentry-cli completions fish' \
     'stripe:stripe completion --shell fish --write-to-stdout' \
+    'tak:tak completion fish' \
     'task:task --completion fish' \
     'taplo:taplo completions fish' \
     'tg:tg completion fish' \
+    'trivy:trivy completion fish' \
     'uv:uv generate-shell-completion fish' \
     'uvx:uvx --generate-shell-completion fish' \
+    'wrangler:wrangler complete fish' \
     'xcodes:xcodes --generate-completion-script fish' \
-    'yq:yq shell-completion fish'
+    'yq:yq shell-completion fish' \
+    'zellij:zellij setup --generate-completion fish'
 
 set -g __tc_dir (set -q XDG_CACHE_HOME; and echo $XDG_CACHE_HOME; or echo $HOME/.cache)/fish/tool-completions
 
