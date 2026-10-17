@@ -56,7 +56,8 @@ function __remove_mise_paths --description 'Remove all mise-managed paths from P
     set -gx PATH $cleaned_path
 end
 
-if set -q IN_NIX_SHELL
+# direnv's IN_NIX_SHELL survives `exec fish`; stripping then loses mise-only tools like zoxide and tmux.
+if set -q IN_NIX_SHELL; and not set -q DIRENV_DIR
     __remove_mise_paths
 else
     if test -d $HOME/.local/share/mise/shims
