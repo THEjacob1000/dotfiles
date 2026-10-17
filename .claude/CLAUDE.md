@@ -3,12 +3,10 @@
 
 # Jacob's Agent Doctrine (canonical)
 
-Single source of truth for how any coding agent should behave on Jacob's machine.
-`numen sync` projects this into each tool's native file (`~/.claude/CLAUDE.md`,
-`~/.codex/AGENTS.md`). Never hand-edit a synced block. Edit this file and re-run
-`numen sync`. Content inside a per-tool block (an HTML comment `numen:tool=claude`
-or `numen:tool=codex`, closed by `/numen:tool`) renders only into that tool;
-everything else renders into both.
+Single source of truth for coding agents on Jacob's machine. `numen sync` projects
+this into `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`; edit here, never in synced
+blocks. HTML comments `numen:tool=claude` or `numen:tool=codex`, closed by
+`/numen:tool`, restrict content to that tool; the rest renders into both.
 
 ## Toolchain
 - Bun for runtime + packages (`bun install/test`, `bun run lint|typecheck`);
@@ -16,33 +14,29 @@ everything else renders into both.
   lint/format. Always defer to what the current repo is actually configured with.
 - Prefer absolute paths over `cd`-prefixed shell commands.
 
-## Code navigation: ripwire for graph questions, rg for literals
-`ripwire` (CLI on PATH, run it through Bash) is a deterministic call-graph map
-of a repo, 0.3s cold, offline. Use it for the questions grep answers badly: what
-matters for this task, who calls X, what breaks if X changes, which tests cover
-it. Every byte it returns is re-read on every later turn, so payload size beats
-call count. Open a file only once the map has named it.
-- The `ripwire` on PATH is numen's front: it adds `--legend=compact` to every
-  XML verb, since the default legend is 3-5 KB of schema prose per call. Pass
-  `--legend=full` only when an attribute's meaning is unclear.
-- Batch independent queries into one Bash call. A turn costs the whole context;
-  a second command in the same turn costs only its bytes.
-- Orient on a task: `ripwire . --for="<task in words>" --token-budget=1200`.
-  Paste symbol and file names from the ask verbatim.
+## Code navigation: ripwire for graphs, literal search otherwise
+`ripwire` (CLI on PATH, through Bash) maps a repo's call graph offline: what
+matters, who calls X, what breaks, which tests cover it. Output is re-read every
+turn: minimize payload. Open files only after the map names them.
+- The `ripwire` on PATH is numen's front: it strips the legend from XML verbs.
+  Pass `--legend=full` only when an attribute's meaning is unclear.
+- Batch independent queries in one Bash call; minimize payload.
+- Orient: `ripwire . --for="<exact symbol/file names and task>" --token-budget=1200`.
+  Paste names verbatim; `confidence="low"` → literal search, not another `--for`.
 - Ripwire maps one repo. Root it at a checkout (or 2..16 named ones), never at a
-  folder of repos: the front refuses that, and a search across many repos is `rg`.
+  folder of repos: the front refuses that. Use literal search across repos.
 - One symbol: `--callers=SYM`; "is it safe to change" needs `--impact=SYM` plus
-  `--uses=SYM`. Narrow flat verbs with `--limit=N`, never `--token-budget` (it
-  gates them to empty output and the turn is wasted).
-- An exact literal is `rg -n 'text'`, not ripwire.
+  `--uses=SYM`. Use `--token-budget` only for `--for`/bundle output; flat verbs
+  use `--limit=N --offset=M` to paginate instead of a whole-document budget gate.
+- Literal search: OMP's `grep` tool; outside OMP, `rg -n 'text'`, not ripwire.
 - A stack trace or build error: `--from-trace=FILE` (`-` for stdin). Paste it,
   don't paraphrase it.
 - Before writing a new fn/class/helper: `--exemplar="<what you're writing>"`.
-- Before calling work done: `--quality-delta`, then `--test-gate` for the tests
-  that actually cover the change. `--situ` reads the working tree itself; never
-  hand-join a file list into `--affected`.
-- About to fan out N agents: `--pack-task="<task>" --partition=N` gives each
-  lane its slice, so N agents stop re-deriving the same orientation.
+- Before calling work done: `--quality-delta --scope=diff` (shared tree:
+  `--scope=<your files>`); out-of-scope rows don't gate, but check for clone
+  fallout. Then `--test-gate` for tests covering the change. `--situ` reads the
+  working tree itself; never hand-join a file list into `--affected`.
+- OMP fanouts of 2–16 named tasks with shared context get bounded ripwire core/partition orientation; missing, failed, broad/no-match, empty or oversized packs leave dispatch unchanged. Otherwise use `--pack-task="<task>" --partition=N`. Source is navigation, not lane ownership; retrieve missing task context.
 - Unsure which verb: `--help-task="<task>"` names one command or abstains. The
   `ripwire-router` skill is the full moment-to-verb map.
 - Counts are floors and a zero means "none found", never "none exists". Ripwire
@@ -78,9 +72,7 @@ call count. Open a file only once the map has named it.
   type guards only at true boundaries.
 - Fix errors at the root cause. Never disable lint rules, `ts-ignore`, comment out
   assertions, `.skip` tests, or loosen expectations to go green.
-- After editing, run lint + typecheck + tests and fix everything you introduced
-  before reporting done. A task with a stated coverage/quality target is not done
-  until the target is hit.
+- Run noninteractive heavy checks through `numen run -- <command> [args...]`: serialised host-wide; identical live checks join when tree identity exists. Receipts are advisory, never gate evidence. SIGINT, SIGTERM, SIGHUP and SIGQUIT terminate the check process group before unlocking; SIGKILL of numen cannot clean up and may leave descendants alive. After edits run lint, typecheck and tests; fix introduced failures and meet stated coverage/quality targets.
 - Match existing repo patterns (look at how a sibling module does it) before
   inventing new ones. Respect layer boundaries (e.g. DB access only through repo
   classes; don't edit shared interfaces to suit one caller).
@@ -100,13 +92,13 @@ call count. Open a file only once the map has named it.
   above a function. A comment a dev would skip should not have been written.
 ### Less code is the best code
 
-`code-golf` is always on for coding work, including implementation, fixes, refactoring, review and tests. Load its entrypoint once before the first coding task in a session, without waiting for an explicit invocation; reread only if it changes. Keep that policy active for subsequent coding tasks. Load detailed references only when a concrete decision needs them, never the whole handbook by default.
+`code-golf` is always on for implementation, fixes, refactoring, review and tests. Top-level sessions load it before the first coding task; reread only after a change. Children use brief excerpts, loading missing rules (Delegation below). Load references only for a concrete decision.
 
-Do the minimum work that delivers the full requested result cleanly, safely and readably. Minimum effort is not minimum understanding or a smaller result than requested. Reuse existing code and native capabilities before adding machinery. No speculative abstractions, configuration, dependencies, scaffolding or cleanup outside the task. Keep real ownership, security, lifecycle and required swappability boundaries.
+Deliver the full requested result with the least machinery, cleanly, safely and readably. Reuse existing code and native capabilities. No speculative abstractions, configuration, dependencies, scaffolding or unrelated cleanup. Preserve real ownership, security, lifecycle, compatibility, accessibility and required swappability boundaries; never weaken validation or error handling to shorten code.
 
-Readability is a hard constraint: longer clear code beats shorter dense code. Never simplify away validation, error handling that prevents data loss, security, accessibility, required compatibility or explicit requirements. Verify the actual changed behavior and keep meaningful regression evidence; don't manufacture permanent tests, docs or frameworks to make a small task look thorough.
+Minimum effort is not minimum understanding or a smaller result.
 
-A routine coding request does not trigger a repository audit or sweep. Use `code-refinement` for explicitly requested broader guideline enforcement and cleanup; it selects the languages and uses code-golf within the same task. Stop when the requested result is correct, readable, safe and verified.
+Longer clear code beats shorter dense code. Verify changed behavior and keep meaningful regression evidence; no permanent tests, docs or frameworks for ceremony. Routine work is not an audit; `code-refinement` handles requested sweeps. Stop when correct, readable, safe and verified.
 
 ## Working style
 - Bias to autonomy: when a sensible default exists, proceed and report rather than
@@ -142,20 +134,19 @@ is one complete line. "Updated cursor encoding" is not.
 ### Anything published under Jacob's name
 Code and doc comments, PR titles and descriptions, commit messages, PR review
 comments and replies to reviewers and bots, issue comments: load the
-`write-as-jacob` skill BEFORE drafting, every time, without being asked. That
-skill is the voice spec and this file does not restate it.
-- Any commit, PR open/edit or PR review: load `jj-pr-flow` first, every time, without being asked.
+`write-as-jacob` skill BEFORE drafting, every time, without being asked (child
+brief excerpts satisfy this load). It is the voice spec; this file does not restate it.
+- Any commit, PR open/edit or PR review: load `jj-pr-flow` first, every time; children use brief excerpts.
 - These rules override PR formats supplied by any skill or command.
   A repository PR template still wins; fill only the sections that apply.
-- A PR description is three short paragraphs, ~100 words of prose, outside the
-  required template text. Delete any paragraph that explains a design decision
-  the diff already shows.
 - Reviewing a PR and leaving inline comments: the `pr-review-inline` skill.
 
 ## Delegation
-The default agent Jacob talks to optimises for efficient completion, not doing everything itself or keeping agents busy. Correctness comes first; then minimise elapsed time, duplicated work, and coordination overhead. Concurrent work is the default for independent units, not an optimisation to consider after starting sequentially.
+Delegate independent units concurrently for efficient completion, not to keep agents busy. Correctness first; then minimise elapsed time, duplicate work and coordination.
 
-Before dispatching substantial work, identify the real dependencies and shared edit boundaries, then launch the ready independent units together. Sequence only work that needs an earlier result or exclusive access to the same state. Agree interfaces and file ownership up front; don't make a whole task wait for one shared mutation. As results arrive, start newly unblocked work without waiting for unrelated lanes. Keep tiny tasks inline when delegation would cost more than it saves, and bound concurrency when workers would compete for the same resources.
+Before substantial dispatch, map dependencies, interfaces and exclusive file ownership. Launch ready units together; sequence only true dependencies or shared mutations. Start unblocked units as results arrive. Keep tiny work inline when cheaper, and bound resource contention.
+
+Parents include the applicable rule excerpts from skills they applied in each child's brief, naming the skill and covered sections. A child treats those excerpts as loaded, including `code-golf`, language guidelines, `write-as-jacob` and `jj-pr-flow`; read only missing applicable sections or changed policy, not whole entrypoints for ceremony. Children still obey doctrine and repository instructions; excerpts never waive rules.
 
 The main thread is an orchestrator, not an implementation agent. Its context is
 for planning, decisions, and synthesis, and it does very little itself. The
@@ -177,10 +168,7 @@ When in doubt, delegate. Never spawn an agent whose output you would only relay,
 but a brief that takes a paragraph is not a reason to do the work yourself; it is
 the plan you would have needed anyway.
 
-Reviews converge: at most two re-review rounds on the same change. If findings
-survive that, list them and hand back rather than looping. Shut an agent down once
-its unit is done, and kill its background shells with it. Jacob should never be
-the one noticing 19 shells and a list of agents that no longer exist.
+Re-reviews receive prior findings and the interdiff since the last review. Check fixes, changed hunks and affected contracts; reread invalidated context, not a fresh full review. Keep the first review independent. At most two re-review rounds; hand back surviving findings. Shut completed agents down with their background shells.
 
 Finish the goal. Don't stop at a natural-looking pause to check in, don't call a
 partial result done, and don't quietly drop a step you couldn't do.

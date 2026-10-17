@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Every agent reaches ripwire through this front, so the compact legend is a guarantee
-# rather than a flag each skill has to remember: full legends cost 3-5 KB of identical
-# prose per call, re-read on every later turn.
+# Every agent reaches ripwire through this front, so a legend-free answer is a guarantee
+# rather than a flag each skill has to remember: even the compact legend is ~0.5-1.2 KB
+# of identical prose per call, re-read on every later turn. --legend=full passes through.
 set -euo pipefail
 
 real="${RIPWIRE_REAL:-$HOME/.local/share/ripwire/bin/ripwire}"
@@ -12,6 +12,16 @@ fi
 
 [ $# -eq 0 ] && exec "$real"
 
+holds_repos() {
+  local marker
+  for marker in "$1"/*/.git "$1"/*/.jj; do
+    if [ -e "$marker" ] || [ -L "$marker" ]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 for arg in "$@"; do
   if [ "$arg" = --mcp ] && command -v systemd-run >/dev/null &&
     systemd-run --user --scope --quiet true 2>/dev/null; then
@@ -20,7 +30,7 @@ for arg in "$@"; do
   fi
   case "$arg" in -*) continue ;; esac
   if [ -d "$arg" ] && ! git -C "$arg" rev-parse --is-inside-work-tree >/dev/null 2>&1 &&
-    { compgen -G "$arg/*/.git" || compgen -G "$arg/*/.jj"; } >/dev/null; then
+    holds_repos "$arg"; then
     echo "ripwire: $arg holds several repos; root it at one checkout (or list 2..16 of them), or use rg across the tree" >&2
     exit 2
   fi
@@ -52,6 +62,6 @@ if [ "$rc" -ne 0 ] && grep -q -- '--legend=compact applies to the XML verbs only
   fi
   echo "ripwire: this verb takes no legend; rerun with --legend=full when piping stdin" >&2
 fi
-cat "$out"
+perl -0777 -pe 's/\A<!-- ripwire .*?-->\n?//s' "$out"
 cat "$err" >&2
 exit "$rc"

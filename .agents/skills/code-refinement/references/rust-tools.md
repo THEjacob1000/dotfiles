@@ -10,7 +10,7 @@ The tools are `numen` subcommands on PATH. Run from the Cargo workspace root, re
 
 ```sh
 run_dir=$(mktemp -d /tmp/refinement-rust-XXXXXX)
-numen gate --output "$run_dir/gate-0.json"
+numen run -- numen gate --output "$run_dir/gate-0.json"
 numen candidates --json > "$run_dir/candidates-0.json"
 numen lanes --lanes 4 --gate-json "$run_dir/gate-0.json" --json > "$run_dir/lanes-0.json"
 ```
@@ -19,10 +19,10 @@ Save candidate and lane output: the candidate JSON is the line-count baseline fo
 
 ## Ownership and verification
 
-Give fix agents exact owned lane paths and relevant diagnostics. They load `rust-guidelines`, inspect affected callers, fix the cause rather than suppressing diagnostics, and don't run Cargo, tests, builds, or verification against concurrent edits. The orchestrator owns manifests, lockfiles, toolchain, lint/formatter configuration and CI, coordinates shared APIs and caller migrations, and completes one dependency stage before dispatching the next. Fix agents make no VCS writes. One verifier runs the complete gate after the integrated fix stage or wave:
+Give fix agents exact owned lane paths, relevant diagnostics and applicable `rust-guidelines` and `code-golf` excerpts. They use those excerpts without reloading entrypoints, read missing rules as needed, inspect affected callers, fix the cause rather than suppressing diagnostics, and don't run Cargo, tests, builds, or verification against concurrent edits. The orchestrator owns manifests, lockfiles, toolchain, lint/formatter configuration and CI, coordinates shared APIs and caller migrations, and completes one dependency stage before dispatching the next. Fix agents make no VCS writes. One verifier runs the complete gate after the integrated fix stage or wave:
 
 ```sh
-numen gate --baseline "$run_dir/gate-0.json" --output "$run_dir/gate-1.json"
+numen run -- numen gate --baseline "$run_dir/gate-0.json" --output "$run_dir/gate-1.json"
 numen candidates --baseline "$run_dir/candidates-0.json"
 ```
 

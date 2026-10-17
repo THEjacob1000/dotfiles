@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
-# voice-lint — deterministic check that text written as Jacob actually sounds
-# like him. The rules live in the write-as-jacob skill; this only catches the
-# mechanical tells (length, ceremony phrases, markdown bloat, empty sections).
+# voice-lint checks a small set of mechanical publishing policies.
+# It cannot establish authorship, assess voice, or decide whether a reader has
+# enough context. The write-as-jacob skill covers those editorial judgments.
 #
 #   voice-lint --mode comment reply.txt     # lint a file (or stdin with -)
 #   voice-lint --hook                       # stdin = PreToolUse JSON; exit 2 blocks
 #
 # Modes: comment (review replies, issue comments) | pr (PR bodies) | commit |
-# doc (harness docs: dashes and emoji only, no length or ceremony rules).
-# Escape hatch: VOICE_LINT=off skips every check, for the rare body that
-# genuinely needs the length.
+# doc (harness docs: em dashes only).
+# No prose word cap: useful context is not a lint violation (F163/F1218).
 set -euo pipefail
 
 MODE=comment
@@ -23,8 +22,6 @@ while [[ $# -gt 0 ]]; do
     *) FILE=$1; shift ;;
   esac
 done
-
-[[ ${VOICE_LINT:-} == off ]] && exit 0
 
 TEXT=""
 if [[ $HOOK == 1 ]]; then
@@ -61,54 +58,63 @@ else
   if [[ -z $FILE || $FILE == "-" ]]; then TEXT=$(cat); else TEXT=$(cat "$FILE"); fi
 fi
 
-case $MODE in
-  pr)      LIMIT=130 ;;
-  commit)  LIMIT=50 ;;
-  *)       LIMIT=60 ;;
-esac
-
-# Commented-out template blocks aren't content — strip them before anything else.
+# Ignore commented-out template guidance when examining published content.
 LIVE=$(printf '%s\n' "$TEXT" | perl -0777 -pe 's/<!--.*?-->//gs')
-# Prose only: also drop checkboxes, headings, code fences, before counting words.
-PROSE=$(grep -vE '^\s*(- \[[ xX]\]|#{1,6} |```)' <<<"$LIVE" || true)
-WORDS=$(wc -w <<<"$PROSE")
 
 FAIL=()
 if [[ $MODE != doc ]]; then
-(( WORDS > LIMIT )) && FAIL+=("$WORDS words in a $MODE, cap is ~$LIMIT. Cut it to the decision, the reason, and nothing else.")
-
-CEREMONY='thanks for|thank you|great catch|good catch|nice catch|i appreciate|let me know if|feel free|happy to|hope this helps|as an ai|you.?re absolutely right|absolutely right|certainly[,!]|i.?d be happy|kindly|apolog|this pr (delivers|introduces|provides)|in summary|to summari[sz]e|it.?s worth noting|please note|i.?ve decided|i have decided|i understand your concern'
-HITS=$(grep -inE "$CEREMONY" <<<"$TEXT" | head -4 || true)
-[[ -n $HITS ]] && FAIL+=("Ceremony/LLM tells, delete these: $(tr '\n' ';' <<<"$HITS")")
+# Gate only stock phrases that are near-absent from his own baseline (<=1 in ~8k
+# items); "good catch", "feel free", "happy to" occur and stay legal.
+CEREMONY='\bas an ai\b|\bi understand your concern\b|\byou.?re absolutely right\b|\blet me know if\b|\bhope this helps\b|\bgreat question\b|\bi appreciate\b|\bin summary\b|\bto summari[sz]e\b|\bit.?s worth noting\b'
+HITS=$(grep -inE "$CEREMONY" <<<"$LIVE" | head -4 || true)
+[[ -n $HITS ]] && FAIL+=("Ceremony/LLM tells, remove stock phrasing: $(tr '\n' ';' <<<"$HITS")")
+# Bloat guards only: far above his own upper tail, so they never force an
+# under-informed draft (F163) but still stop essays (F378, F1229).
+case $MODE in pr) CAP=800 ;; comment) CAP=120 ;; *) CAP=0 ;; esac
+PROSE=$(awk '/^[[:space:]]*(```|~~~)/{f=!f;next} !f' <<<"$LIVE" | grep -vE '^[[:space:]]*(- \[[ xX]\]|#{1,6} |>)' || true)
+WORDS=$(wc -w <<<"$PROSE")
+(( CAP > 0 && WORDS > CAP )) && FAIL+=("$WORDS words in a $MODE is an essay, not something he'd write; cut what the reader already has, keep the point and its reason.")
+# F163 explicitly requests removing the authorship trailer. Keep this separate
+# from ordinary mentions of agents or tools in a technical explanation.
+# F163's actual footer was "Claude Opus via omp." Match signature-shaped whole
+# lines only; technical explanations and quoted/fenced examples aren't trailers.
+UNFENCED=$(awk '
+  /^[[:space:]]*(```|~~~)/ { fence = !fence; next }
+  !fence { print }
+' <<<"$LIVE")
+AUTHOR='(\[)?(claude([[:space:]]+(code|opus|sonnet|haiku|[0-9.]+))*|omp|codex|chatgpt|an? (ai|agent))(\]\([^)]*\))?'
+ATTRIBUTION="^[[:space:]_*]*(🤖[[:space:]]*)?(co-authored-by:[[:space:]].+|(generated|written|authored) (with|by)[[:space:]]+${AUTHOR}|${AUTHOR}[[:space:]]+via[[:space:]]+omp)[.![:space:]_*]*$"
+MODEL_SIGNATURE='^[[:space:]_*]*[A-Z][[:alnum:]._-]*([[:space:]]+[[:alnum:]][[:alnum:]._-]*){0,5}[[:space:]]+via[[:space:]]+omp[.![:space:]_*]*$'
+HITS=$({ grep -inE "$ATTRIBUTION" <<<"$UNFENCED" || true; grep -nE "$MODEL_SIGNATURE" <<<"$UNFENCED" || true; } | head -3 || true)
+[[ -n $HITS ]] && FAIL+=("Agent authorship trailer/footer. Remove the attribution: $(tr '\n' ';' <<<"$HITS")")
 fi
 
-grep -qP '[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}\x{2B00}-\x{2BFF}\x{FE0F}]' <<<"$TEXT" 2>/dev/null \
-  && FAIL+=("Emoji. Jacob doesn't use them here.")
-
-# The classic AI tell. En dash only counts between words, so numeric ranges
-# (100-200 words) stay legal.
-grep -qP '—|\S\s–\s\S' <<<"$TEXT" 2>/dev/null \
-  && FAIL+=("Em/en dash, the most recognisable machine-wrote-this tell. Use a comma, full stop, or brackets.")
-
-if [[ $MODE == comment ]]; then
-  grep -qE '^#{1,6} ' <<<"$TEXT" && FAIL+=("Markdown headings in a review comment — write a sentence.")
-  grep -qE '\*\*[^*]+\*\*' <<<"$TEXT" && FAIL+=("Bold labels. No **[Category]** headers, no **Fix:** lines.")
-  (( $(grep -cE '^\s*[-*] ' <<<"$TEXT" || true) > 2 )) && FAIL+=("Bullet wall in a comment — one or two sentences instead.")
-fi
+# Profile: Vocabulary, sentence shapes and punctuation, Dashes: zero em dashes
+# in 3,678 baseline inline/reply items, one in conversation comments. This is a
+# mechanical policy, not proof of agent authorship. En dashes/emoji are allowed.
+grep -qF '—' <<<"$LIVE" \
+  && FAIL+=("Em dash. Use a comma, full stop, or brackets.")
 
 if [[ $MODE == pr ]]; then
-  # CI already shows the reviewer whether tests, lint and typecheck passed. A
-  # line naming a check and an outcome is a recount, however it's phrased.
-  CHECK='\b(tests?|suite|checks?|ci|lint(er|s)?|clippy|typecheck|type-?check|tsc|mypy|ruff|biome|eslint|rustfmt|fmt|pytest|coverage)\b'
-  OUTCOME='\b(pass(es|ing|ed)?|green|clean|locally|ran|succeed(s|ed)?)\b|[0-9]+(\.[0-9]+)?%|[0-9]+ (passed|failed)'
-  HITS=$(grep -inE "$CHECK" <<<"$LIVE" | grep -iE "$OUTCOME" | head -3 || true)
-  [[ -n $HITS ]] && FAIL+=("Recounts what CI already shows (test/lint/coverage results). Delete it; evidence means the change exercised by hand, see pr-evidence: $(tr '\n' ';' <<<"$HITS")")
+  # F993/F83 reject routine local CI recount; F390 still requires explained
+  # proof. Match standalone check/status statements, not a whole line merely
+  # containing "test", "ran" or a percentage (benchmarks and repros are valid).
+  CHECK='(tests?|((full|ci) )?test suite|suite|checks?|ci( checks)?|lint|clippy|typecheck|type-?check|tsc|mypy|ruff|biome|eslint|rustfmt|fmt|pytest|coverage|((bun|npm|pnpm|yarn|cargo|go) (run )?(test|check|lint|clippy|fmt|typecheck)))'
+  CHECKS="(all )?\`?${CHECK}\`?([[:space:]]*(,|and|&)[[:space:]]*\`?${CHECK}\`?)*"
+  STATUS='(pass(es|ing|ed)?|green|clean|succeed(s|ed)?|[0-9]+([.][0-9]+)?%|[0-9]+ pass(ed)?([,;] [0-9]+ fail(ed)?)?)'
+  PREFIX='^[[:space:]]*([-*][[:space:]]+)?((validation|verification|verified|testing|checks|tests|coverage):[[:space:]]*)?'
+  RESULT="${CHECKS}[[:space:]:]+(are |is |all )?${STATUS}([[:space:]]+locally)?"
+  COUNTS='[0-9]+ pass(ed)?[,;][[:space:]]+[0-9]+ fail(ed)?'
+  RUN="(i[[:space:]]+)?(ran|run)[[:space:]]+(the[[:space:]]+)?${CHECKS}([[:space:]]+locally)?(:[[:space:]]+(all[[:space:]]+)?${STATUS})?"
+  RECOUNT="${PREFIX}(${RESULT}([[:space:]]*(,|and|&)[[:space:]]*${RESULT})*|${RUN}|verified[[:space:]]+with[[:space:]]+${CHECKS}|${COUNTS})[.![:space:]]*$"
+  HITS=$(grep -inE "$RECOUNT" <<<"$UNFENCED" | head -3 || true)
+  [[ -n $HITS ]] && FAIL+=("Recounts what CI already shows (test/lint/coverage results). Remove routine check status; keep material benchmarks, reproductions and manual evidence: $(tr '\n' ';' <<<"$HITS")")
 fi
 
 if [[ $MODE == pr || $MODE == comment ]]; then
-  # Hard-wrapped prose. GitHub turns a single newline into a <br>, so an
-  # 80-column paragraph renders ragged. A long line followed by more prose is a
-  # wrap; short line then prose is a deliberate break and stays legal.
+  # Rendering policy from 787227b05ffd, not an authenticated voice trait.
+  # Reject long prose lines continued without a paragraph break; keep fenced
+  # examples and deliberately short breaks.
   WRAPPED=$(awk '
     /^\s*```/ { fence = !fence; prev = ""; next }
     fence { next }
@@ -123,48 +129,25 @@ if [[ $MODE == pr || $MODE == comment ]]; then
   [[ -n $WRAPPED ]] && FAIL+=("Hard-wrapped prose (line $WRAPPED). GitHub renders the newline as a break. One paragraph = one line.")
 fi
 
-if [[ $MODE == commit ]] && grep -qiE '^(Merge |Revert ")' <<<"$TEXT"; then
-  # Merge and revert commits keep the tool's standard message, prefix and all.
-  exit 0
-fi
-
 if [[ $MODE == commit ]]; then
-  # Subject line only. A second non-empty line is a body, and Jacob doesn't
-  # write them (bullet summaries, why-paragraphs, Co-authored-by trailers).
-  (( $(grep -c '[^[:space:]]' <<<"$TEXT" || true) > 1 )) \
-    && FAIL+=("Commit body. Subject line only, drop everything after the first line.")
+  # Explicit project publishing policy, not an empirical authorship test.
+  # Profile: Commit subjects documents historical bodies as counterexamples.
+  # Only the first line can identify a generated merge. Its standard body is
+  # exempt, but attribution and em-dash findings above still block publishing.
+  if ! grep -qE '^Merge (branch|remote-tracking branch|pull request) ' <<<"${TEXT%%$'\n'*}"; then
+    (( $(grep -c '[^[:space:]]' <<<"$TEXT" || true) > 1 )) \
+      && FAIL+=("Commit body. Subject line only, drop everything after the first line.")
+  fi
   # Messages that describe the occasion instead of the change.
   VAGUE='(implement|address|appl|resolv|incorporat)[a-z]* (the )?((pr|code) )?(review )?(feedback|comments?|review)|as requested|^[a-z]+(\([^)]*\))?!?: *(various|misc|minor|small|assorted|general)\b|^[a-z]+(\([^)]*\))?!?: *(bug ?fixes|fixes|updates?|changes|improvements?|cleanup|tweaks?|refactor(ing)?|lint(ing)?( fixes)?)[[:space:]]*$'
   grep -qiE "$VAGUE" <<<"$TEXT" \
     && FAIL+=("Says nothing about what changed. Name the thing you touched and what happened to it.")
 fi
 
-if [[ $MODE == pr ]]; then
-  # A section uncommented just to say "none" should have stayed inside its
-  # <!-- --> block. Empty-but-present sections only count for the two the LOKE
-  # template ships commented out — the rest ship empty on purpose.
-  EMPTY=$(awk '
-    function flush() {
-      if (h == "") return
-      if (n == 0) { if (tolower(h) ~ /related prs|rollback/) print h }
-      else if (neg == n) print h
-    }
-    /^## / { flush(); h = $0; n = 0; neg = 0; next }
-    NF && h != "" {
-      n++
-      line = tolower($0)
-      gsub(/^[[:space:]]*([-*+][[:space:]]+)?[_*]*/, "", line)
-      if (line ~ /^(n\/?a|none|nothing|no|not (applicable|needed|required)|just a code revert|revert (this|the) pr|standard revert)([^a-z]|$)/) neg++
-    }
-    END { flush() }
-  ' <<<"$LIVE" | head -3 || true)
-  [[ -n $EMPTY ]] && FAIL+=("Empty/negative sections — leave them commented out instead: $(tr '\n' ';' <<<"$EMPTY")")
-fi
-
 if (( ${#FAIL[@]} )); then
   { echo "voice-lint ($MODE): rewrite before sending."
     printf ' - %s\n' "${FAIL[@]}"
-    echo "Rules: the write-as-jacob skill. Genuinely needs the length? VOICE_LINT=off."
+    echo "Rules: the write-as-jacob skill. Passing lint does not establish voice or sufficient context."
   } >&2
   exit 2
 fi

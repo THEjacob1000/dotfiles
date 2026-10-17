@@ -35,18 +35,9 @@ The PR number is required in that path. `pulls/comments/<id>/replies` without it
 Never fall back to `gh pr comment` for a thread-less finding. Don't resolve the conversations; leave them for Jacob.
 
 ## Voice
-Follow the **write-as-jacob** skill. It's the source of truth, and `voice-lint` blocks the post if the reply drifts. The short version: verdict first, one or two sentences, cite a file:line or symbol so the call is checkable.
+Follow **write-as-jacob**, the source of truth for voice and reply substance. Answer the skipped finding with the repository fact or scope reason the bot is missing. `voice-lint` checks mechanical publishing rules, not whether the reply sounds like Jacob or answers the concern.
 
-```
-not applying, cfg is validated in loadConfig (config.ts:41) so this check is dead
-false positive, that key is a test fixture
-out of scope, this file's error handling gets rewritten in #482
-probs not worth it, the map is single-writer so a mutex just costs allocations
-already handled, parseArgs throws before this branch is reachable
-stale, that loop was removed in the last push
-```
-
-Never: "Thanks for flagging! I've considered this and while I understand the concern, I've decided not to implement this change because..."
+For real bot-reply examples and the distinction between scope and applicability, use that skill's reply genre and exemplars rather than a canned verdict template.
 
 ## Boundary
 Invoking this skill is approval to post *these replies only*. It is not approval to push, create/merge a PR, or edit the PR body. Those still need an explicit ask in the turn.
