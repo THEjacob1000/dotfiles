@@ -23,6 +23,8 @@ function o
     # of that name (this box runs session-per-repo) and would silently no-op.
     set -l session (tmux display-message -p '#S')
     tmux select-window -t "$session:=$name" 2>/dev/null; and return
-    set -l win (tmux new-window -P -F '#{window_id}' -n $name -c $dir nvim .)
+    set -l win (tmux new-window -P -F '#{window_id}' -n $name -c $dir)
+    # typed into a shell so quitting nvim leaves the pane open
+    tmux send-keys -t $win 'nvim .' Enter
     tmux split-window -h -t $win -c $dir
 end
