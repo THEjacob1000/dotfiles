@@ -60,6 +60,20 @@ return {
             client:notify("workspace/didChangeConfiguration", { settings = client.settings })
           end,
         },
+        falcon = {
+          mason = false,
+          filetypes = { "dart" },
+          -- falcon is pinned per project through mise, so resolve it from the project root rather than nvim's PATH
+          cmd = function(dispatchers, config)
+            return vim.lsp.rpc.start({ "mise", "exec", "--", "falcon", "lsp" }, dispatchers, { cwd = config.root_dir })
+          end,
+          root_dir = function(bufnr, on_dir)
+            local root = vim.fs.root(bufnr, "falcon.json")
+            if root then
+              on_dir(root)
+            end
+          end,
+        },
       },
     },
   },
