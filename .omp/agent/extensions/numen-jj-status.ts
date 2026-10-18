@@ -2,13 +2,14 @@
 import { dlopen, FFIType, ptr } from "bun:ffi";
 import { readdir, readFile } from "node:fs/promises";
 import { totalmem } from "node:os";
-import type { UsageReport } from "@oh-my-pi/pi-ai";
+import type { OAuthAccountIdentity, UsageReport } from "@oh-my-pi/pi-ai";
 import { resolveUsedFraction } from "@oh-my-pi/pi-ai/usage";
 import type {
 	ContextUsage,
 	ExtensionAPI,
 	ExtensionContext,
 } from "@oh-my-pi/pi-coding-agent";
+import { limitMatchesActiveAccount } from "@oh-my-pi/pi-coding-agent/slash-commands/helpers/active-oauth-account";
 import {
 	formatContextUsage,
 	getContextUsageLevel,
@@ -39,10 +40,13 @@ export function usageWindows(
 	reports: UsageReport[],
 	provider: string,
 	model: string,
+	identity?: OAuthAccountIdentity,
 ): StatusSnapshot["usage"] {
 	const limits = reports
 		.filter((report) => report.provider === provider)
-		.flatMap((report) => report.limits)
+		.flatMap((report) =>
+			report.limits.filter((limit) => !identity || limitMatchesActiveAccount(report, limit, identity)),
+		)
 		.filter(
 			(limit) =>
 				!limit.scope.tier &&
@@ -496,7 +500,15 @@ export default function (pi: ExtensionAPI) {
 								repository,
 								resources,
 								usage: model
-									? usageWindows(reports, model.provider, model.id)
+									? usageWindows(
+											reports,
+											model.provider,
+											model.id,
+											ctx.modelRegistry.authStorage.oauth.identity(
+												model.provider,
+												ctx.sessionManager.getSessionId(),
+											),
+										)
 									: [],
 							},
 							width,
