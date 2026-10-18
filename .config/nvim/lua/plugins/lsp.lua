@@ -63,6 +63,10 @@ return {
         falcon = {
           mason = false,
           filetypes = { "dart" },
+          -- live falcon.json reloads; nvim leaves this off on Linux, and without inotifywait its fallback opens a handle per directory
+          capabilities = {
+            workspace = { didChangeWatchedFiles = { dynamicRegistration = vim.fn.executable("inotifywait") == 1 } },
+          },
           -- falcon is pinned per project through mise, so resolve it from the project root rather than nvim's PATH
           cmd = function(dispatchers, config)
             return vim.lsp.rpc.start({ "mise", "exec", "--", "falcon", "lsp" }, dispatchers, { cwd = config.root_dir })
