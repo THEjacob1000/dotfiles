@@ -72,7 +72,7 @@ cargo-generate = "github:cargo-generate/cargo-generate"
 
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
-trusted_config_paths = ["/home/jacob/Documents/Codex/loke-workspaces"]
+trusted_config_paths = ["~/Documents/Codex/loke-workspaces"]
 experimental = true
 # Shims on PATH expose every project's pinned tools in every directory.
 activate_shims = false

@@ -112,5 +112,5 @@ if status is-interactive; and not set -q TMUX; and not string match -q "screen*"
 end
 
 # opencode
-fish_add_path /home/jacob/.opencode/bin
+fish_add_path $HOME/.opencode/bin
 zoxide init fish | source
