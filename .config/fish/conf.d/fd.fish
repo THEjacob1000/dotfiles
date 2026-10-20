@@ -1,3 +1,3 @@
 if type -q fdfind; and not type -q fd
-    alias fd="fdfind"
+    function fd --wraps="fdfind" --description "alias fd=fdfind"; fdfind $argv; end
 end

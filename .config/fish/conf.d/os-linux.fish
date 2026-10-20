@@ -1,5 +1,5 @@
 # Linux-only setup. Sourced before config.fish.
-if test (uname) != Linux
+if test (__fish_uname) != Linux
     exit
 end
 

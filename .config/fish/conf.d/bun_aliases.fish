@@ -7,19 +7,19 @@
 # ---------------------------------------------------------
 # Aliases
 # ---------------------------------------------------------
-alias b="bun"
-alias bb="bun build"
-alias bi="bun i"
+function b --wraps="bun" --description "alias b=bun"; bun $argv; end
+function bb --wraps="bun build" --description "alias bb=bun build"; bun build $argv; end
+function bi --wraps="bun i" --description "alias bi=bun i"; bun i $argv; end
 function birf
     bun install $argv; and rm -f bun.lock bun.lockb
 end
-alias bx="bunx"
-alias bts="bun test"
-alias br="bun run"
-alias brt="bun run test"
-alias bt="bun test"
-alias bd="bun dev"
-alias brb="bun run build"
+function bx --wraps="bunx" --description "alias bx=bunx"; bunx $argv; end
+function bts --wraps="bun test" --description "alias bts=bun test"; bun test $argv; end
+function br --wraps="bun run" --description "alias br=bun run"; bun run $argv; end
+function brt --wraps="bun run test" --description "alias brt=bun run test"; bun run test $argv; end
+function bt --wraps="bun test" --description "alias bt=bun test"; bun test $argv; end
+function bd --wraps="bun dev" --description "alias bd=bun dev"; bun dev $argv; end
+function brb --wraps="bun run build" --description "alias brb=bun run build"; bun run build $argv; end
 
 # ---------------------------------------------------------
 # bb = bun build — file args + build flags

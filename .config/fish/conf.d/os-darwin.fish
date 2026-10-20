@@ -1,5 +1,5 @@
 # macOS-only setup. Sourced before config.fish.
-if test (uname) != Darwin
+if test (__fish_uname) != Darwin
     exit
 end
 

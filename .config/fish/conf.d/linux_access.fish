@@ -1,5 +1,5 @@
 # Helpers for driving the Linux box from macOS. Linux side has no use for them.
-if test (uname) != Darwin
+if test (__fish_uname) != Darwin
     exit
 end
 

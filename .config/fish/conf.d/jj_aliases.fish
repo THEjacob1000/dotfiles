@@ -7,38 +7,38 @@
 # ---------------------------------------------------------
 # Aliases
 # ---------------------------------------------------------
-alias j="jj"
-alias ja="jj abandon"
-alias jb="jj bookmark"
-alias jbm="jj bookmark move"
-alias jbd="jj bookmark d"
-alias jbl="jj bookmark list"
-alias jbr="jj bookmark rename"
-alias jbt="jj bookmark track --remote=origin"
-alias jbf="jj bookmark forget"
-alias jc="jj commit"
-alias jcmsg="jj commit --message"
-alias jd="jj diff"
-alias jdmsg="jj desc --message"
-alias je="jj edit"
-alias jgcl="jj git clone"
-alias jgf="jj git fetch"
-alias jgp="jj git push"
-alias jgpa="jj git push --all"
-alias jl="jj log"
-alias jn="jj new"
-alias jrb="jj rebase"
-alias jrbt="jj git fetch; and jj rebase -b @ -d 'trunk()'"
-alias jrs="jj restore"
-alias jrt='cd "(jj root || echo .)"'
-alias js="jj squash"
-alias jsp="jj split"
-alias jsps="jj split --siblings"
-alias jst="jj st"
-alias jsto="jj squash --into"
-alias jnt="jj git fetch; and jj new 'trunk()'"
-alias jmm="jj new @ 'trunk()'; and jj commit -m 'Merge in master'"
-alias jcp="jj commit; and jj git push --all"
+function j --wraps="jj" --description "alias j=jj"; jj $argv; end
+function ja --wraps="jj abandon" --description "alias ja=jj abandon"; jj abandon $argv; end
+function jb --wraps="jj bookmark" --description "alias jb=jj bookmark"; jj bookmark $argv; end
+function jbm --wraps="jj bookmark move" --description "alias jbm=jj bookmark move"; jj bookmark move $argv; end
+function jbd --wraps="jj bookmark d" --description "alias jbd=jj bookmark d"; jj bookmark d $argv; end
+function jbl --wraps="jj bookmark list" --description "alias jbl=jj bookmark list"; jj bookmark list $argv; end
+function jbr --wraps="jj bookmark rename" --description "alias jbr=jj bookmark rename"; jj bookmark rename $argv; end
+function jbt --wraps="jj bookmark track --remote=origin" --description "alias jbt=jj bookmark track --remote=origin"; jj bookmark track --remote=origin $argv; end
+function jbf --wraps="jj bookmark forget" --description "alias jbf=jj bookmark forget"; jj bookmark forget $argv; end
+function jc --wraps="jj commit" --description "alias jc=jj commit"; jj commit $argv; end
+function jcmsg --wraps="jj commit --message" --description "alias jcmsg=jj commit --message"; jj commit --message $argv; end
+function jd --wraps="jj diff" --description "alias jd=jj diff"; jj diff $argv; end
+function jdmsg --wraps="jj desc --message" --description "alias jdmsg=jj desc --message"; jj desc --message $argv; end
+function je --wraps="jj edit" --description "alias je=jj edit"; jj edit $argv; end
+function jgcl --wraps="jj git clone" --description "alias jgcl=jj git clone"; jj git clone $argv; end
+function jgf --wraps="jj git fetch" --description "alias jgf=jj git fetch"; jj git fetch $argv; end
+function jgp --wraps="jj git push" --description "alias jgp=jj git push"; jj git push $argv; end
+function jgpa --wraps="jj git push --all" --description "alias jgpa=jj git push --all"; jj git push --all $argv; end
+function jl --wraps="jj log" --description "alias jl=jj log"; jj log $argv; end
+function jn --wraps="jj new" --description "alias jn=jj new"; jj new $argv; end
+function jrb --wraps="jj rebase" --description "alias jrb=jj rebase"; jj rebase $argv; end
+function jrbt --wraps="jj git fetch; and jj rebase -b @ -d 'trunk()'" --description "alias jrbt=jj git fetch; and jj rebase -b @ -d 'trunk()'"; jj git fetch; and jj rebase -b @ -d 'trunk()' $argv; end
+function jrs --wraps="jj restore" --description "alias jrs=jj restore"; jj restore $argv; end
+function jrt --wraps='cd "(jj root || echo .)"' --description 'alias jrt=cd "(jj root || echo .)"'; cd "(jj root || echo .)" $argv; end
+function js --wraps="jj squash" --description "alias js=jj squash"; jj squash $argv; end
+function jsp --wraps="jj split" --description "alias jsp=jj split"; jj split $argv; end
+function jsps --wraps="jj split --siblings" --description "alias jsps=jj split --siblings"; jj split --siblings $argv; end
+function jst --wraps="jj st" --description "alias jst=jj st"; jj st $argv; end
+function jsto --wraps="jj squash --into" --description "alias jsto=jj squash --into"; jj squash --into $argv; end
+function jnt --wraps="jj git fetch; and jj new 'trunk()'" --description "alias jnt=jj git fetch; and jj new 'trunk()'"; jj git fetch; and jj new 'trunk()' $argv; end
+function jmm --wraps="jj new @ 'trunk()'; and jj commit -m 'Merge in master'" --description "alias jmm=jj new @ 'trunk()'; and jj commit -m 'Merge in master'"; jj new @ 'trunk()'; and jj commit -m 'Merge in master' $argv; end
+function jcp --wraps="jj commit; and jj git push --all" --description "alias jcp=jj commit; and jj git push --all"; jj commit; and jj git push --all $argv; end
 
 # ---------------------------------------------------------
 # Helper: list local bookmark names

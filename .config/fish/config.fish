@@ -73,15 +73,15 @@ end
 # -----------------------------
 
 # General
-alias py="python3"
-alias tf="terraform"
-alias cf-tf="cf-terraforming"
-alias bazel bazelisk
-alias ef="exec fish"
-alias ff="fastfetch"
+function py --wraps="python3" --description "alias py=python3"; python3 $argv; end
+function tf --wraps="terraform" --description "alias tf=terraform"; terraform $argv; end
+function cf-tf --wraps="cf-terraforming" --description "alias cf-tf=cf-terraforming"; cf-terraforming $argv; end
+function bazel --wraps="bazelisk" --description "alias bazel bazelisk"; bazelisk $argv; end
+function ef --wraps="exec fish" --description "alias ef=exec fish"; exec fish $argv; end
+function ff --wraps="fastfetch" --description "alias ff=fastfetch"; fastfetch $argv; end
 
 # loke built from source, for when the mise-managed one is not what you want
-alias loke-debug="$HOME/Documents/Developer/loke-cli/loke"
+function loke-debug --wraps="$HOME/Documents/Developer/loke-cli/loke" --description "alias loke-debug=$HOME/Documents/Developer/loke-cli/loke"; $HOME/Documents/Developer/loke-cli/loke $argv; end
 
 # Git SSH commit signing: configured once via:
 #   git config --global gpg.format ssh

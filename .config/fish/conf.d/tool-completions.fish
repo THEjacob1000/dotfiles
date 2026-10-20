@@ -48,10 +48,13 @@ set -g __tc_specs \
 set -g __tc_dir (set -q XDG_CACHE_HOME; and echo $XDG_CACHE_HOME; or echo $HOME/.cache)/fish/tool-completions
 
 # Empty stubs first in fish_complete_path stop fish's bundled scripts autoloading alongside ours.
-mkdir -p $__tc_dir/stubs
+# Every tool starts with a placeholder; __tc_load checks PATH on first Tab, so startup does no lookups.
+test -d $__tc_dir/stubs; or mkdir -p $__tc_dir/stubs
 for spec in $__tc_specs
-    set -l stub $__tc_dir/stubs/(string split -m1 -f1 : $spec).fish
-    test -e $stub; or echo '# managed by conf.d/tool-completions.fish' >$stub
+    set -l tool (string split -m1 -f1 : $spec)
+    test -e $__tc_dir/stubs/$tool.fish; or echo '# managed by conf.d/tool-completions.fish' >$__tc_dir/stubs/$tool.fish
+    complete -c $tool -e
+    complete -c $tool -f -a "(__tc_load $tool)"
 end
 contains $__tc_dir/stubs $fish_complete_path; or set -p fish_complete_path $__tc_dir/stubs
 
@@ -70,24 +73,26 @@ end
 # Swaps the placeholder for the real script on first Tab, then answers that Tab with it.
 function __tc_load -a tool
     complete -c $tool -e
-    set -l bin (path resolve (command -s $tool))
-    set -l cmd (string split ' ' -- (string split -m1 -f2 : (string match -- "$tool:*" $__tc_specs)))
-    set -l cache $__tc_dir/$tool-(echo $bin(path mtime $bin) | cksum | string split -f1 ' ').fish
-    if not test -s $cache
-        if command $cmd >$cache.tmp 2>/dev/null </dev/null; and test -s $cache.tmp
-            mv $cache.tmp $cache
-        else
-            rm -f $cache.tmp
+    set -l bin (command -s $tool)
+    if test -n "$bin"
+        set bin (path resolve $bin)
+        set -l cmd (string split ' ' -- (string split -m1 -f2 : (string match -- "$tool:*" $__tc_specs)))
+        set -l cache $__tc_dir/$tool-(echo $bin(path mtime $bin) | cksum | string split -f1 ' ').fish
+        if not test -s $cache
+            if command $cmd >$cache.tmp 2>/dev/null </dev/null; and test -s $cache.tmp
+                mv $cache.tmp $cache
+            else
+                rm -f $cache.tmp
+            end
         end
+        test -s $cache; and source $cache
     end
-    test -s $cache; and source $cache
     complete -C (commandline -cp)
 end
 
-# Startup sets PATH several times; sync once at the first prompt, then follow later changes.
+# Startup sets PATH several times and the placeholders already cover it; follow changes from the first prompt.
 function __tc_init --on-event fish_prompt
     functions -e __tc_init
-    __tc_sync
     function __tc_watch --on-variable PATH
         __tc_sync
     end
