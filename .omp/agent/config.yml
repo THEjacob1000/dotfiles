@@ -3,7 +3,7 @@ modelRoles:
   slow: "openai-codex/gpt-6-astra:medium"
   plan: "anthropic/claude-opus-5-5:medium"
   task: "openai-codex/gpt-6.1-sol:medium"
-  advisor: "anthropic/claude-opus-5-5:high"
+  advisor: "openai-codex/gpt-6.1-sol:medium"
   smol: "openai-codex/gpt-6-luna:medium"
   commit: "openai-codex/gpt-6-luna:low"
   default: "anthropic/claude-opus-5-5:medium"
@@ -91,3 +91,5 @@ compaction:
     anthropic/claude-haiku-5-5: 100000
   thresholdTokens: 100000
   modelThresholdsEnabled: true
+advisor:
+  enabled: true
