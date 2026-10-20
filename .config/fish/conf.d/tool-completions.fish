@@ -55,7 +55,7 @@ for spec in $__tc_specs
 end
 contains $__tc_dir/stubs $fish_complete_path; or set -p fish_complete_path $__tc_dir/stubs
 
-function __tc_sync --on-variable PATH
+function __tc_sync
     for spec in $__tc_specs
         set -l tool (string split -m1 -f1 : $spec)
         set -l bin (command -s $tool)
@@ -84,4 +84,11 @@ function __tc_load -a tool
     complete -C (commandline -cp)
 end
 
-__tc_sync
+# Startup sets PATH several times; sync once at the first prompt, then follow later changes.
+function __tc_init --on-event fish_prompt
+    functions -e __tc_init
+    __tc_sync
+    function __tc_watch --on-variable PATH
+        __tc_sync
+    end
+end

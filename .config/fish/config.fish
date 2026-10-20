@@ -113,4 +113,4 @@ end
 
 # opencode
 fish_add_path $HOME/.opencode/bin
-zoxide init fish | source
+__cached_source zoxide init fish

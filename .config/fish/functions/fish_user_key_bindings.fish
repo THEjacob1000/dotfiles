@@ -2,7 +2,7 @@ function fish_user_key_bindings
     fish_vi_key_bindings
 
     # Must run after fish_vi_key_bindings, which resets every binding.
-    type -q fzf; and fzf --fish | source
+    __cached_source fzf --fish
     bind -M insert ctrl-r history-pager
     bind -M default ctrl-r history-pager
 
