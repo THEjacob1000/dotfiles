@@ -46,7 +46,9 @@ turn: minimize payload. Open files only after the map names them.
 - Use jj exclusively in any repo with a `.jj/` directory (most do, including
   colocated jj+git repos). Only fall back to git in a plain-git repo with no
   `.jj/`. Never `git diff/show/log` in a jj repo, use `jj diff` / `jj log`.
-- Never create a branch or bookmark unless explicitly asked. When requested, use `feat/`, `fix/`, `chore/`, or `refactor/` prefixes.
+- Never create a branch or bookmark unless explicitly asked. When requested, use `feat/`, `fix/`, `chore/`, or `refactor/` prefixes
+  followed by a short kebab-case description (`fix/geocode-null-response`). Never put a Jira ticket id
+  (`LOKE-1234`) in a branch or bookmark name; the ticket belongs in the PR title and body only.
 - One logical step = one local commit with a conventional message. Subject line
   only, never a body, and it names the actual change ("fix: null-check geocode
   response", not "chore: implemented PR feedback"). Merge commits keep the

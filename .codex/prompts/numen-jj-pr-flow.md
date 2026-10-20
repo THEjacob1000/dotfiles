@@ -10,7 +10,7 @@ Detect: `.jj/` exists means a jj repo (never use mutating git commands). No `.jj
 1. Finish file-changing tasks with a local commit and a new working-copy change, without waiting for a separate commit request. Respect an explicit request not to commit; don't create an empty commit.
 2. Inspect `jj st` and the task's diff. Run applicable lint, typecheck and tests and fix failures introduced by the task. Disclose known pre-existing failures and unrelated findings, but don't treat them as a reason to leave completed, verified work uncommitted locally or claim the whole gate passed.
 3. Load `write-as-jacob`, then use `jj commit -m "<type>: <summary>" <owned-paths...>` to commit the task and open the next working-copy change. This is the scoped equivalent of `jj describe` followed by `jj new`. One `-m`, subject line only, naming the actual change. Never sweep unrelated changes into the commit; if a file has mixed ownership, separate the task's hunks first. Unrelated work may remain in the new working copy.
-4. Do not create or move branches/bookmarks unless explicitly asked. When requested, use `feat/`, `fix/`, `chore/`, or `refactor/` prefixes. Local completion never authorizes a push, PR or merge.
+4. Do not create or move branches/bookmarks unless explicitly asked. When requested, use `feat/`, `fix/`, `chore/`, or `refactor/` prefixes with a short kebab-case description, never a Jira ticket id (`fix/geocode-null-response`, not `fix/LOKE-1234-geocode`). Tickets go in the PR title and body only. Local completion never authorizes a push, PR or merge.
 
 ## Reviewing a branch / PR locally
 - Full branch diff: `jj diff -r main..@` (or `jj diff --from main --to @`). Per-commit: `jj log -r main..@` then `jj diff -r <change-id>`.
@@ -37,8 +37,9 @@ Pushing/PR-creating without an in-turn request is forbidden (global Hard Boundar
 - Title is `[LOKE-1234] <plain summary>`: the `title_prefix` from pr-prep, then the
   summary. No conventional-commit prefix. Space-separated if there are genuinely
   several tickets. Never invent a second one.
-- No ticket found: leave the `[LOKE-XXXX]` placeholder in the body and omit the
-  prefix from the title.
+- No ticket found by pr-prep: use the ticket id from the request if one was given.
+  Otherwise leave the `[LOKE-XXXX]` placeholder in the body and omit the prefix
+  from the title.
 - **Leave `<!-- -->` blocks commented out** unless you have real content for them.
   If there are no related PRs, or the rollback is just a code revert, the block
   stays commented. Uncommenting one to write "None" or "N/A" is wrong.

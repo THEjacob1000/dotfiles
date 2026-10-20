@@ -10,8 +10,7 @@
 #
 # Template resolution: a repo-local PR template always wins; otherwise, for repos
 # under the LOKE org, the shared LOKE template. Ticket ids are lifted from the
-# bookmark name first (the reliable source) and only then from commit
-# descriptions on the stack.
+# bookmark name (older branches) and then from commit descriptions on the stack.
 set -euo pipefail
 
 LOKE_TEMPLATE="${LOKE_PR_TEMPLATE:-$HOME/Documents/Developer/loke-github/pull_request_template.md}"
