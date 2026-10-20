@@ -74,6 +74,8 @@ end
 function __tc_load -a tool
     complete -c $tool -e
     set -l bin (command -s $tool)
+    # record what was loaded so __tc_sync erases it once the tool leaves PATH
+    set -g __tc_bin_(string escape --style=var -- $tool) $bin
     if test -n "$bin"
         set bin (path resolve $bin)
         set -l cmd (string split ' ' -- (string split -m1 -f2 : (string match -- "$tool:*" $__tc_specs)))
