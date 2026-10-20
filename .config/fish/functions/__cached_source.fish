@@ -5,7 +5,9 @@ function __cached_source -a tool
     set -l cache $dir/$tool-(path mtime $bin).fish
     if not test -s $cache
         mkdir -p $dir
-        rm -f $dir/$tool-*.fish
+        # set tolerates an unmatched glob; a command argument would error on the first run
+        set -l stale $dir/$tool-*.fish
+        rm -f $stale
         if command $tool $argv[2..] >$cache.tmp 2>/dev/null </dev/null; and test -s $cache.tmp
             mv $cache.tmp $cache
         else
