@@ -1,36 +1,38 @@
 {
+  "app.launchOnStartup": false,
+  "autocomplete.disable": true,
   "chat.defaultAgent": "yolo",
   "chat.disableTrustAllConfirmation": true,
-  "chat.verbosity.tui": {
-    "filters": [
-      "all",
-      "-subagent"
-    ],
-    "display": {
-      "showToolReasoning": false,
-      "toolArgsMode": "block",
-      "showElapsed": false,
-      "subagent": {
-        "pipeline": false,
-        "prompts": false,
-        "roles": false,
-        "deps": false,
-        "responses": false
-      },
-      "thinkingDisplay": "collapsed",
-      "showThinkingContent": true,
-      "showWriteDiffs": true,
-      "showTasks": true,
-      "persistOutput": false,
-      "argsMaxLines": null,
-      "outputMaxLines": 5,
-      "argsMaxChars": null,
-      "outputMaxChars": null
-    }
-  },
+  "chat.enableAutoAgentUpgrade": true,
   "chat.showThinking": "collapsed",
   "chat.statusLine.tui": {
     "usage": true
   },
-  "chat.enableAutoAgentUpgrade": true
+  "chat.verbosity.tui": {
+    "display": {
+      "argsMaxChars": null,
+      "argsMaxLines": null,
+      "outputMaxChars": null,
+      "outputMaxLines": 5,
+      "persistOutput": false,
+      "showElapsed": false,
+      "showTasks": true,
+      "showThinkingContent": true,
+      "showToolReasoning": false,
+      "showWriteDiffs": true,
+      "subagent": {
+        "deps": false,
+        "pipeline": false,
+        "prompts": false,
+        "responses": false,
+        "roles": false
+      },
+      "thinkingDisplay": "collapsed",
+      "toolArgsMode": "block"
+    },
+    "filters": [
+      "all",
+      "-subagent"
+    ]
+  }
 }
