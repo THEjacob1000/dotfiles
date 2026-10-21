@@ -61,7 +61,8 @@ tealdeer = "latest"
 dua = "latest"
 usage = "latest"
 ffmpeg = "latest"
-"aqua:buildkite/cli" = "latest"
+# Pinned: "latest" moved the bk path mid-session and pruned the old install off PATH.
+"aqua:buildkite/cli" = "3.64.2"
 
 [tool_alias]
 loke = "http:loke"
