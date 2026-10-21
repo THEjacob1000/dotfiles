@@ -15,14 +15,12 @@ if vim.fn.has("mac") == 1 then
     cache_enabled = 0,
   }
 elseif vim.env.DISPLAY == nil and vim.env.WAYLAND_DISPLAY == nil then
-  -- No X server (e.g. over ssh): xsel can't run, so copy over OSC 52 to the client's terminal.
+  -- No X server (e.g. over ssh): xsel can't run, so read and write the client terminal's clipboard over OSC 52.
   local osc52 = require("vim.ui.clipboard.osc52")
-  -- OSC 52 reads aren't answered through tmux, so paste from tmux's buffer, which OSC 52 copies land in.
-  local paste = vim.env.TMUX and { "tmux", "save-buffer", "-" } or osc52.paste("+")
   vim.g.clipboard = {
     name = "OSC 52",
     copy = { ["+"] = osc52.copy("+"), ["*"] = osc52.copy("*") },
-    paste = { ["+"] = paste, ["*"] = paste },
+    paste = { ["+"] = osc52.paste("+"), ["*"] = osc52.paste("*") },
   }
 else
   vim.g.clipboard = {
