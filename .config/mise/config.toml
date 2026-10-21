@@ -15,7 +15,7 @@ jjui = "latest"
 just = "latest"
 postgres = "latest"
 python = "latest"
-railway = { version = "latest", exe = "railway" }
+railway = "latest"
 ruby = { version = "latest", os = ["macos"] }
 sqlite = "latest"
 stripe = "latest"
