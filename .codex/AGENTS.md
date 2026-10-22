@@ -14,6 +14,23 @@ blocks. HTML comments `numen:tool=claude` or `numen:tool=codex`, closed by
   lint/format. Always defer to what the current repo is actually configured with.
 - Prefer absolute paths over `cd`-prefixed shell commands.
 
+## LOKE repos: local infra through `loke deps`
+A LOKE repo is any checkout whose remote is `github.com/LOKE/*`. When tests or a
+dev run there need MySQL, PostgreSQL, MongoDB, RabbitMQ, Redis or S3, use the
+`loke` CLI (source in `~/Documents/Developer/loke-cli`), never `docker run`, the
+repo's own `docker compose`, testcontainers or a hand-rolled container.
+- `loke deps list` first; start only what's missing:
+  `loke deps start postgres redis` (names: `mysql postgres mongo rabbitmq redis s3`,
+  plus opt-in `gate`). Ports match loke-data, but Postgres is stock postgis (no
+  `ulid` extension) and S3 only creates `reporter-local` unless `LOKE_S3_BUCKETS`
+  is set; check those before blaming the test.
+- Leave them running when done; they're shared with Jacob and other agents. Never
+  `loke deps stop` services you didn't start.
+- Need real data rather than an empty DB: `loke db pull -d <database>`, and only
+  when asked, since a pull replaces the local database outright.
+- If Docker isn't running or `loke deps` fails, report it; don't fall back to
+  another way of launching the services.
+
 ## Code navigation: ripwire for graphs, literal search otherwise
 `ripwire` (CLI on PATH, through Bash) maps a repo's call graph offline: what
 matters, who calls X, what breaks, which tests cover it. Output is re-read every
@@ -147,6 +164,12 @@ brief excerpts satisfy this load). It is the voice spec; this file does not rest
 Delegate independent units concurrently for efficient completion, not to keep agents busy. Correctness first; then minimise elapsed time, duplicate work and coordination.
 
 Before substantial dispatch, map dependencies, interfaces and exclusive file ownership. Launch ready units together; sequence only true dependencies or shared mutations. Start unblocked units as results arrive. Keep tiny work inline when cheaper, and bound resource contention.
+
+Size delegated tasks under ~45 minutes; split long lanes into fix + scoped gate, then final gate. Children commit/fold and describe after each green scoped step. If incomplete, leave a continuation note in the lane; the parent immediately relaunches with the same brief plus that note instead of re-deriving context.
+
+Lane briefs declare one standalone `Workspace: /absolute/lane/root` line. OMP's lane guard pins that root for the child session and rejects `edit`/`write` targets outside it, resolving relative paths from the actual tool cwd and checking symlinks and move destinations. Use absolute lane paths; file URLs, archive members and selectors are rejected. Edit sources must already exist at their authored paths to prevent tag-path recovery; create files with `write`. AST previews and deferred applies (`ast_edit`/`resolve`) are blocked: use `edit`/`write` in lanes. `agent://`, `proc://`, `xd://` and `local://` writes remain available for coordination/tools/scratch; shell and external-tool writes still require the brief's lane discipline, not this guard.
+
+Batch subagent completion reports when the batch finishes or every five completions. End broadcasts with "do not acknowledge".
 
 Parents include the applicable rule excerpts from skills they applied in each child's brief, naming the skill and covered sections. A child treats those excerpts as loaded, including `code-golf`, language guidelines, `write-as-jacob` and `jj-pr-flow`; read only missing applicable sections or changed policy, not whole entrypoints for ceremony. Children still obey doctrine and repository instructions; excerpts never waive rules.
 

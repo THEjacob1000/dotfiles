@@ -1,0 +1,178 @@
+#!/usr/bin/env bash
+# Refine round bookkeeping; attestations and packet authorization remain explicit.
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+usage: refine-round resolve DISPOSITIONS.json [--attest TEXT] [numen options...]
+       refine-round merge REVIEW-DIR [--output FILE]
+       refine-round import [FILE] [numen review import options...]
+       refine-round group-lanes [FILE] [--output-dir DIR]
+
+Run from the project root. merge reads batch-*.json into
+.numen-refine/reviews/merged-round.json. import defaults to that file and drops
+out-of-scope findings. group-lanes reads all open findings by default (or supplied
+show/backlog/review JSON) and writes lane-N.json files into a fresh directory,
+grouped by shared source areas (first two path components), joining cross-area findings.
+resolve accepts an array, or {"dispositions": [...]}, of numen_key/status/note
+records. Supply honest --attest text; this wrapper never manufactures evidence.
+USAGE
+}
+
+fail() {
+  printf 'refine-round: %s\n' "$*" >&2
+  exit 2
+}
+[[ $# -gt 0 ]] || {
+  usage >&2
+  exit 2
+}
+command=$1
+shift
+merged=.numen-refine/reviews/merged-round.json
+case $command in
+  resolve)
+    [[ $# -gt 0 ]] || fail 'resolve requires a dispositions file'
+    file=$1
+    shift
+    rows=$(jq -c '
+      (if type == "array" then . else .dispositions end)
+      | if type != "array" then error("expected dispositions array") else . end
+      | if all(.[]; (.numen_key | type == "string" and length > 0)
+          and (.status | IN("fixed", "wontfix", "false_positive", "open", "deferred"))
+          and (.note | type == "string")) then . else error("invalid disposition") end
+      | group_by(.numen_key)
+      | map(if (unique | length) == 1 then .[0]
+            else error("conflicting duplicate dispositions") end)
+      | .[]' "$file") || fail 'invalid or conflicting dispositions'
+    [[ -n $rows ]] || exit 0
+    applied=0
+    while IFS= read -r row; do
+      key=$(jq -r '.numen_key' <<<"$row")
+      status=$(jq -r '.status' <<<"$row")
+      note=$(jq -r '.note' <<<"$row")
+      if ! numen refine resolve "$key" --exact --status "$status" --note "$note" "$@"; then
+        fail "failed at $key after $applied rows; corrected dispositions can be rerun"
+      fi
+      applied=$((applied + 1))
+    done <<<"$rows"
+    ;;
+  merge)
+    [[ $# -gt 0 ]] || fail 'merge requires a review directory'
+    directory=$1
+    shift
+    if [[ $# -gt 0 ]]; then
+      [[ $# == 2 && $1 == --output ]] || fail 'expected --output FILE'
+      merged=$2
+    fi
+    shopt -s nullglob
+    batches=("$directory"/batch-*.json)
+    ((${#batches[@]})) || fail 'no batch-*.json files found'
+    mkdir -p "$(dirname "$merged")"
+    temporary=$(mktemp "${merged}.XXXXXX")
+    trap 'rm -f "$temporary"' EXIT
+    jq -se '
+      def canonical:
+        walk(if type == "object" then
+          with_entries(select(.value != null and .value != {} and .value != []))
+          else . end);
+      def agree($old; $new):
+        reduce ($new | to_entries[]) as $entry ($old;
+          if has($entry.key) and (.[$entry.key] | canonical) != ($entry.value | canonical)
+          then error("conflicting review field: " + $entry.key)
+          else .[$entry.key] = $entry.value end);
+      reduce .[] as $batch
+        ({assessments: {}, issues: [], reviewed_files: [], context_updates: {},
+          dismissed_concerns: [], provenance: null, session: null};
+          .assessments = agree(.assessments; $batch.assessments // {})
+          | .issues += ($batch.issues // [])
+          | .reviewed_files += ($batch.reviewed_files // [])
+          | .dismissed_concerns += ($batch.dismissed_concerns // [])
+          | .context_updates = agree(.context_updates; $batch.context_updates // {})
+          | reduce ["provenance", "session"][] as $key (.;
+              if $batch[$key] != null then
+                if .[$key] != null and .[$key] != $batch[$key]
+                then error("conflicting " + $key) else .[$key] = $batch[$key] end
+              else . end))
+      | .reviewed_files |= unique
+      | .issues |= (group_by([.dimension, .identifier, .concern.file // "."])
+          | map(if (unique_by(canonical) | length) == 1 then .[0]
+                else error("conflicting review issue identity") end))
+      | .dismissed_concerns |= unique
+    ' "${batches[@]}" >"$temporary"
+    mv "$temporary" "$merged"
+    printf '%s\n' "$merged"
+    ;;
+  import)
+    if [[ $# -gt 0 && $1 != --* ]]; then
+      merged=$1
+      shift
+    fi
+    exec numen refine review import "$merged" --drop-out-of-scope "$@"
+    ;;
+  group-lanes)
+    input=
+    if [[ $# -gt 0 && $1 != --* ]]; then
+      input=$(<"$1")
+      [[ -n $input ]] || fail 'input file is empty'
+      shift
+    fi
+    directory=.numen-refine/lanes
+    if [[ $# -gt 0 ]]; then
+      [[ $# == 2 && $1 == --output-dir ]] || fail 'expected --output-dir DIR'
+      directory=$2
+    fi
+    if [[ -z $input ]]; then
+      input=$(numen refine show --json --status open --no-budget --top 0)
+    fi
+    groups=$(jq -c '
+      def key: [.detector, .file, .symbol] | map(select(. != null)) | join("::");
+      def areas: [.related_files[] | split("/") | .[:2] | join("/")] | unique;
+      def paths:
+        . as $observation
+        | [(.evidence | (.files, .related_files) | select(type == "array") | .[]),
+           (.evidence | (.members, .variants) | arrays | .[]
+             | if type == "object" then .file else . end),
+           (.evidence | (.targets, .sources, .tests) | arrays | .[]),
+           (.evidence | select(.family == "dependency") | (.target, .importer)),
+           (if .key.detector != "review" then .key.file else empty end)]
+        | map(select(type == "string")) | unique
+        | if length == 0 then [$observation.key.file] else . end;
+      (.result // .)
+      | (if has("findings") then [.findings[] | .observation
+          | . + {related_files: paths,
+              numen_key: (.key | key)}]
+        elif has("items") then [.items[] | select(.id.kind == "finding")
+          | . + {related_files: (({key: .id.key, evidence} | paths) + .files | unique),
+              numen_key: (.id.key | key)}]
+        else .issues end)
+      | reduce .[] as $issue ([];
+        ($issue | areas) as $areas
+        | [.[] | select(any(.areas[]; . as $a | $areas | index($a)))] as $shared
+        | [.[] | select(all(.areas[]; . as $a | $areas | index($a) | not))]
+          + [{areas: ([$shared[].areas[], $areas[]] | unique),
+              issues: ([$shared[].issues[], $issue])}])
+      | to_entries[] | {lane: (.key + 1), issues: [.value.issues[]
+          | if has("numen_key") then .
+            else . + {numen_key: (if .historical_key != null then (.historical_key | key)
+              else (if .concern != null then "concerns::" + .concern.file else "review::." end)
+                + "::" + .dimension + "::" + .identifier end)} end]}
+    ' <<<"$input")
+    mkdir -p "$directory"
+    shopt -s nullglob
+    existing=("$directory"/lane-*.json)
+    ((${#existing[@]} == 0)) || fail 'lane files already exist; select a fresh --output-dir'
+    [[ -n $groups ]] || exit 0
+    while IFS= read -r group; do
+      lane=$(jq -r '.lane' <<<"$group")
+      file="$directory/lane-$lane.json"
+      jq '.issues' <<<"$group" >"$file"
+      printf '%s\n' "$file"
+    done <<<"$groups"
+    ;;
+  --help | -h | help) usage ;;
+  *)
+    usage >&2
+    fail "unknown command: $command"
+    ;;
+esac

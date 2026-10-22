@@ -69,6 +69,43 @@ Clusters organize work; they do not establish safe parallelism. Completion order
 
 ## Independent review batches
 
+Full 20-dimension holistic review is milestone-only: use it after a substantial
+capability lands or before a release, not after every cleanup round. Between
+milestones run `ripwire --quality-delta --scope=diff` and one independent
+`code-reviewer` per lane over that lane's diff and affected contracts. Fix concrete
+regressions and run the selected native gates; do not prepare another holistic
+batch merely to refresh the score.
+
+`refine-round` preserves round bookkeeping outside an eval kernel:
+
+```sh
+refine-round resolve dispositions.json --attest "$honest_attestation"
+refine-round merge review-dir
+refine-round import --lang LANG --packet BLIND_PACKET \
+  --attested-external --attest "$honest_review_independence_attestation"
+refine-round group-lanes
+```
+
+Run it from the project root. `merge` reads `batch-*.json`, deduplicates exact
+issues and citations, preserves provenance and judgments, and refuses conflicting
+dimension assessments or issue identities instead of inventing evidence.
+`import` forwards to `numen refine review import --drop-out-of-scope`; all normal
+packet, language, history, and attestation checks still apply. The opt-in flag
+removes excluded citations and drops findings outside the selected source scope;
+without it imports remain strict. `resolve` validates and deduplicates
+`numen_key`/`status`/`note` rows before calling exact-key resolution;
+same-status rows can be reapplied after correcting a later failure. It never
+fabricates an attestation or rewrites the inventory store.
+`group-lanes` reads all open individual findings from unbudgeted `numen refine show`
+by default, or supplied show/backlog/review JSON. It writes issue arrays with
+exact finding keys, joining findings that share source areas (the first two
+path components) so overlapping areas stay in one lane. Inspect the generated
+lanes and sequence shared contracts before
+dispatch; grouping is not proof of dependency independence. `--output FILE` on
+merge and `--output-dir DIR` on group-lanes select explicit destinations.
+Lane output directories must not already contain lane files, preventing stale
+rounds from being mixed or overwritten.
+
 ```sh
 numen refine review dimensions --lang LANG --json
 numen refine review prepare --lang LANG --holistic --json
