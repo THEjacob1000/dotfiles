@@ -44,11 +44,7 @@ function kp --description "Kill processes and Docker containers using one or mor
 
         echo "kp: killing PID(s): $all_pids"
 
-        if test (uname) = Darwin
-            sudo kill -9 $all_pids
-        else
-            kill -9 $all_pids
-        end
+        sudo kill -9 $all_pids
     end
 
     # Deduplicate and remove containers
