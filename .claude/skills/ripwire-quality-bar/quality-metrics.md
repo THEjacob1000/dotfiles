@@ -59,7 +59,7 @@ defect- and vulnerability-prone files in the empirical literature. Push hardest 
 | **Resolution ambiguity `amb=`** | the map's OWN honesty signal — K calls the resolver guessed | verify high-`amb` in source | header `ambiguous=`, per-symbol `amb=` | read the source before trusting a high-`amb` edge |
 | **Cache-friendly data layout (DOD)** | hot-path perf + this codebase's house value: SoA over AoS, smallest type that fits, 32-bit ids | contextual | `--field-affinity[=STRUCT]` for co-accessed-but-far-apart fields (`split-line`/`straddle`); `--for` finds the hot struct. A static HYPOTHESIS, not a measurement — see `ripwire-perf-target` for what it cannot see | mirror the surrounding hot-path layout; don't AoS a hot loop — confirm on hardware counters before changing a layout |
 
-## Why `--quality-delta`'s 10 kinds — the measured agent failure modes
+## Why `--quality-delta`'s 12 kinds — the measured agent failure modes
 Not a generic lint list; each targets what the 2025-26 literature found agent-written code actually
 degrades on (large-N studies):
 - **Verbosity**: agent code runs **2.3× more verbose** than human code on matched tasks.
@@ -68,6 +68,13 @@ degrades on (large-N studies):
 - **Contract drift**: unplanned API-surface growth is a documented failure mode distinct from complexity —
   classic complexity metrics lost predictive power for real agent-maintainability failures once controlled
   for size; contract drift and code growth are what remained predictive (arXiv:2606.21804).
+- **Placeholders** (`placeholder`; not a literature-measured mode): a stub or TODO the change added.
+  It never gates; it exists so a change is not called done over a `todo!()` or a `NotImplementedException`.
+- **Defect shapes** (`defect-shape`; measured on this project's own review findings, not the literature): a
+  literal format whose fields do not match its arguments (`format-arity` — the one row that gates on new code
+  too), a byte cap plus an ellipsis with no
+  UTF-8 back-off (`utf8-cut`), a keep-first dedup over a severity field (`dedup-first`), and a test
+  script's absence assertion that passes on a crash (`vacuous-assert`). The last three are `sev="minor"`.
 - **Pass-rate ≠ design quality**: fewer than half of test-passing agent patches satisfy design constraints
   (DesignBench) — tests passing is not evidence the delta is clean.
 - One-time "write good code" prompting cuts initial verbosity/erosion by about a third but does **not**
