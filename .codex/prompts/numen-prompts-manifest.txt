@@ -41,6 +41,7 @@ numen-rust-guidelines.md
 numen-tdd.md
 numen-teach.md
 numen-to-questionnaire.md
+numen-typescript-guidelines.md
 numen-wayfinder.md
 numen-wizard.md
 numen-write-as-jacob.md

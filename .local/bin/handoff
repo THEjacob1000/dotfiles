@@ -36,7 +36,10 @@ case "$cmd" in
   emit)
     mkdir -p "$DIR"
     ts="$(date +%Y-%m-%dT%H-%M-%S)"
-    out="$DIR/handoff-$ts.md"
+    temporary="$(mktemp "$DIR/handoff-$ts-XXXXXX")"
+    out="$temporary.md"
+    trap 'rm -f "$temporary"' EXIT
+    ln "$temporary" "$out"
     if [[ "${2:-}" == "-" || ! -t 0 ]]; then
       # body piped on stdin
       cat > "$out"

@@ -74,12 +74,13 @@ fi
 # ---- draft -----------------------------------------------------------------
 DRAFT=""
 if [[ -n $TEMPLATE && $CONTEXT_ONLY == 0 ]]; then
-  DRAFT=$(mktemp "${TMPDIR:-/tmp}/pr-body-XXXXXX.md")
-  cp "$TEMPLATE" "$DRAFT"
+  DRAFT=$(mktemp "${TMPDIR:-/tmp}/pr-body-XXXXXX")
   # Fill the ticket placeholder only — [LOKE-XXXX] and friends. No tickets
   # found means the placeholder stays put, which is the wanted behaviour.
   if [[ -n $TICKET_LINE ]]; then
-    sed -i -E "s/^\[[A-Za-z]+-[Xx]+\]$/${TICKET_LINE//\//\\/}/" "$DRAFT"
+    sed -E "s/^\[[A-Za-z]+-[Xx]+\]$/${TICKET_LINE//\//\\/}/" "$TEMPLATE" > "$DRAFT"
+  else
+    cp "$TEMPLATE" "$DRAFT"
   fi
 fi
 

@@ -91,7 +91,7 @@ turn: minimize payload. Open files only after the map names them.
   type guards only at true boundaries.
 - Fix errors at the root cause. Never disable lint rules, `ts-ignore`, comment out
   assertions, `.skip` tests, or loosen expectations to go green.
-- Run noninteractive heavy checks through `numen run -- <command> [args...]`: serialised host-wide; identical live checks join when tree identity exists. Receipts are advisory, never gate evidence. SIGINT, SIGTERM, SIGHUP and SIGQUIT terminate the check process group before unlocking; SIGKILL of numen cannot clean up and may leave descendants alive. After edits run lint, typecheck and tests; fix introduced failures and meet stated coverage/quality targets.
+- Run noninteractive heavy checks through `numen run -- <command> [args...]`: queued FIFO into host-sized slots (NUMEN_RUN_SLOTS overrides); identical live checks join when tree identity exists. Receipts are advisory, never gate evidence. SIGINT, SIGTERM, SIGHUP and SIGQUIT terminate the check process group before unlocking; SIGKILL of numen cannot clean up and may leave descendants alive. After edits run lint, typecheck and tests; fix introduced failures and meet stated coverage/quality targets.
 - Match existing repo patterns (look at how a sibling module does it) before
   inventing new ones. Respect layer boundaries (e.g. DB access only through repo
   classes; don't edit shared interfaces to suit one caller).

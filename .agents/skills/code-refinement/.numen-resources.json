@@ -1,4 +1,5 @@
 [
+  "references/native-scans.md",
   "references/refine-loop.md",
   "references/routing.md",
   "references/rust-tools.md"
