@@ -1,0 +1,14 @@
+#!/bin/sh
+# tmux copy-command on Linux. xclip stays the single owner of the X clipboard, so desktop
+# Ghosttys don't race for the selection; clients attached over ssh get OSC 52 so the copy
+# reaches the machine they're typing on.
+data=$(cat; printf x)
+data=${data%x}
+
+printf %s "$data" | timeout 2s xclip -selection clipboard -in >/dev/null 2>&1
+
+osc=$(printf '\033]52;c;%s\a' "$(printf %s "$data" | base64 | tr -d '\n')")
+tmux list-clients -F '#{client_pid} #{client_tty}' | while read -r pid tty; do
+    tr '\0' '\n' <"/proc/$pid/environ" 2>/dev/null | grep -q '^SSH_CONNECTION=' || continue
+    printf %s "$osc" >"$tty"
+done
