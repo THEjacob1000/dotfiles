@@ -1,0 +1,1488 @@
+{
+  "schema_version": 2,
+  "lesson_id": "loke:purchase-expiry",
+  "title": "When an unaccepted purchase expires, what changes atomically, and why is a reversal not proof of an external refund?",
+  "objectives": [
+    {
+      "id": "trace",
+      "outcome": "Trace candidate selection through the locked eligibility recheck and domain transition, including acceptance exactly at the deadline.",
+      "concept_ids": [
+        "loke:eligibility",
+        "loke:domain"
+      ],
+      "check_ids": [
+        "acceptance-at-deadline"
+      ]
+    },
+    {
+      "id": "boundary",
+      "outcome": "Explain which internal writes share the SQL transaction and distinguish Pending refund recording from external refund completion.",
+      "concept_ids": [
+        "loke:transaction"
+      ],
+      "check_ids": [
+        "refund-boundary"
+      ]
+    },
+    {
+      "id": "duplicate",
+      "outcome": "Predict why a second worker with a new reference does not count a rejection committed by the first.",
+      "concept_ids": [
+        "loke:retries"
+      ],
+      "check_ids": [
+        "predict-duplicate"
+      ]
+    }
+  ],
+  "prerequisites": [
+    {
+      "concept_id": "database:transaction",
+      "explanation": "A transaction groups database writes so its commit exposes one result. It does not by itself complete an external payment-provider operation."
+    },
+    {
+      "concept_id": "database:row-lock",
+      "explanation": "A locked reload waits for conflicting writers of the same row. Here the purchase is re-read under FOR UPDATE before the eligibility decision."
+    }
+  ],
+  "evidence": [
+    {
+      "kind": "source",
+      "id": "scan",
+      "path": "crates/loke-server/src/purchase/expiry.rs",
+      "selector": {
+        "kind": "inherent_method",
+        "owner": "PurchaseStore",
+        "method": "expire_due"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "attempt",
+      "path": "crates/loke-server/src/purchase/expiry.rs",
+      "selector": {
+        "kind": "inherent_method",
+        "owner": "PurchaseStore",
+        "method": "expire_one"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "store-due",
+      "path": "crates/loke-server/src/purchase.rs",
+      "selector": {
+        "kind": "inherent_method",
+        "owner": "PurchaseStore",
+        "method": "due_work"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "transaction",
+      "path": "crates/loke-server/src/purchase.rs",
+      "selector": {
+        "kind": "inherent_method",
+        "owner": "PurchaseStore",
+        "method": "expire_unaccepted"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "load",
+      "path": "crates/loke-server/src/purchase/records.rs",
+      "selector": {
+        "kind": "item",
+        "path": "load",
+        "item_kind": "function"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "query",
+      "path": "crates/loke-server/src/purchase/records.rs",
+      "selector": {
+        "kind": "item",
+        "path": "due",
+        "item_kind": "function"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "coordinator",
+      "path": "crates/loke-server/src/purchase.rs",
+      "selector": {
+        "kind": "item",
+        "path": "reverse_locked",
+        "item_kind": "function"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "persist",
+      "path": "crates/loke-server/src/purchase/records.rs",
+      "selector": {
+        "kind": "item",
+        "path": "update",
+        "item_kind": "function"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "eligibility",
+      "path": "crates/loke-sale/src/sale.rs",
+      "selector": {
+        "kind": "inherent_method",
+        "owner": "Sale",
+        "method": "due_work"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "reject",
+      "path": "crates/loke-sale/src/sale/fulfilment.rs",
+      "selector": {
+        "kind": "inherent_method",
+        "owner": "Sale",
+        "method": "reject_expired"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "reject-with",
+      "path": "crates/loke-sale/src/sale/fulfilment.rs",
+      "selector": {
+        "kind": "inherent_method",
+        "owner": "Sale",
+        "method": "reject_with"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "accept",
+      "path": "crates/loke-sale/src/sale/fulfilment.rs",
+      "selector": {
+        "kind": "inherent_method",
+        "owner": "Sale",
+        "method": "check_progress"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "reverse",
+      "path": "crates/loke-sale/src/sale/corrections.rs",
+      "selector": {
+        "kind": "inherent_method",
+        "owner": "Sale",
+        "method": "reverse"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "refund",
+      "path": "crates/loke-sale/src/sale/corrections.rs",
+      "selector": {
+        "kind": "inherent_method",
+        "owner": "Sale",
+        "method": "new_refund"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "refund-status",
+      "path": "crates/loke-sale/src/sale/model.rs",
+      "selector": {
+        "kind": "item",
+        "path": "RefundStatus",
+        "item_kind": "enum"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "reversal",
+      "path": "crates/loke-sale/src/sale/model.rs",
+      "selector": {
+        "kind": "item",
+        "path": "Reversal",
+        "item_kind": "struct"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "store",
+      "path": "crates/loke-server/src/purchase.rs",
+      "selector": {
+        "kind": "item",
+        "path": "PurchaseStore",
+        "item_kind": "struct"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "credit-lock",
+      "path": "crates/loke-server/src/purchase.rs",
+      "selector": {
+        "kind": "item",
+        "path": "credit_wallet",
+        "item_kind": "function"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "points-write",
+      "path": "crates/loke-server/src/purchase.rs",
+      "selector": {
+        "kind": "item",
+        "path": "write_reversed_points",
+        "item_kind": "function"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "race-helper",
+      "path": "crates/loke-server/tests/integration/order_timing.rs",
+      "selector": {
+        "kind": "item",
+        "path": "competing",
+        "item_kind": "function"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "accept-first-test",
+      "path": "crates/loke-server/tests/integration/order_timing.rs",
+      "selector": {
+        "kind": "item",
+        "path": "acceptance_committed_first_prevents_waiting_expiry",
+        "item_kind": "function"
+      }
+    },
+    {
+      "kind": "source",
+      "id": "expiry-first-test",
+      "path": "crates/loke-server/tests/integration/order_timing.rs",
+      "selector": {
+        "kind": "item",
+        "path": "expiry_committed_first_prevents_waiting_acceptance",
+        "item_kind": "function"
+      }
+    }
+    ,
+    {
+      "kind": "source",
+      "id": "duplicate-test",
+      "path": "crates/loke-server/tests/integration/order_timing.rs",
+      "selector": {"kind": "item", "path": "concurrent_expiry_workers_commit_one_reversal_and_one_refund", "item_kind": "function"}
+    },
+    {
+      "kind": "source",
+      "id": "retry-test",
+      "path": "crates/loke-server/tests/integration/order_timing.rs",
+      "selector": {"kind": "item", "path": "expiry_reverses_value_once_keeps_refund_pending_and_refuses_late_acceptance", "item_kind": "function"}
+    },
+    {
+      "kind": "source",
+      "id": "deadline-test",
+      "path": "crates/loke-server/tests/integration/order_timing.rs",
+      "selector": {"kind": "item", "path": "acceptance_at_or_after_deadline_is_refused_without_prior_expiry_or_writes", "item_kind": "function"}
+    }
+  ],
+  "claims": [
+    {
+      "id": "paged-scan",
+      "text": "expire_due scans AutoReject pages of 100 for one organisation; records::due filters non-null acceptance_due_at <= now, orders by deadline and purchase ID, and uses an exclusive tuple cursor. Per-order failures are collected; a page failure returns an error.",
+      "status": "implemented",
+      "basis": "source",
+      "evidence_ids": [
+        "scan",
+        "store-due",
+        "query"
+      ]
+    },
+    {
+      "id": "locked-reload",
+      "text": "expire_unaccepted begins a READ COMMITTED transaction and calls records::load with exclusive=true. The loader selects the organisation/purchase row FOR UPDATE, not SKIP LOCKED.",
+      "status": "implemented",
+      "basis": "source",
+      "evidence_ids": [
+        "transaction",
+        "load"
+      ]
+    },
+    {
+      "id": "concrete-boundary",
+      "text": "PurchaseStore is a concrete PgPool-owning struct; this path calls records functions and Sale methods rather than a discovered storage trait.",
+      "status": "implemented",
+      "basis": "source",
+      "evidence_ids": [
+        "store",
+        "transaction",
+        "coordinator"
+      ]
+    },
+    {
+      "id": "recheck",
+      "text": "The locked snapshot is admitted only when Sale::due_work(now).auto_reject is true. Otherwise reverse_locked commits and returns the previous sale without writes.",
+      "status": "implemented",
+      "basis": "source",
+      "evidence_ids": [
+        "transaction",
+        "coordinator",
+        "eligibility"
+      ]
+    },
+    {
+      "id": "inclusive-deadline",
+      "text": "Auto-reject requires order timing, AwaitingAcceptance and an explicit reached acceptance deadline, using now >= deadline. Inspection does not advance state.",
+      "status": "implemented",
+      "basis": "source",
+      "evidence_ids": [
+        "eligibility"
+      ]
+    },
+    {
+      "id": "rejection",
+      "text": "reject_expired refuses a first not-yet-due rejection; reject_with records OrderRejected with AcceptanceDeadline cause, reverses the sale, and sets fulfilment to Rejected.",
+      "status": "implemented",
+      "basis": "source",
+      "evidence_ids": [
+        "reject",
+        "reject-with"
+      ]
+    },
+    {
+      "id": "reversal-effects",
+      "text": "Sale::reverse returns optional restored wallet and reversed points snapshots, records credit/discount/points effects and accountable owner/reference, and creates a card refund only when card_remaining is nonzero.",
+      "status": "implemented",
+      "basis": "source",
+      "evidence_ids": [
+        "reverse",
+        "reversal"
+      ]
+    },
+    {
+      "id": "pending-not-paid",
+      "text": "new_refund creates Pending with no resolved_at. RefundStatus distinguishes Pending from Final. The reversal refund is an immutable request, not a current provider outcome; recording it does not execute an external refund.",
+      "status": "implemented",
+      "basis": "source",
+      "evidence_ids": [
+        "refund",
+        "refund-status",
+        "reversal",
+        "coordinator"
+      ]
+    },
+    {
+      "id": "atomic-writes",
+      "text": "reverse_locked validates discount/payment, obtains applicable wallet/points locks, applies the domain transition, releases consumed discounts, persists applicable wallet/points changes and the sale snapshot/projections, then commits the same SQL transaction. An unchanged version commits without writes.",
+      "status": "implemented",
+      "basis": "source",
+      "evidence_ids": [
+        "coordinator",
+        "credit-lock",
+        "points-write",
+        "persist"
+      ]
+    },
+    {
+      "id": "attempt-attribution",
+      "text": "expire_one generates a fresh random 128-bit refund reference and counts success only when the returned reversal reference equals that attempt reference. Finding any prior reversal is insufficient.",
+      "status": "implemented",
+      "basis": "source",
+      "evidence_ids": [
+        "attempt",
+        "scan"
+      ]
+    },
+    {
+      "id": "duplicate-result",
+      "text": "The concurrent and sequential retry source tests assert that distinct-reference expiry calls return the same rejected sale with one Pending refund. Assuming A wins this authored ordering and both calls succeed, B reloads A's committed rejection under the configured READ COMMITTED transaction and changes nothing. B not counting that result is inferred from expire_one's attempt-reference comparison; this is not an observed run or a claim about which worker wins.",
+      "status": "implemented",
+      "basis": "inference",
+      "evidence_ids": [
+        "load",
+        "transaction",
+        "coordinator",
+        "eligibility",
+        "attempt",
+        "duplicate-test",
+        "retry-test"
+      ]
+    },
+    {
+      "id": "race-tests",
+      "text": "The source tests deliberately queue acceptance and expiry behind a row blocker. Acceptance-first uses acceptance time 9 and expiry time 10 and preserves acceptance; expiry-first preserves rejection with one Pending refund and refuses waiting acceptance. These tests were inspected, not executed here.",
+      "status": "implemented",
+      "basis": "source",
+      "evidence_ids": [
+        "race-helper",
+        "accept-first-test",
+        "expiry-first-test"
+      ]
+    },
+    {
+      "id": "deadline-acceptance",
+      "text": "For an order still AwaitingAcceptance at exactly its acceptance deadline, check_progress refuses first acceptance because due_work(now).auto_reject is already true. Earlier recorded progress can be replayed; this is not a successful HTTP-request claim.",
+      "status": "implemented",
+      "basis": "source",
+      "evidence_ids": [
+        "accept",
+        "eligibility",
+        "deadline-test"
+      ]
+    }
+  ],
+  "entities": [
+    {
+      "id": "worker",
+      "label": "Expiry worker: expire_due / expire_one",
+      "kind": "task",
+      "claim_ids": [
+        "paged-scan",
+        "attempt-attribution"
+      ],
+      "evidence_ids": [
+        "scan",
+        "attempt"
+      ]
+    },
+    {
+      "id": "store",
+      "label": "PurchaseStore (concrete PgPool owner)",
+      "kind": "component",
+      "claim_ids": [
+        "concrete-boundary"
+      ],
+      "evidence_ids": [
+        "store"
+      ]
+    },
+    {
+      "id": "records",
+      "label": "purchase::records",
+      "kind": "module",
+      "claim_ids": [
+        "locked-reload",
+        "atomic-writes"
+      ],
+      "evidence_ids": [
+        "load",
+        "persist"
+      ]
+    },
+    {
+      "id": "row",
+      "label": "Postgres purchase row",
+      "kind": "resource",
+      "claim_ids": [
+        "locked-reload"
+      ],
+      "evidence_ids": [
+        "load"
+      ]
+    },
+    {
+      "id": "sale",
+      "label": "Sale domain",
+      "kind": "type",
+      "claim_ids": [
+        "inclusive-deadline",
+        "rejection"
+      ],
+      "evidence_ids": [
+        "eligibility",
+        "reject-with"
+      ]
+    },
+    {
+      "id": "saved",
+      "label": "Persisted sale + due/queue projections",
+      "kind": "data",
+      "claim_ids": [
+        "atomic-writes"
+      ],
+      "evidence_ids": [
+        "persist"
+      ]
+    },
+    {
+      "id": "tx",
+      "label": "READ COMMITTED transaction",
+      "kind": "transaction",
+      "claim_ids": [
+        "locked-reload",
+        "atomic-writes"
+      ],
+      "evidence_ids": [
+        "transaction",
+        "coordinator"
+      ]
+    },
+    {
+      "id": "wallet",
+      "label": "Applicable wallet restoration",
+      "kind": "data",
+      "claim_ids": [
+        "atomic-writes",
+        "reversal-effects"
+      ],
+      "evidence_ids": [
+        "coordinator",
+        "reverse"
+      ]
+    },
+    {
+      "id": "points",
+      "label": "Applicable points reversal",
+      "kind": "data",
+      "claim_ids": [
+        "atomic-writes",
+        "reversal-effects"
+      ],
+      "evidence_ids": [
+        "coordinator",
+        "reverse"
+      ]
+    },
+    {
+      "id": "second",
+      "label": "Second expiry attempt B",
+      "kind": "task",
+      "claim_ids": [
+        "duplicate-result"
+      ],
+      "evidence_ids": [
+        "attempt",
+        "transaction"
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "kind": "boundary_map",
+      "id": "orientation",
+      "entity_ids": [
+        "worker",
+        "store",
+        "records",
+        "row",
+        "sale",
+        "saved",
+        "wallet",
+        "points"
+      ],
+      "relationships": [
+        {
+          "id": "scan-call",
+          "from": "worker",
+          "to": "store",
+          "kind": "calls",
+          "label": "scan due work, then expire one",
+          "status": "implemented",
+          "claim_ids": [
+            "paged-scan",
+            "attempt-attribution"
+          ],
+          "evidence_ids": []
+        },
+        {
+          "id": "record-call",
+          "from": "store",
+          "to": "records",
+          "kind": "calls",
+          "label": "load locked snapshot / update",
+          "status": "implemented",
+          "claim_ids": [
+            "locked-reload",
+            "atomic-writes"
+          ],
+          "evidence_ids": []
+        },
+        {
+          "id": "row-read",
+          "from": "records",
+          "to": "row",
+          "kind": "depends_on",
+          "label": "SQL row identified by organisation and purchase",
+          "status": "implemented",
+          "claim_ids": [
+            "locked-reload"
+          ],
+          "evidence_ids": []
+        },
+        {
+          "id": "domain-call",
+          "from": "store",
+          "to": "sale",
+          "kind": "calls",
+          "label": "recheck and reject_expired",
+          "status": "implemented",
+          "claim_ids": [
+            "recheck",
+            "rejection"
+          ],
+          "evidence_ids": []
+        },
+        {
+          "id": "snapshot-write",
+          "from": "records",
+          "to": "saved",
+          "kind": "persists",
+          "label": "snapshot, version, due/queue projections",
+          "status": "implemented",
+          "claim_ids": [
+            "atomic-writes"
+          ],
+          "evidence_ids": []
+        },
+        {
+          "id": "wallet-write",
+          "from": "store",
+          "to": "wallet",
+          "kind": "persists",
+          "label": "applicable restored wallet through transaction",
+          "status": "implemented",
+          "claim_ids": [
+            "atomic-writes"
+          ],
+          "evidence_ids": []
+        },
+        {
+          "id": "points-write",
+          "from": "store",
+          "to": "points",
+          "kind": "persists",
+          "label": "applicable changed points account",
+          "status": "implemented",
+          "claim_ids": [
+            "atomic-writes"
+          ],
+          "evidence_ids": []
+        }
+      ]
+    },
+    {
+      "kind": "sequence",
+      "id": "expiry-sequence",
+      "entity_ids": [
+        "worker",
+        "store",
+        "tx",
+        "records",
+        "row",
+        "sale",
+        "saved",
+        "wallet",
+        "points"
+      ],
+      "relationships": [],
+      "lanes": [
+        "worker",
+        "store",
+        "tx",
+        "records",
+        "row",
+        "sale",
+        "saved",
+        "wallet",
+        "points"
+      ],
+      "messages": [
+        {
+          "id": "begin",
+          "source": "worker",
+          "destination": "store",
+          "label": "expire_unaccepted(reference A)",
+          "kind": "call",
+          "claim_ids": [
+            "locked-reload"
+          ],
+          "after_message_ids": []
+        },
+        {
+          "id": "begin-tx",
+          "source": "store",
+          "destination": "tx",
+          "label": "BEGIN READ COMMITTED",
+          "kind": "call",
+          "claim_ids": [
+            "locked-reload"
+          ],
+          "after_message_ids": [
+            "begin"
+          ]
+        },
+        {
+          "id": "reload",
+          "source": "tx",
+          "destination": "records",
+          "label": "load(exclusive = true): FOR UPDATE",
+          "kind": "call",
+          "claim_ids": [
+            "locked-reload"
+          ],
+          "after_message_ids": [
+            "begin-tx"
+          ]
+        },
+        {
+          "id": "admit",
+          "source": "store",
+          "destination": "sale",
+          "label": "due_work(now).auto_reject",
+          "kind": "call",
+          "claim_ids": [
+            "recheck"
+          ],
+          "after_message_ids": [
+            "reload"
+          ]
+        },
+        {
+          "id": "validate-wallet",
+          "source": "store",
+          "destination": "wallet",
+          "label": "validate cancellation, discounts and payment; obtain applicable credit-wallet lock",
+          "kind": "call",
+          "claim_ids": ["atomic-writes"],
+          "after_message_ids": ["admit"]
+        },
+        {
+          "id": "lock-points",
+          "source": "store",
+          "destination": "points",
+          "label": "if purchase has a member: obtain points account under lock",
+          "kind": "call",
+          "claim_ids": ["atomic-writes"],
+          "after_message_ids": ["validate-wallet"]
+        },
+        {
+          "id": "transition",
+          "source": "store",
+          "destination": "sale",
+          "label": "reject_expired / reverse",
+          "kind": "call",
+          "claim_ids": [
+            "rejection",
+            "reversal-effects"
+          ],
+          "after_message_ids": [
+            "lock-points"
+          ]
+        },
+        {
+          "id": "writes",
+          "source": "tx",
+          "destination": "saved",
+          "label": "write snapshot and projections; related internal effects",
+          "kind": "call",
+          "claim_ids": [
+            "atomic-writes"
+          ],
+          "after_message_ids": [
+            "transition"
+          ]
+        },
+        {
+          "id": "commit",
+          "source": "store",
+          "destination": "tx",
+          "label": "COMMIT",
+          "kind": "call",
+          "claim_ids": [
+            "atomic-writes"
+          ],
+          "after_message_ids": [
+            "writes"
+          ]
+        }
+      ],
+      "walkthrough": {
+        "kind": "source_derived",
+        "claim_ids": [
+          "locked-reload",
+          "recheck",
+          "atomic-writes"
+        ]
+      }
+    },
+    {
+      "kind": "state_machine",
+      "id": "sale-states",
+      "entity_ids": [
+        "sale",
+        "wallet",
+        "points"
+      ],
+      "relationships": [],
+      "states": [
+        {
+          "id": "awaiting",
+          "entity_id": "sale",
+          "label": "AwaitingAcceptance",
+          "values": [
+            {
+              "property": "auto_reject",
+              "value": "true only when explicit deadline reached"
+            }
+          ]
+        },
+        {
+          "id": "accepted",
+          "entity_id": "sale",
+          "label": "Progressed(Accepted)",
+          "values": [
+            {
+              "property": "auto_reject",
+              "value": "false"
+            }
+          ]
+        },
+        {
+          "id": "rejected",
+          "entity_id": "sale",
+          "label": "Rejected with reversal",
+          "values": [
+            {
+              "property": "auto_reject",
+              "value": "false"
+            },
+            {
+              "property": "new card refund",
+              "value": "Pending if remaining card money is nonzero"
+            }
+          ]
+        }
+      ],
+      "transitions": [
+        {
+          "id": "deadline-reject",
+          "from_state_id": "awaiting",
+          "to_state_id": "rejected",
+          "label": "reject_expired",
+          "condition": "Explicit deadline reached; collected valid sale and required account state; no prior reversal",
+          "before": [
+            {
+              "property": "fulfilment",
+              "value": "AwaitingAcceptance"
+            }
+          ],
+          "after": [
+            {
+              "property": "fulfilment",
+              "value": "Rejected"
+            },
+            {
+              "property": "reversal",
+              "value": "recorded with reference, owner and effects"
+            }
+          ],
+          "claim_ids": [
+            "inclusive-deadline",
+            "rejection",
+            "reversal-effects",
+            "pending-not-paid"
+          ]
+        },
+        {
+          "id": "before-deadline-accept",
+          "from_state_id": "awaiting",
+          "to_state_id": "accepted",
+          "label": "first acceptance",
+          "condition": "Acceptance deadline not reached and progress admission succeeds",
+          "before": [
+            {
+              "property": "fulfilment",
+              "value": "AwaitingAcceptance"
+            }
+          ],
+          "after": [
+            {
+              "property": "fulfilment",
+              "value": "Progressed(Accepted)"
+            }
+          ],
+          "claim_ids": [
+            "deadline-acceptance"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "sequence",
+      "id": "duplicate-sequence",
+      "entity_ids": [
+        "worker",
+        "second",
+        "tx",
+        "row",
+        "sale"
+      ],
+      "relationships": [],
+      "lanes": [
+        "worker",
+        "second",
+        "tx",
+        "row",
+        "sale"
+      ],
+      "messages": [
+        {
+          "id": "a-lock",
+          "source": "worker",
+          "destination": "row",
+          "label": "A reloads and locks row",
+          "kind": "call",
+          "claim_ids": [
+            "locked-reload"
+          ],
+          "after_message_ids": []
+        },
+        {
+          "id": "b-waits",
+          "source": "second",
+          "destination": "second",
+          "label": "B waits if A still holds the row lock",
+          "kind": "wait",
+          "claim_ids": [
+            "duplicate-result"
+          ],
+          "after_message_ids": [
+            "a-lock"
+          ],
+          "uncertainty": "Assume B reaches the same row while A holds the lock; no scheduler timing is asserted."
+        },
+        {
+          "id": "a-reject",
+          "source": "worker",
+          "destination": "sale",
+          "label": "A rejects and records reference A",
+          "kind": "call",
+          "claim_ids": [
+            "rejection",
+            "duplicate-result"
+          ],
+          "after_message_ids": [
+            "a-lock"
+          ]
+        },
+        {
+          "id": "a-commit",
+          "source": "worker",
+          "destination": "tx",
+          "label": "A commits",
+          "kind": "call",
+          "claim_ids": [
+            "atomic-writes"
+          ],
+          "after_message_ids": [
+            "a-reject"
+          ]
+        },
+        {
+          "id": "b-reload",
+          "source": "second",
+          "destination": "row",
+          "label": "B locked reload sees A’s committed rejection",
+          "kind": "call",
+          "claim_ids": [
+            "duplicate-result"
+          ],
+          "after_message_ids": [
+            "a-commit",
+            "b-waits"
+          ]
+        },
+        {
+          "id": "b-noop",
+          "source": "second",
+          "destination": "sale",
+          "label": "auto_reject false; keep reference A; B not counted",
+          "kind": "call",
+          "claim_ids": [
+            "duplicate-result",
+            "attempt-attribution"
+          ],
+          "after_message_ids": [
+            "b-reload"
+          ]
+        }
+      ],
+      "walkthrough": {
+        "kind": "source_derived",
+        "claim_ids": [
+          "duplicate-result",
+          "attempt-attribution"
+        ]
+      }
+    }
+  ],
+  "steps": [
+    {
+      "id": "find-due",
+      "concept_id": "loke:eligibility",
+      "objective_ids": [
+        "trace"
+      ],
+      "question": "Which purchases are candidates, rather than guaranteed mutations?",
+      "scene_id": "orientation",
+      "beats": [
+        {
+          "id": "orient",
+          "narration": "The worker coordinates a concrete PurchaseStore. Records loads and updates the purchase row; Sale owns the eligibility and rejection rules. The coordinator also persists applicable wallet, points and discount effects. These are internal and conditional, not additional workers.",
+          "claim_ids": [
+            "concrete-boundary",
+            "atomic-writes"
+          ],
+          "actions": [
+            {
+              "kind": "show",
+              "targets": [
+                "worker",
+                "store",
+                "records",
+                "row",
+                "sale",
+                "saved",
+                "wallet",
+                "points"
+              ],
+              "offset_ms": 0,
+              "duration_ms": 600
+            },
+            {"kind": "focus", "targets": ["records"], "offset_ms": 5000, "duration_ms": 1000},
+            {"kind": "focus", "targets": ["sale"], "offset_ms": 10000, "duration_ms": 1000},
+            {"kind": "focus", "targets": ["wallet", "points"], "offset_ms": 14500, "duration_ms": 1000}
+          ],
+          "duration_ms": 18000
+        },
+        {
+          "id": "scan-page",
+          "narration": "Selecting a due purchase is not permission to reject its old state. The tenant-scoped scan reads up to 100 rows ordered by deadline and purchase ID. Its exclusive cursor advances pages; each selected purchase gets its own expiry attempt.",
+          "claim_ids": [
+            "paged-scan",
+            "locked-reload"
+          ],
+          "actions": [
+            {
+              "kind": "focus",
+              "targets": [
+                "worker",
+                "records",
+                "saved"
+              ],
+              "offset_ms": 0,
+              "duration_ms": 600
+            },
+            {"kind": "annotate", "targets": ["records"], "offset_ms": 5000, "duration_ms": 1000, "text": "tenant + deadline <= now; ordered cursor page"},
+            {"kind": "focus", "targets": ["worker", "store"], "offset_ms": 12500, "duration_ms": 1000}
+          ],
+          "duration_ms": 18000
+        }
+      ]
+    },
+    {
+      "id": "locked-reload",
+      "concept_id": "loke:transaction",
+      "objective_ids": [
+        "trace",
+        "boundary"
+      ],
+      "question": "Where does the selected purchase become protected from a competing mutation?",
+      "scene_id": "expiry-sequence",
+      "beats": [
+        {
+          "id": "enter",
+          "narration": "The store starts READ COMMITTED and reloads the purchase exclusively. records::load implements that flag with SELECT FOR UPDATE on the organisation and purchase row. Holding the lock protects the eligibility decision and subsequent writes from a competing acceptance. The tradeoff is waiting: workers and acceptance queue behind a conflicting row lock rather than using SKIP LOCKED.",
+          "claim_ids": [
+            "locked-reload",
+            "race-tests"
+          ],
+          "actions": [
+            {
+              "kind": "call",
+              "targets": [
+                "store",
+                "tx"
+              ],
+              "offset_ms": 0,
+              "duration_ms": 600,
+              "source": "store",
+              "destination": "tx",
+              "label": "BEGIN READ COMMITTED"
+            },
+            {
+              "kind": "acquire",
+              "targets": [
+                "tx",
+                "row"
+              ],
+              "offset_ms": 1000,
+              "duration_ms": 600,
+              "resource": "row",
+              "transaction": "tx"
+            },
+            {"kind": "focus", "targets": ["row"], "offset_ms": 6500, "duration_ms": 1000},
+            {"kind": "annotate", "targets": ["row"], "offset_ms": 12500, "duration_ms": 1000, "text": "conflicting writer waits until transaction ends"}
+          ],
+          "duration_ms": 18000
+        }
+      ]
+    },
+    {
+      "id": "recheck",
+      "concept_id": "loke:eligibility",
+      "objective_ids": [
+        "trace"
+      ],
+      "question": "Why can a row selected by the scan still produce no change?",
+      "scene_id": "expiry-sequence",
+      "beats": [
+        {
+          "id": "still-due",
+          "narration": "The decision uses the reloaded Sale, not the scanned projection. Still AwaitingAcceptance with an explicit deadline at or before now means auto_reject is true. Only that branch reaches rejection. The predicate inspects state; it does not advance it.",
+          "claim_ids": [
+            "recheck",
+            "inclusive-deadline"
+          ],
+          "actions": [
+            {
+              "kind": "call",
+              "targets": [
+                "store",
+                "sale"
+              ],
+              "offset_ms": 0,
+              "duration_ms": 600,
+              "source": "store",
+              "destination": "sale",
+              "label": "due_work(now).auto_reject"
+            },
+            {"kind": "annotate", "targets": ["sale"], "offset_ms": 5500, "duration_ms": 1000, "text": "AwaitingAcceptance + explicit deadline <= now"},
+            {"kind": "focus", "targets": ["store"], "offset_ms": 13000, "duration_ms": 1000}
+          ],
+          "duration_ms": 18000
+        },
+        {
+          "id": "no-longer-due",
+          "narration": "Compare an accepted or already rejected snapshot: auto_reject is false. reverse_locked commits unchanged and returns that snapshot before taking the reversal path. This is why selection alone cannot decide the mutation.",
+          "claim_ids": [
+            "recheck",
+            "inclusive-deadline"
+          ],
+          "actions": [
+            {
+              "kind": "annotate",
+              "targets": [
+                "sale"
+              ],
+              "offset_ms": 0,
+              "duration_ms": 600,
+              "text": "still due → transition | no longer eligible → commit unchanged"
+            },
+            {"kind": "focus", "targets": ["sale"], "offset_ms": 5000, "duration_ms": 1000},
+            {"kind": "annotate", "targets": ["tx"], "offset_ms": 12500, "duration_ms": 1000, "text": "no longer due: return unchanged, no reversal writes"}
+          ],
+          "duration_ms": 18000
+        },
+        {
+          "id": "deadline-transfer",
+          "narration": "Now transfer the eligibility rule to acceptance. Sale::check_progress asks due_work(now).auto_reject before first acceptance. At exactly the deadline, now >= deadline is already true for a still-awaiting timed order, so acceptance is refused even if no expiry worker has run. A separate source test asserts refusal at times 10 and 11 without prior expiry or writes; it was inspected, not executed here.",
+          "claim_ids": ["deadline-acceptance"],
+          "actions": [
+            {
+              "kind": "annotate",
+              "targets": ["sale"],
+              "offset_ms": 0,
+              "duration_ms": 600,
+              "text": "still AwaitingAcceptance + now >= deadline → first acceptance refused"
+            },
+            {"kind": "focus", "targets": ["sale"], "offset_ms": 6500, "duration_ms": 1000},
+            {"kind": "annotate", "targets": ["sale"], "offset_ms": 13000, "duration_ms": 1000, "text": "check_progress refuses first acceptance; worker need not run"}
+          ],
+          "duration_ms": 18000
+        }
+      ],
+      "check": {
+        "id": "acceptance-at-deadline",
+        "placement": "after",
+        "prompt": "Judge the claim for an order still AwaitingAcceptance: first acceptance at exactly its explicit deadline can succeed if expiry has not run yet. Explain using Sale::check_progress and Sale::due_work.",
+        "objective_ids": ["trace"],
+        "explanation": "The admission rule does not wait for expiry: check_progress asks due_work(now).auto_reject, which is true at equality.",
+        "reveal_target": {"kind": "beat", "beat_id": "deadline-transfer"},
+        "answer": {
+          "kind": "free_text",
+          "reference_answer": "False. At equality the due predicate is already true for a still-awaiting timed order, so first acceptance is refused before any expiry worker records rejection."
+        }
+      }
+    },
+    {
+      "id": "domain",
+      "concept_id": "loke:domain",
+      "objective_ids": [
+        "trace",
+        "boundary"
+      ],
+      "question": "Which domain state changes, and is the card refund completed?",
+      "scene_id": "sale-states",
+      "beats": [
+        {
+          "id": "reject-domain",
+          "narration": "reject_expired checks the deadline again for a first rejection, then records the deadline cause and accountable owner. reject_with records rejection, runs reverse, and sets fulfilment to Rejected. The reversal records its reference and original benefit effects; optional updated wallet and points snapshots are returned for persistence.",
+          "claim_ids": [
+            "rejection",
+            "reversal-effects"
+          ],
+          "actions": [
+            {
+              "kind": "set_state",
+              "targets": [
+                "sale"
+              ],
+              "offset_ms": 0,
+              "duration_ms": 600,
+              "property": "fulfilment",
+              "before": "AwaitingAcceptance",
+              "after": "Rejected"
+            },
+            {"kind": "annotate", "targets": ["sale"], "offset_ms": 6500, "duration_ms": 1000, "text": "deadline cause; owner and reference recorded"},
+            {"kind": "focus", "targets": ["sale"], "offset_ms": 13500, "duration_ms": 1000}
+          ],
+          "duration_ms": 18000
+        },
+        {
+          "id": "refund-request",
+          "narration": "If card money remains, reverse creates a refund request with status Pending and no resolution time. The reversal stores that request, not proof that a payment provider completed it. No external refund worker or transport is part of this depicted call path.",
+          "claim_ids": [
+            "pending-not-paid"
+          ],
+          "actions": [
+            {
+              "kind": "annotate",
+              "targets": [
+                "sale"
+              ],
+              "offset_ms": 0,
+              "duration_ms": 600,
+              "text": "Pending refund recorded ≠ external refund executed"
+            },
+            {"kind": "annotate", "targets": ["sale"], "offset_ms": 6500, "duration_ms": 1000, "text": "remaining card amount → optional Pending request"},
+            {"kind": "annotate", "targets": ["sale"], "offset_ms": 13500, "duration_ms": 1000, "text": "resolved_at: None; no provider completion established"}
+          ],
+          "duration_ms": 18000
+        }
+      ],
+      "check": {
+        "id": "refund-boundary",
+        "placement": "after",
+        "prompt": "Judge the claim: recording a reversal containing a refund proves the external card refund completed. Name what was actually recorded and what remains unproven.",
+        "objective_ids": ["boundary"],
+        "explanation": "The domain records a Pending request with no resolution time, not a provider-completion result.",
+        "reveal_target": {"kind": "beat", "beat_id": "refund-request"},
+        "answer": {
+          "kind": "free_text",
+          "reference_answer": "False. The sale contains a Pending refund request. Recording that request does not establish external execution or provider completion."
+        }
+      }
+    },
+    {
+      "id": "commit",
+      "concept_id": "loke:transaction",
+      "objective_ids": [
+        "boundary"
+      ],
+      "question": "What does this commit make atomic, and what does it not establish?",
+      "scene_id": "expiry-sequence",
+      "beats": [
+        {
+          "id": "persist-effects",
+          "narration": "After admission and validation, the coordinator obtains applicable wallet and points locks, applies the domain transition, releases consumed discounts and writes applicable wallet and points changes. records::update writes the sale snapshot, version and deadline/queue projections through that same transaction.",
+          "claim_ids": [
+            "atomic-writes"
+          ],
+          "actions": [
+            {
+              "kind": "focus",
+              "targets": [
+                "tx",
+                "wallet",
+                "points",
+                "saved"
+              ],
+              "offset_ms": 0,
+              "duration_ms": 600
+            },
+            {"kind": "focus", "targets": ["wallet", "points"], "offset_ms": 4500, "duration_ms": 1000},
+            {"kind": "focus", "targets": ["saved"], "offset_ms": 10000, "duration_ms": 1000},
+            {"kind": "annotate", "targets": ["tx"], "offset_ms": 14500, "duration_ms": 1000, "text": "same SQL transaction: applicable effects + snapshot + projections"}
+          ],
+          "duration_ms": 18000
+        },
+        {
+          "id": "commit-boundary",
+          "narration": "The SQL commit makes those internal writes one committed result. No-op branches also commit without writes. A stored Pending refund remains a request; this commit does not establish external card-refund completion.",
+          "claim_ids": [
+            "atomic-writes",
+            "pending-not-paid"
+          ],
+          "actions": [
+            {
+              "kind": "commit",
+              "targets": [
+                "tx"
+              ],
+              "offset_ms": 0,
+              "duration_ms": 600,
+              "transaction": "tx"
+            },
+            {"kind": "focus", "targets": ["saved"], "offset_ms": 5500, "duration_ms": 1000},
+            {"kind": "annotate", "targets": ["saved"], "offset_ms": 12500, "duration_ms": 1000, "text": "committed Pending request ≠ completed external refund"}
+          ],
+          "duration_ms": 18000
+        }
+      ]
+    },
+    {
+      "id": "retry-transfer",
+      "concept_id": "loke:retries",
+      "objective_ids": [
+        "duplicate",
+        "trace"
+      ],
+      "question": "Does a second expiry reference mean a second newly expired purchase?",
+      "scene_id": "duplicate-sequence",
+      "beats": [
+        {
+          "id": "retry-setup",
+          "narration": "Each expire_one attempt generates its own random reference. Its result counts only if the returned reversal reference matches that attempt. We can now apply the locked reload and recheck to a second attempt, rather than treating any existing reversal as its success.",
+          "claim_ids": [
+            "attempt-attribution"
+          ],
+          "actions": [
+            {
+              "kind": "show",
+              "targets": [
+                "worker",
+                "second",
+                "tx",
+                "row",
+                "sale"
+              ],
+              "offset_ms": 0,
+              "duration_ms": 600
+            },
+            {"kind": "annotate", "targets": ["worker"], "offset_ms": 5500, "duration_ms": 1000, "text": "each expire_one creates its own attempt reference"},
+            {"kind": "focus", "targets": ["second"], "offset_ms": 13000, "duration_ms": 1000}
+          ],
+          "duration_ms": 18000
+        },
+        {
+          "id": "duplicate-answer",
+          "narration": "Assume A and B target the same row with distinct references, A wins the lock and commits, and both operations succeed. The inspected duplicate-worker test asserts that both READ COMMITTED locked calls return the same rejected sale: the waiting reload sees the committed rejection, not its old candidate. B is no longer due and writes nothing. Inferring through expire_one, A’s reference differs from B’s, so B does not count a new expiry. The source test does not fix the winner; this ordering is illustrative, not captured.",
+          "claim_ids": [
+            "duplicate-result",
+            "attempt-attribution"
+          ],
+          "actions": [
+            {
+              "kind": "annotate",
+              "targets": [
+                "second",
+                "sale"
+              ],
+              "offset_ms": 0,
+              "duration_ms": 600,
+              "text": "returned reference A ≠ attempt reference B → not newly expired"
+            },
+            {"kind": "acquire", "targets": ["tx", "row"], "offset_ms": 1500, "duration_ms": 1000, "resource": "row", "transaction": "tx", "illustrative": true},
+            {"kind": "wait", "targets": ["second"], "offset_ms": 3500, "duration_ms": 2500, "illustrative": true, "reason": "B waits for A in this assumed ordering"},
+            {"kind": "commit", "targets": ["tx"], "offset_ms": 6500, "duration_ms": 1000, "transaction": "tx", "illustrative": true},
+            {"kind": "call", "targets": ["second", "row"], "offset_ms": 9500, "duration_ms": 1000, "illustrative": true, "source": "second", "destination": "row", "label": "Assumed A-wins ordering: B reloads committed rejection"},
+            {"kind": "annotate", "targets": ["second", "sale"], "offset_ms": 14000, "duration_ms": 1000, "text": "B returns unchanged; A reference does not match B"}
+          ],
+          "duration_ms": 18000
+        }
+      ],
+      "check": {
+        "id": "predict-duplicate",
+        "placement": "before",
+        "prompt": "Assume A commits rejection first and B then reloads the same row with a distinct reference. Judge the claim: B counts this as newly expired because the returned sale has a reversal.",
+        "objective_ids": [
+          "duplicate"
+        ],
+        "explanation": "No. The locked recheck makes B a no-op, and expire_one compares the stored reversal reference with its own fresh reference.",
+        "reveal_target": {
+          "kind": "beat",
+          "beat_id": "duplicate-answer"
+        },
+        "answer": {
+          "kind": "choice",
+          "options": [
+            {
+              "id": "counted",
+              "label": "Counted: any reversal is enough"
+            },
+            {
+              "id": "not-counted",
+              "label": "Not counted: the reversal belongs to A’s reference"
+            }
+          ],
+          "correct_option_id": "not-counted"
+        }
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "main",
+      "label": "One still-due purchase",
+      "assumptions": [
+        "Source-derived path at the current grounded checkout, not an observed execution.",
+        "The purchase remains AwaitingAcceptance at its explicit reached deadline, collected payment and required benefit state are valid, and transaction operations succeed.",
+        "Optional wallet/points effects occur only when the purchase requires them."
+      ],
+      "step_ids": [
+        "find-due",
+        "locked-reload",
+        "recheck",
+        "domain",
+        "commit",
+        "retry-transfer"
+      ],
+      "walkthrough": {
+        "kind": "source_derived",
+        "claim_ids": [
+          "paged-scan",
+          "locked-reload",
+          "recheck",
+          "rejection",
+          "atomic-writes",
+          "attempt-attribution"
+        ]
+      }
+    },
+    {
+      "id": "duplicate",
+      "label": "Two expiry attempts, A commits first",
+      "assumptions": [
+        "Source-derived concurrency inference; no captured concurrency run is available.",
+        "Both attempts target the same organisation/purchase row with distinct refund references.",
+        "A acquires the row lock first and commits rejection before B completes its locked reload; both operations succeed.",
+        "B may wait while A holds the row lock. No precise scheduler timing or worker deployment is asserted."
+      ],
+      "step_ids": [
+        "locked-reload",
+        "recheck",
+        "retry-transfer"
+      ],
+      "walkthrough": {
+        "kind": "source_derived",
+        "claim_ids": [
+          "duplicate-result",
+          "locked-reload",
+          "attempt-attribution"
+        ]
+      }
+    }
+  ],
+  "default_scenario_id": "main"
+}
