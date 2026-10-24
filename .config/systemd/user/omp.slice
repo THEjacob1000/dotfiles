@@ -4,3 +4,5 @@ Description=omp agent sessions, deprioritised so the desktop stays responsive
 [Slice]
 CPUWeight=20
 IOWeight=10
+MemoryHigh=30G
+MemoryMax=34G

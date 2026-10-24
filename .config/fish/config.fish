@@ -108,6 +108,8 @@ set -g fish_greeting
 # GUI terminals can inherit TMUX while setting their own TERM; do not nest tmux.
 if status is-interactive; and not set -q TMUX; and not string match -q "screen*" $TERM; and not string match -q "tmux*" $TERM
     set -l session_name (if test "$PWD" = "$HOME"; echo main; else; basename $PWD; end)
+    # the server lives in tmux.service so an OOM kill in this terminal's scope can't take it down
+    command -q systemctl; and systemctl --user start tmux.service 2>/dev/null
     exec tmux new-session -A -s $session_name
 end
 

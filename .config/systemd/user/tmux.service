@@ -1,0 +1,11 @@
+[Unit]
+Description=tmux server, kept out of terminal scopes so an OOM kill in a pane can't take it down
+
+[Service]
+Type=forking
+ExecStart=%h/.local/share/mise/shims/tmux new-session -d -s main
+ExecStop=%h/.local/share/mise/shims/tmux kill-server
+OOMPolicy=continue
+
+[Install]
+WantedBy=default.target
