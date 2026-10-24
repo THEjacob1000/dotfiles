@@ -1,6 +1,6 @@
 # Interactive lesson
 
-Use a browser lesson when the learner needs to follow, inspect or question an explanation. OMP authors and adapts it; Numen validates, grounds, saves and plays it. A saved lesson bundle and the returned learner events are separate deliverables. Lesson v2 video export is not available.
+Use a browser lesson when the learner needs to follow, inspect or question an explanation. OMP authors and adapts it; Numen validates, grounds, saves and plays it. A saved lesson bundle and the returned learner events are separate deliverables. Export a saved v2 lesson only when a linear video is requested.
 
 For codebase teaching, start with [architecture learning](architecture-learning.md). Load [scene authoring](lesson-scenes.md) when storyboarding and [evidence](lesson-evidence.md) when grounding claims. Lessons use strict data, not author HTML or JavaScript.
 
@@ -47,6 +47,23 @@ V2 caps are 12 steps, 12 beats per step, 32 visible entities per scene, 128 enti
 Sequence by objectives: problem, small orientation map, concrete worked example, consequential variation. Explain prerequisites at point of use. Explain what happens, how it happens and why when supported; label inferred rationale. A failure-first opening is useful when it answers the learner's question, not compulsory. Static reading holds and ordinary pacing are valid; default playback is 1x with a remembered speed preference.
 
 Checks are optional and skippable. V2 uses `placement: "before"|"after"`; a before-check gates its `reveal_target` until answer, reveal or skip, so keep answer-bearing labels and earlier beats out of the prediction. Choices are evaluated against the authored answer. Free text and counterfactuals use model answers and self-assessment, not hidden automatic grading or command execution. A counterfactual may preserve behavior, expose a tradeoff or fail. A reveal, skipped check or pulled prerequisite is not a correct answer.
+
+## Optional saved-lesson video
+
+Call `frames.lesson_export` with `project`, optional immutable `revision` and `scenario_id`, explicit `prediction_pause_ms`, optional `narration`, `output` and `format`. This compiles the hash-verified saved bundle into a Frames composition and uses the normal render pipeline; it does not change the saved revision.
+
+```json
+{"project":"purchase-expiry","scenario_id":"default","narration":null,"prediction_pause_ms":5000,"format":"mp4"}
+```
+
+Use real scenario and check IDs. A numeric pause applies to all checks; a map provides per-check milliseconds and an optional `"default"`, for example `{"default":5000,"predict-refund":8000}`. Each question is followed by the requested pause and a timed authored-answer reveal, not learner grading.
+
+Null or omitted `narration` uses authored beat timing. An object enables the existing local speech cache/synthesizer, for example `{"voice":"af_heart","speed":1}`; each beat then lasts its measured audio duration plus authored hold. The default format is MP4; other formats use the published Frames render schema. Relative output paths are inside the generated composition; output cannot overwrite lesson storage.
+
+The video uses the saved reducer and layout. Title/end disclosures identify the source revision, commit/dirty state, claim statuses and associated local bundle. Planned, hypothetical and inferred content stays visibly labelled. Interactive inspector, explore and compare are absent: use the associated bundle for those experiences. Errors identify the failing `load`, `narration`, `output`, `compile` or `render` stage; preserve the bundle and correct that stage.
+
+The existing Frames browser layout gate samples every generated segment before rendering. Clipped or overflowing content fails at the `render` stage with the check report instead of silently publishing a truncated video. Shorten or split the affected source text, save a new revision, and export again.
+
 
 ## Legacy lessons and older runtimes
 

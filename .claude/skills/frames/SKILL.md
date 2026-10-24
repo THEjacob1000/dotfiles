@@ -8,7 +8,7 @@ generated-by: numen-sync
 
 # Frames
 
-Frames provides local HTML video compositions, interactive decks and source-grounded browser lessons through `frames.*` tools. Choose the requested experience before authoring: teach with a lesson, inspect its authored model in explore mode, or produce a video composition. Lesson v2 video export is not available.
+Frames provides local HTML video compositions, interactive decks and source-grounded browser lessons through `frames.*` tools. Choose the requested experience before authoring: teach with a lesson, inspect its authored model in explore mode, or produce a video composition. For a linear video of a saved v2 lesson, use `frames.lesson_export` as described in [lesson operations](references/lesson.md).
 
 ## Architecture teaching and exploration
 
