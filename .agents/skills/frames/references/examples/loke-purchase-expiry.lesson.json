@@ -1139,7 +1139,7 @@
       "beats": [
         {
           "id": "still-due",
-          "narration": "The decision uses the reloaded Sale, not the scanned projection. Still AwaitingAcceptance with an explicit deadline at or before now means auto_reject is true. Only that branch reaches rejection. The predicate inspects state; it does not advance it.",
+          "narration": "After taking the purchase lock, the store checks the reloaded Sale, not the earlier scan result. auto_reject is true only while the sale is still AwaitingAcceptance and has an explicit acceptance deadline at or before now. due_work only reads that state; it does not reject the purchase. A true result lets the coordinator proceed to the separate rejection transition.",
           "claim_ids": [
             "recheck",
             "inclusive-deadline"
