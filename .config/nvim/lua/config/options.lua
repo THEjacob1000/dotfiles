@@ -23,10 +23,12 @@ elseif vim.env.DISPLAY == nil and vim.env.WAYLAND_DISPLAY == nil then
     paste = { ["+"] = osc52.paste("+"), ["*"] = osc52.paste("*") },
   }
 else
+  -- Inside tmux, copies go through tmux-copy so a client attached over ssh gets them too.
+  local plus_copy = vim.env.TMUX and { vim.fn.expand("~/.local/bin/tmux-copy") } or { "xsel", "--nodetach", "-i", "-b" }
   vim.g.clipboard = {
     name = "xsel with bounded reads",
     copy = {
-      ["+"] = { "xsel", "--nodetach", "-i", "-b" },
+      ["+"] = plus_copy,
       ["*"] = { "xsel", "--nodetach", "-i", "-p" },
     },
     paste = {

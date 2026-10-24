@@ -1,14 +1,24 @@
 #!/bin/sh
-# tmux copy-command on Linux. xclip stays the single owner of the X clipboard, so desktop
-# Ghosttys don't race for the selection; clients attached over ssh get OSC 52 so the copy
-# reaches the machine they're typing on.
-data=$(cat; printf x)
-data=${data%x}
+# Linux clipboard copy for tmux (copy-command, pane-set-clipboard hook) and nvim inside tmux.
+# xclip stays the single owner of the X clipboard, so desktop Ghosttys don't race for the
+# selection. If the client that copied (the most recently active one) is attached over ssh,
+# it alone also gets OSC 52 so the copy reaches the machine it's typing on.
 
-printf %s "$data" | timeout 2s xclip -selection clipboard -in >/dev/null 2>&1
+# An ssh client attaching strips DISPLAY from the session; the server's global copy still points at the desktop.
+DISPLAY=${DISPLAY:-$(tmux show-environment -g DISPLAY 2>/dev/null | sed 's/^DISPLAY=//')}
+export DISPLAY
 
-osc=$(printf '\033]52;c;%s\a' "$(printf %s "$data" | base64 | tr -d '\n')")
-tmux list-clients -F '#{client_pid} #{client_tty}' | while read -r pid tty; do
-    tr '\0' '\n' <"/proc/$pid/environ" 2>/dev/null | grep -q '^SSH_CONNECTION=' || continue
-    printf %s "$osc" >"$tty"
-done
+b64=$(base64 | tr -d '\n')
+printf %s "$b64" | base64 -d | timeout 2s xclip -selection clipboard -in >/dev/null 2>&1
+
+set -- $(tmux display-message -p '#{client_pid} #{client_tty} #{client_control_mode}' 2>/dev/null)
+[ -n "$2" ] && [ "$3" = 0 ] || exit 0
+grep -qz '^SSH_CONNECTION=' "/proc/$1/environ" 2>/dev/null || exit 0
+
+# tmux on the receiving side drops OSC 52 payloads over about 1 MiB.
+if [ ${#b64} -gt 1000000 ]; then
+    tmux display-message 'tmux-copy: selection too large to send over ssh'
+    exit 0
+fi
+printf '\033]52;c;%s\a' "$b64" | timeout 2s sh -c 'cat >"$1"' _ "$2"
+exit 0
