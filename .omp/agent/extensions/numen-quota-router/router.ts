@@ -8,12 +8,21 @@
  */
 
 import * as path from "node:path";
-import type { Api, AuthStorage, Model, ModelUsageAccountHealth, ModelUsageHealth } from "@oh-my-pi/pi-ai";
+import type {
+	Api,
+	AuthStorage,
+	Model,
+	ModelUsageAccountHealth,
+	ModelUsageHealth,
+} from "@oh-my-pi/pi-ai";
 import type { ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 import { isAuthenticated, kNoAuth, settings } from "@oh-my-pi/pi-coding-agent";
 import { cfgDisabledProviders } from "@oh-my-pi/pi-coding-agent/config/model-settings";
 import { cfgRetryFallbackChains } from "@oh-my-pi/pi-coding-agent/session/settings";
-import { splitThinkingSuffix, splitUpstreamRouting } from "@oh-my-pi/pi-tui/overlays/model-selector";
+import {
+	splitThinkingSuffix,
+	splitUpstreamRouting,
+} from "@oh-my-pi/pi-tui/overlays/model-selector";
 import { getAgentDir, logger } from "@oh-my-pi/pi-utils";
 import { config, routingEnabled } from "./config";
 import {
@@ -71,7 +80,9 @@ let sharedStore: Promise<RoutingStore> | undefined;
 
 /** The one ledger every OMP process on this machine shares. */
 export function routingStore(): Promise<RoutingStore> {
-	sharedStore ??= RoutingStore.open(path.join(getAgentDir(), "data", "numen-quota-router.db"));
+	sharedStore ??= RoutingStore.open(
+		path.join(getAgentDir(), "data", "numen-quota-router.db"),
+	);
 	return sharedStore;
 }
 
@@ -105,7 +116,10 @@ function isExactQualifiedMatch(pattern: string, model: Model<Api>): boolean {
 	const base = selectorParts(pattern).base;
 	const slash = base.indexOf("/");
 	if (slash <= 0) return true;
-	return model.provider.toLowerCase() === base.slice(0, slash).toLowerCase() && model.id === base.slice(slash + 1);
+	return (
+		model.provider.toLowerCase() === base.slice(0, slash).toLowerCase() &&
+		model.id === base.slice(slash + 1)
+	);
 }
 
 function resolveCandidates(
@@ -119,7 +133,12 @@ function resolveCandidates(
 	for (const [index, pattern] of selectors.entries()) {
 		const matched = ctx.models.resolve(pattern);
 		const model =
-			strictFallbacks && index > 0 && matched && !isExactQualifiedMatch(pattern, matched) ? undefined : matched;
+			strictFallbacks &&
+			index > 0 &&
+			matched &&
+			!isExactQualifiedMatch(pattern, matched)
+				? undefined
+				: matched;
 		const selector = model ? selectorFor(model, pattern) : pattern;
 		if (seen.has(selector)) continue;
 		seen.add(selector);
@@ -166,7 +185,9 @@ interface CandidatePool {
  * - Every other list remains pinned to its first model; configured retry
  *   fallbacks are appended after the caller's own authoritative order.
  */
-function candidatePool(request: SubagentRoutingRequest): CandidatePool | undefined {
+function candidatePool(
+	request: SubagentRoutingRequest,
+): CandidatePool | undefined {
 	const { patterns, role } = request;
 	const primary = patterns[0];
 	if (primary === undefined) return undefined;
@@ -174,28 +195,44 @@ function candidatePool(request: SubagentRoutingRequest): CandidatePool | undefin
 	if (pool && pool.length > 0) {
 		const suffix = selectorParts(primary).level;
 		return {
-			selectors: pool.map(selector => withThinkingLevel(selector, suffix)),
+			selectors: pool.map((selector) => withThinkingLevel(selector, suffix)),
 			pinned: false,
 		};
 	}
 	const chains = cfgRetryFallbackChains.get(settings);
 	const { base, level } = selectorParts(primary);
 	const chain =
-		chains?.[primary] ?? chains?.[base] ?? (role !== undefined ? chains?.[role] : undefined) ?? chains?.default ?? [];
+		chains?.[primary] ??
+		chains?.[base] ??
+		(role !== undefined ? chains?.[role] : undefined) ??
+		chains?.default ??
+		[];
 	return {
-		selectors: [...patterns, ...chain.map(selector => withThinkingLevel(selector, level))],
+		selectors: [
+			...patterns,
+			...chain.map((selector) => withThinkingLevel(selector, level)),
+		],
 		pinned: true,
 	};
 }
 
-function pickAccount(health: ModelUsageHealth): ModelUsageAccountHealth | undefined {
-	const live = health.accounts.filter(account => account.state !== "depleted");
-	const pool = live.length > 0 ? live : health.accounts;
+function pickAccount(
+	health: ModelUsageHealth,
+): ModelUsageAccountHealth | undefined {
+	const live = health.accounts.filter(
+		(account) => account.state !== "depleted",
+	);
+	const healthy = live.filter((account) => account.state === "healthy");
+	const pool =
+		healthy.length > 0 ? healthy : live.length > 0 ? live : health.accounts;
 	return (
-		pool.find(account => account.selected) ??
+		pool.find((account) => account.selected) ??
 		pool.reduce<ModelUsageAccountHealth | undefined>(
 			(best, account) =>
-				best === undefined || (account.remainingFraction ?? -1) > (best.remainingFraction ?? -1) ? account : best,
+				best === undefined ||
+				(account.remainingFraction ?? -1) > (best.remainingFraction ?? -1)
+					? account
+					: best,
 			undefined,
 		)
 	);
@@ -209,23 +246,32 @@ async function healthOf(
 ): Promise<RoutingHealthSnapshot> {
 	let health: ModelUsageHealth;
 	try {
-		health = await authStorage.getModelUsageHealth(model.provider, {
+		health = await authStorage.health.model(model.provider, {
 			modelId: model.id,
 			baseUrl: model.baseUrl,
 			reserveFraction,
 			sessionId,
+			signal: AbortSignal.timeout(5000),
 		});
 	} catch (error) {
-		logger.debug("numen-quota-router: usage lookup failed; candidate is unknown", {
+		const category =
+			error instanceof Error &&
+			["TypeError", "TimeoutError", "AbortError"].includes(error.name)
+				? error.name
+				: "Error";
+		logger.warn("numen-quota-router: usage lookup failed; quota unknown", {
 			provider: model.provider,
 			model: model.id,
-			error: error instanceof Error ? error.message : "unknown error",
+			error: category,
 		});
-		return { state: "unknown" };
+		return {
+			state: "unknown",
+			diagnostic: `usage lookup failed (${category}); quota unknown`,
+		};
 	}
 	const account = pickAccount(health);
 	return {
-		state: account?.state ?? health.state,
+		state: health.state,
 		remainingFraction: account?.remainingFraction,
 		resetsAt: account?.resetsAt,
 	};
@@ -235,7 +281,9 @@ async function healthOf(
  * Route one fresh subagent and persist its dispatch-time decision; throws
  * {@link SubagentRoutingError} when policy refuses the spawn.
  */
-export async function routeSubagentModel(request: SubagentRoutingRequest): Promise<SubagentRoutingOutcome> {
+export async function routeSubagentModel(
+	request: SubagentRoutingRequest,
+): Promise<SubagentRoutingOutcome> {
 	const passthrough: SubagentRoutingOutcome = { patterns: request.patterns };
 	if (!routingEnabled()) return passthrough;
 	const pool = candidatePool(request);
@@ -248,7 +296,7 @@ export async function routeSubagentModel(request: SubagentRoutingRequest): Promi
 	const modelRegistry = request.ctx.modelRegistry;
 	const authStorage = modelRegistry.authStorage;
 	const evaluated = await Promise.all(
-		resolved.map(async candidate => {
+		resolved.map(async (candidate) => {
 			if (!candidate.model) {
 				return {
 					...candidate,
@@ -256,17 +304,25 @@ export async function routeSubagentModel(request: SubagentRoutingRequest): Promi
 					health: { state: "unknown" as const },
 				};
 			}
-			const key = await modelRegistry.getApiKey(candidate.model, request.sessionId);
+			const key = await modelRegistry.getApiKey(
+				candidate.model,
+				request.sessionId,
+			);
 			const authenticated = key === kNoAuth || isAuthenticated(key);
 			const health = authenticated
-				? await healthOf(authStorage, candidate.model, reserveFraction, request.sessionId)
+				? await healthOf(
+						authStorage,
+						candidate.model,
+						reserveFraction,
+						request.sessionId,
+					)
 				: { state: "unknown" as const };
 			return { ...candidate, authenticated, health };
 		}),
 	);
 
-	const outcome = store.transact(view => {
-		const candidates: RoutingCandidate[] = evaluated.map(candidate => ({
+	const outcome = store.transact((view) => {
+		const candidates: RoutingCandidate[] = evaluated.map((candidate) => ({
 			selector: candidate.selector,
 			provider: candidate.provider,
 			modelId: candidate.modelId,
@@ -296,10 +352,13 @@ export async function routeSubagentModel(request: SubagentRoutingRequest): Promi
 			provider: decision.provider,
 			modelId: decision.modelId,
 			selector: decision.selector,
+			effort: selectorParts(decision.selector).level,
 			pinned: pool.pinned,
 			policyVersion: ROUTING_POLICY_VERSION,
 			confidence: decision.confidence,
-			reason: request.note ? `${request.note}; ${decision.reason}` : decision.reason,
+			reason: request.note
+				? `${request.note}; ${decision.reason}`
+				: decision.reason,
 			assessments: decision.assessments,
 			startedAt: now,
 		});
@@ -312,13 +371,20 @@ export async function routeSubagentModel(request: SubagentRoutingRequest): Promi
 			role: request.role,
 			outcome: outcome.outcome,
 		});
-		throw new SubagentRoutingError(outcome.outcome, outcome.reason, outcome.earliestResetAt, outcome.assessments);
+		throw new SubagentRoutingError(
+			outcome.outcome,
+			outcome.reason,
+			outcome.earliestResetAt,
+			outcome.assessments,
+		);
 	}
 	logger.info("numen-quota-router: routed", {
 		id: request.id,
 		agent: request.agent,
 		role: request.role,
 		selector: outcome.selector,
+		selectorEffort: selectorParts(outcome.selector).level,
+		runtimeObserved: false,
 		confidence: outcome.confidence,
 		pinned: pool.pinned,
 		reason: outcome.reason,

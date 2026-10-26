@@ -9,16 +9,27 @@ import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
 import { getAgentDir } from "@oh-my-pi/pi-utils";
 import type { RoutingReservePolicy } from "./policy";
+export interface TierOption {
+	id: string;
+	selector: string;
+	active: boolean;
+	/** Only offer when the caller supplies bounded source evidence for escalation. */
+	requiresEscalationEvidence?: boolean;
+	/** Provisional relative total-work cost preference, not cash pricing or a token guarantee. */
+	costRank: number;
+	criteria: { what: string; not_for: string };
+}
+
 export interface TierConfig {
 	enabled: boolean;
 	model: string;
 	agents: string[];
 	minConfidence: number;
-	shadowFloor: number;
+	probabilityTieTolerance: number;
 	timeoutMs: number;
 	maxStateChars: number;
 	instructions: string;
-	options: Array<{ id: string; selector: string; active: boolean; criteria: { what: string; not_for: string } }>;
+	options: TierOption[];
 }
 
 export interface RouterConfig {
@@ -57,73 +68,112 @@ export const config: RouterConfig = {
 		model: "jev-1.13.0",
 		agents: ["task"],
 		minConfidence: 0.3,
-		shadowFloor: 0.15,
+		probabilityTieTolerance: 0.02,
 		timeoutMs: 1500,
 		maxStateChars: 12000,
 		instructions:
-			"Pick the option that gives the best result per dollar for this delegated coding task. Each option lists the work it covers and its cost tier. Choose the lowest-cost option whose description covers the task; choose a higher-cost one only when the task needs work listed under it. Judge the work required, not the length of the brief.",
+			"Choose the lowest-cost suitable option for the work and its acceptance checks. This is provisional evidence-informed task-fit policy, not a benchmark ranking. Judge required decisions, coupling, ambiguity, verification and consequences, not brief length or labels such as audit, architecture or unknown bug. Ordinary implementation, review and evidence-gathering debugging may use a general engineering option. Raise effort or choose a costlier option only for specific unmet needs; Astra requires explicit escalation evidence that a lower-cost option failed acceptance or cannot cover the task. Cost ranks are relative total-work preferences: subscription headroom, API-equivalent token estimates, latency and actual cash are different measures; unknown or zero catalog prices do not mean free. Do not invent capabilities, prices, prior failures or missing context.",
 		options: [
 			{
 				id: "luna-low",
 				selector: "openai-codex/gpt-6-luna:low",
 				active: true,
+				costRank: 1,
 				criteria: {
-					what: "Fully specified mechanical work: renames, edits whose exact change the brief spells out, file or symbol inventory, search-and-report, formatting, running named commands and summarising their output. Lowest cost.",
-					not_for: "Anything that needs a decision the brief does not already make, writing new logic, or debugging.",
+					what: "Explicit mechanical work with little discretion: exact renames or amendments, inventory, search-and-report, formatting, or running named commands and summarising output. Acceptance and the intended change are supplied.",
+					not_for:
+						"New logic, debugging that needs hypotheses, choosing unspecified behaviour, or subtle verification whose failure would be consequential.",
 				},
 			},
 			{
 				id: "luna-high",
 				selector: "openai-codex/gpt-6-luna:high",
 				active: false,
+				costRank: 2,
 				criteria: {
-					what: "Small, well-scoped implementation, tests or a localised bugfix where the brief names the files and the expected behaviour. Low cost per token; high effort can spend many tokens.",
-					not_for: "Vague briefs, multi-file changes, delicate behaviour changes, or anything where a subtle mistake would go unnoticed.",
+					what: "Small, well-scoped implementation or tests with named files, specified behaviour and direct acceptance checks.",
+					not_for:
+						"Ambiguous behaviour, cross-boundary coupling or consequential mistakes without strong verification.",
 				},
 			},
 			{
 				id: "sol-medium",
 				selector: "openai-codex/gpt-6.1-sol:medium",
 				active: true,
+				costRank: 2,
 				criteria: {
-					what: "Engineering where the brief settles what to build: multi-file features and tests, bugs with a known or locatable cause, long changes inside one repo, refactors, subsystem investigation, terminal- and tool-heavy automation, graphics and 3D programming, data analysis, reading dense documents, front-end changes whose behaviour and look the brief already specifies, and exploit-style security work. Moderate cost.",
-					not_for: "Visual and interaction design decisions; unknown-cause debugging, architecture or trust-boundary decisions.",
+					what: "General engineering: implementation and tests, specified multi-file changes, ordinary reviews and audits, refactors, frontend behaviour, investigation and debugging that requires gathering evidence and testing hypotheses. An initially unknown cause alone is not a reason to escalate. Use when acceptance checks can bound the work.",
+					not_for:
+						"Explicitly mechanical work suited to the cheaper option; substantial unresolved coupling, consequential design tradeoffs or repeated failed acceptance that needs higher effort.",
 				},
 			},
 			{
 				id: "sonnet-medium",
 				selector: "anthropic/claude-sonnet-5-5:medium",
-				active: false,
+				active: true,
+				costRank: 2,
 				criteria: {
-					what: "Fast, bounded edits and quick iteration, especially terminal-driven work, where response speed matters more than depth. Moderate cost.",
-					not_for: "Deep judgment or careful reasoning, visual design decisions, cross-module refactors or architecture.",
+					what: "Competing general engineering option for bounded implementation, tests, ordinary review and localised investigation, especially turnaround-sensitive iteration with clear acceptance checks. Select on concrete task fit or observed turnaround needs, not provider labels.",
+					not_for:
+						"Mechanical work covered by the cheaper option, or unresolved cross-boundary design and expensive-to-detect mistakes requiring higher effort.",
+				},
+			},
+			{
+				id: "sol-high",
+				selector: "openai-codex/gpt-6.1-sol:high",
+				active: true,
+				costRank: 3,
+				criteria: {
+					what: "Engineering needing deeper reasoning about coupled modules, competing hypotheses, ambiguous requirements, consequential API or interaction decisions, concurrency and trust boundaries, or evidence that medium effort failed acceptance. Identify the extra decisions and verification burden.",
+					not_for:
+						"Routine implementation or review with bounded acceptance; an architecture or audit label, an unknown bug, or a long brief without additional reasoning needs.",
 				},
 			},
 			{
 				id: "opus-medium",
 				selector: "anthropic/claude-opus-5-5:medium",
 				active: true,
+				costRank: 4,
 				criteria: {
-					what: "Visual and interaction design work (components, styling, layout, interaction, polish), code review, codebase-wide migrations and audits, and checking whether a brief's assumptions hold before building on them. Higher cost.",
-					not_for: "Unknown-cause debugging, architecture or trust-boundary decisions that need high effort; exploit-style security work, which Anthropic's cyber safeguards can hand to an older model.",
+					what: "Alternative for consequential design or review that must reconcile interacting constraints, assumptions and user behaviour across boundaries. Choose when the brief or prior evidence identifies a task-fit benefit over the cheaper engineering options; design and audits do not automatically require this option.",
+					not_for:
+						"Ordinary review, implementation, evidence-gathering debugging or UI polish already covered by cheaper options; complexity inferred only from a task label.",
 				},
 			},
 			{
 				id: "opus-high",
 				selector: "anthropic/claude-opus-5-5:high",
 				active: true,
+				costRank: 5,
 				criteria: {
-					what: "Unknown-cause debugging, architecture decisions, trust-boundary and concurrency code, new screens, design systems and UX flows, underspecified problems where the brief itself may be wrong, and long autonomous runs where a wrong answer is expensive. Highest effort and highest cost.",
-					not_for: "Well-specified work, UI polish, review or refactors; exploit-style security work, which Anthropic's cyber safeguards can hand to an older model.",
+					what: "Alternative high-effort option for material ambiguity, tightly coupled consequential design, difficult concurrency or trust-boundary reasoning, and failures that remain after cheaper attempts. Require specific reasoning or verification needs that justify the added expected work cost.",
+					not_for:
+						"Routine work or escalation merely because a task says audit, architecture, design, security or unknown-cause debugging.",
+				},
+			},
+			{
+				id: "astra-high",
+				selector: "openai-codex/gpt-6-astra:high",
+				active: true,
+				requiresEscalationEvidence: true,
+				costRank: 6,
+				criteria: {
+					what: "Exceptional escalation with explicit evidence: a cheaper capable option failed representative acceptance checks, or a concrete capability or reasoning requirement cannot be covered by the other options. State the unmet requirement and bound the escalation work.",
+					not_for:
+						"The default for hard, lengthy, high-stakes or ambiguous work; choosing the largest model without evidence of a lower-cost option's inadequacy.",
 				},
 			},
 		],
 	},
 };
 
-function enabledWithOverride(value: string | undefined, fallback: boolean): boolean {
+function enabledWithOverride(
+	value: string | undefined,
+	fallback: boolean,
+): boolean {
 	const override = value?.trim().toLowerCase();
-	if (override === "off" || override === "0" || override === "false") return false;
+	if (override === "off" || override === "0" || override === "false")
+		return false;
 	if (override === "on" || override === "1" || override === "true") return true;
 	return fallback;
 }
@@ -137,9 +187,17 @@ function jevRouterSetting(): boolean {
 	const file = path.join(getAgentDir(), "numen.json");
 	if (!existsSync(file)) return true;
 	const settings: unknown = JSON.parse(readFileSync(file, "utf8"));
-	return !(typeof settings === "object" && settings !== null && "jevRouter" in settings && settings.jevRouter === false);
+	return !(
+		typeof settings === "object" &&
+		settings !== null &&
+		"jevRouter" in settings &&
+		settings.jevRouter === false
+	);
 }
 
 export function tiersEnabled(): boolean {
-	return enabledWithOverride(process.env.NUMEN_JEV_ROUTER, config.tiers.enabled && jevRouterSetting());
+	return enabledWithOverride(
+		process.env.NUMEN_JEV_ROUTER,
+		config.tiers.enabled && jevRouterSetting(),
+	);
 }

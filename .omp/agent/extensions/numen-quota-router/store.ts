@@ -56,7 +56,12 @@ CREATE TABLE IF NOT EXISTS usage_snapshots (
 );
 `;
 
-export type RoutingDispatchOutcome = "routed" | "completed" | "failed" | "aborted" | "orphaned";
+export type RoutingDispatchOutcome =
+	| "routed"
+	| "completed"
+	| "failed"
+	| "aborted"
+	| "orphaned";
 
 export interface RoutingDecisionRecord {
 	id: string;
@@ -138,12 +143,16 @@ export class RoutingStore {
 		fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 		return openSqliteDatabase(
 			dbPath,
-			db => {
+			(db) => {
 				db.run("PRAGMA journal_mode=WAL");
 				db.run("PRAGMA synchronous=NORMAL");
-				const version = db.query<{ user_version: number }, []>("PRAGMA user_version").get()?.user_version ?? 0;
+				const version =
+					db.query<{ user_version: number }, []>("PRAGMA user_version").get()
+						?.user_version ?? 0;
 				if (version !== 0 && version !== SCHEMA_VERSION) {
-					db.run("DROP TABLE IF EXISTS dispatches; DROP TABLE IF EXISTS usage_snapshots;");
+					db.run(
+						"DROP TABLE IF EXISTS dispatches; DROP TABLE IF EXISTS usage_snapshots;",
+					);
 				}
 				db.run(SCHEMA_SQL);
 				db.run(`PRAGMA user_version = ${SCHEMA_VERSION}`);
@@ -171,12 +180,13 @@ export class RoutingStore {
 			) VALUES (
 				$id, $sessionId, $parentAgentId, $pid, $host, $agent, $role, $provider, $modelId, $selector, $effort, $pinned,
 				$policyVersion, $confidence, $reason, $candidatesJson, 'dispatch', $startedAt,
-				$startedAt, 'routed', $selector, 0
+				$startedAt, 'routed', NULL, NULL
 			)`,
 		);
 		return {
-			recentDispatches: (provider, now) => recentQuery.get(provider, now - RECENT_DISPATCH_WINDOW_MS)?.count ?? 0,
-			recordDecision: decision => {
+			recentDispatches: (provider, now) =>
+				recentQuery.get(provider, now - RECENT_DISPATCH_WINDOW_MS)?.count ?? 0,
+			recordDecision: (decision) => {
 				insert.run({
 					$id: decision.id,
 					$sessionId: decision.sessionId ?? null,

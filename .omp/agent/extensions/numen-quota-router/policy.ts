@@ -14,6 +14,8 @@ export type RoutingReservePolicy = "confirm" | "auto" | "fail-closed";
 /** Provider-reported allowance state for one candidate. */
 export interface RoutingHealthSnapshot {
 	state: RoutingHealthState;
+	/** Sanitized lookup failure; an unknown allowance is never a healthy report. */
+	diagnostic?: string;
 	remainingFraction?: number;
 	resetsAt?: number;
 }
@@ -85,7 +87,11 @@ export interface RoutingSelected {
 	assessments: RoutingCandidateAssessment[];
 }
 
-export type RoutingBlockedOutcome = "reserve-confirm" | "fail-closed" | "exhausted" | "unauthenticated";
+export type RoutingBlockedOutcome =
+	| "reserve-confirm"
+	| "fail-closed"
+	| "exhausted"
+	| "unauthenticated";
 
 export interface RoutingBlocked {
 	kind: "blocked";
@@ -109,18 +115,25 @@ function formatResetAt(resetsAt: number | undefined, now: number): string {
 	const totalMinutes = Math.round(deltaMs / 60_000);
 	if (totalMinutes < 60) return `resets in ${totalMinutes}m`;
 	const hours = Math.floor(totalMinutes / 60);
-	if (hours < 48) return `resets in ${hours}h${String(totalMinutes % 60).padStart(2, "0")}m`;
+	if (hours < 48)
+		return `resets in ${hours}h${String(totalMinutes % 60).padStart(2, "0")}m`;
 	return `resets in ${Math.round(hours / 24)}d`;
 }
 
-function describeAllowance(assessment: RoutingCandidateAssessment, input: RoutingPolicyInput): string {
+function describeAllowance(
+	assessment: RoutingCandidateAssessment,
+	input: RoutingPolicyInput,
+): string {
 	if (assessment.effectiveRemaining === undefined) {
 		return `${assessment.reportedState} (${formatResetAt(assessment.resetsAt, input.now)})`;
 	}
 	return `${formatPercent(assessment.effectiveRemaining)} left (${formatResetAt(assessment.resetsAt, input.now)})`;
 }
 
-function assess(candidate: RoutingCandidate, input: RoutingPolicyInput): RoutingCandidateAssessment {
+function assess(
+	candidate: RoutingCandidate,
+	input: RoutingPolicyInput,
+): RoutingCandidateAssessment {
 	const { health } = candidate;
 	const base: RoutingCandidateAssessment = {
 		selector: candidate.selector,
@@ -148,7 +161,7 @@ function assess(candidate: RoutingCandidate, input: RoutingPolicyInput): Routing
 		};
 	}
 	if (health.state === "unknown") {
-		return { ...base, note: "no reliable usage report" };
+		return { ...base, note: health.diagnostic ?? "no reliable usage report" };
 	}
 	const remaining = health.remainingFraction;
 	if (remaining === undefined) {
@@ -183,10 +196,13 @@ function rankHealthy(
 	return [...healthy].sort((a, b) => {
 		const slackA = a.slack ?? 0;
 		const slackB = b.slack ?? 0;
-		const comparable = Math.abs(slackA - slackB) <= tolerance * Math.max(Math.abs(slackA), Math.abs(slackB));
+		const comparable =
+			Math.abs(slackA - slackB) <=
+			tolerance * Math.max(Math.abs(slackA), Math.abs(slackB));
 		if (comparable) {
 			const fairness =
-				(bySelector.get(a.selector)?.recentDispatches ?? 0) - (bySelector.get(b.selector)?.recentDispatches ?? 0);
+				(bySelector.get(a.selector)?.recentDispatches ?? 0) -
+				(bySelector.get(b.selector)?.recentDispatches ?? 0);
 			if (fairness !== 0) return fairness;
 			return a.preference - b.preference;
 		}
@@ -212,16 +228,21 @@ function eligiblePatterns(
 		) {
 			continue;
 		}
-		if (!patterns.includes(assessment.selector)) patterns.push(assessment.selector);
+		if (!patterns.includes(assessment.selector))
+			patterns.push(assessment.selector);
 	}
 	return patterns;
 }
 
 function firstUsableCandidate(
 	ordered: RoutingCandidateAssessment[],
-): { assessment: RoutingCandidateAssessment; confidence: RoutingConfidence } | undefined {
+):
+	| { assessment: RoutingCandidateAssessment; confidence: RoutingConfidence }
+	| undefined {
 	const assessment = ordered.find(
-		candidate => candidate.effectiveState === "healthy" || candidate.effectiveState === "unknown",
+		(candidate) =>
+			candidate.effectiveState === "healthy" ||
+			candidate.effectiveState === "unknown",
 	);
 	if (!assessment) return undefined;
 	return {
@@ -234,7 +255,11 @@ function firstReserveFallback(
 	ordered: RoutingCandidateAssessment[],
 	pin: RoutingCandidateAssessment,
 ): RoutingCandidateAssessment | undefined {
-	return ordered.find(assessment => assessment.selector !== pin.selector && assessment.effectiveState === "reserve");
+	return ordered.find(
+		(assessment) =>
+			assessment.selector !== pin.selector &&
+			assessment.effectiveState === "reserve",
+	);
 }
 
 interface PinnedChoice {
@@ -271,10 +296,16 @@ function choosePinned(
 	};
 }
 
-function earliestReset(assessments: RoutingCandidateAssessment[], now: number): number | undefined {
+function earliestReset(
+	assessments: RoutingCandidateAssessment[],
+	now: number,
+): number | undefined {
 	const resets = assessments
-		.map(assessment => assessment.resetsAt)
-		.filter((resetsAt): resetsAt is number => resetsAt !== undefined && resetsAt > now);
+		.map((assessment) => assessment.resetsAt)
+		.filter(
+			(resetsAt): resetsAt is number =>
+				resetsAt !== undefined && resetsAt > now,
+		);
 	return resets.length > 0 ? Math.min(...resets) : undefined;
 }
 
@@ -285,27 +316,43 @@ function explain(
 	why: string,
 ): string {
 	const others = assessments
-		.filter(assessment => assessment.selector !== selected.selector)
-		.map(assessment => `${assessment.selector}: ${assessment.note}`);
+		.filter((assessment) => assessment.selector !== selected.selector)
+		.map((assessment) => `${assessment.selector}: ${assessment.note}`);
 	const scope = input.role ? `role ${input.role}` : `agent ${input.agent}`;
 	const detail = `${selected.selector}: ${describeAllowance(selected, input)}`;
-	return [`${selected.selector} selected for ${scope}: ${why}`, detail, ...others].join("; ");
+	return [
+		`${selected.selector} selected for ${scope}: ${why}`,
+		detail,
+		...others,
+	].join("; ");
 }
 
 /** Decide which candidate a new subagent runs on. Pure; see the module doc for the objective. */
 export function decideRoute(input: RoutingPolicyInput): RoutingDecision {
-	const bySelector = new Map(input.candidates.map(candidate => [candidate.selector, candidate]));
-	const assessments = input.candidates.map(candidate => assess(candidate, input));
-	const orderedByPreference = [...assessments].sort((a, b) => a.preference - b.preference);
+	const bySelector = new Map(
+		input.candidates.map((candidate) => [candidate.selector, candidate]),
+	);
+	const assessments = input.candidates.map((candidate) =>
+		assess(candidate, input),
+	);
+	const orderedByPreference = [...assessments].sort(
+		(a, b) => a.preference - b.preference,
+	);
 	const healthy = rankHealthy(
-		assessments.filter(assessment => assessment.effectiveState === "healthy"),
+		assessments.filter((assessment) => assessment.effectiveState === "healthy"),
 		input,
 		bySelector,
 	);
-	const unknown = orderedByPreference.filter(assessment => assessment.effectiveState === "unknown");
+	const unknown = orderedByPreference.filter(
+		(assessment) => assessment.effectiveState === "unknown",
+	);
 	const reserve = [...assessments]
-		.filter(assessment => assessment.effectiveState === "reserve")
-		.sort((a, b) => (b.effectiveRemaining ?? 0) - (a.effectiveRemaining ?? 0) || a.preference - b.preference);
+		.filter((assessment) => assessment.effectiveState === "reserve")
+		.sort(
+			(a, b) =>
+				(b.effectiveRemaining ?? 0) - (a.effectiveRemaining ?? 0) ||
+				a.preference - b.preference,
+		);
 	const chain = [...healthy, ...unknown, ...reserve];
 
 	const select = (
@@ -329,9 +376,16 @@ export function decideRoute(input: RoutingPolicyInput): RoutingDecision {
 		assessments,
 	});
 
-	const pinnedChoice = input.pinned ? choosePinned(orderedByPreference, input.reservePolicy) : undefined;
+	const pinnedChoice = input.pinned
+		? choosePinned(orderedByPreference, input.reservePolicy)
+		: undefined;
 	if (pinnedChoice) {
-		return select(pinnedChoice.assessment, pinnedChoice.why, pinnedChoice.confidence, true);
+		return select(
+			pinnedChoice.assessment,
+			pinnedChoice.why,
+			pinnedChoice.confidence,
+			true,
+		);
 	}
 
 	if (!input.pinned) {
@@ -344,7 +398,11 @@ export function decideRoute(input: RoutingPolicyInput): RoutingDecision {
 						: "only candidate with healthy allowance"
 					: `headroom ${healthyChoice.slack !== undefined ? healthyChoice.slack.toFixed(2) : "?"} vs ${runnerUp.slack !== undefined ? runnerUp.slack.toFixed(2) : "?"} for ${runnerUp.selector}` +
 						(Math.abs((healthyChoice.slack ?? 0) - (runnerUp.slack ?? 0)) <=
-						input.tieTolerance * Math.max(Math.abs(healthyChoice.slack ?? 0), Math.abs(runnerUp.slack ?? 0))
+						input.tieTolerance *
+							Math.max(
+								Math.abs(healthyChoice.slack ?? 0),
+								Math.abs(runnerUp.slack ?? 0),
+							)
 							? " (comparable; alternating by recent dispatches)"
 							: "");
 			return select(healthyChoice, why, "high");
@@ -360,7 +418,9 @@ export function decideRoute(input: RoutingPolicyInput): RoutingDecision {
 	}
 
 	if (reserve.length > 0) {
-		const listing = reserve.map(assessment => `${assessment.selector} ${assessment.note}`).join("; ");
+		const listing = reserve
+			.map((assessment) => `${assessment.selector} ${assessment.note}`)
+			.join("; ");
 		const [reserveChoice] = reserve;
 		if (input.reservePolicy === "auto" && reserveChoice) {
 			return select(
@@ -371,7 +431,10 @@ export function decideRoute(input: RoutingPolicyInput): RoutingDecision {
 		}
 		return {
 			kind: "blocked",
-			outcome: input.reservePolicy === "fail-closed" ? "fail-closed" : "reserve-confirm",
+			outcome:
+				input.reservePolicy === "fail-closed"
+					? "fail-closed"
+					: "reserve-confirm",
 			reason:
 				input.reservePolicy === "fail-closed"
 					? `Every eligible candidate is inside the ${formatPercent(input.reserveFraction)} routing reserve and reservePolicy is fail-closed: ${listing}.`
@@ -381,9 +444,15 @@ export function decideRoute(input: RoutingPolicyInput): RoutingDecision {
 		};
 	}
 
-	const depleted = assessments.filter(assessment => assessment.effectiveState === "depleted");
-	const unauthenticated = depleted.every(assessment => !assessment.authenticated);
-	const listing = depleted.map(assessment => `${assessment.selector} ${assessment.note}`).join("; ");
+	const depleted = assessments.filter(
+		(assessment) => assessment.effectiveState === "depleted",
+	);
+	const unauthenticated = depleted.every(
+		(assessment) => !assessment.authenticated,
+	);
+	const listing = depleted
+		.map((assessment) => `${assessment.selector} ${assessment.note}`)
+		.join("; ");
 	return {
 		kind: "blocked",
 		outcome: unauthenticated ? "unauthenticated" : "exhausted",
