@@ -1,0 +1,12 @@
+[Unit]
+Description=Encrypted restic backup of /home/jacob to the Seagate drive
+ConditionPathIsMountPoint=/media/jacob/Seagate Expansion Drive1
+
+[Service]
+Type=oneshot
+Environment="RESTIC_REPOSITORY=/media/jacob/Seagate Expansion Drive1/restic-jacob-pc"
+Environment="RESTIC_PASSWORD_COMMAND=secret-tool lookup service restic repo jacob-pc"
+Nice=19
+IOSchedulingClass=idle
+ExecStart=%h/.local/share/mise/shims/restic backup %h --one-file-system --exclude-caches --exclude-file=%h/.config/restic/excludes
+ExecStart=%h/.local/share/mise/shims/restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune
