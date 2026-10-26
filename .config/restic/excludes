@@ -22,3 +22,5 @@
 /home/jacob/.swapfile
 node_modules
 .dart_tool
+.next
+.gradle
