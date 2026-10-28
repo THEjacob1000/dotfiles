@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Explicit operator provisioning; --check never downloads or builds.
+manifest=${NUMEN_FFMPEG_MANIFEST:-$(dirname "${BASH_SOURCE[0]}")/ffmpeg-numen.json}
+command -v jq >/dev/null || { echo 'provision-ffmpeg: jq is required' >&2; exit 1; }
+[[ $(jq -er '.recipe' "$manifest") == 1 && $(jq -er '.platform' "$manifest") == linux-x86_64 ]] || { echo 'unknown recipe or platform' >&2; exit 1; }
+[[ $(uname -s)-$(uname -m) == Linux-x86_64 ]] || { echo 'this recipe requires Linux x86_64' >&2; exit 1; }
+version=$(jq -er '.ffmpeg.version' "$manifest")
+name=$(jq -er '.install_name' "$manifest")
+[[ $name =~ ^ffmpeg-[0-9]+\.[0-9]+\.[0-9]+-zscale[0-9]+$ ]] || { echo 'invalid install name' >&2; exit 1; }
+data_root=${XDG_DATA_HOME:-$HOME/.local/share}
+[[ $data_root == /* ]] || { echo 'XDG_DATA_HOME must be absolute' >&2; exit 1; }
+prefix=$data_root/numen/toolchains/$name
+
+check_prefix() {
+  local candidate=$1 table value banner configuration expected actual
+  [[ -d $candidate && ! -L $candidate ]] || { echo "refusing a missing or symlinked prefix: $candidate" >&2; return 1; }
+  [[ -x $candidate/bin/ffmpeg && -x $candidate/bin/ffprobe ]] || { echo "missing provisioned FFmpeg: $candidate; run mise run provision-ffmpeg" >&2; return 1; }
+  [[ -f $candidate/numen-provision-manifest.json ]] && cmp -s "$manifest" "$candidate/numen-provision-manifest.json" || { echo 'provisioning manifest changed; rebuild into a new install_name' >&2; return 1; }
+  [[ -f $candidate/numen-binaries.sha256 ]] || { echo 'missing binary digest receipt' >&2; return 1; }
+  local receipts
+  mapfile -t receipts < "$candidate/numen-binaries.sha256"
+  [[ ${#receipts[@]} == 2 && ${receipts[0]} =~ ^[[:xdigit:]]{64}"  bin/ffmpeg"$ && ${receipts[1]} =~ ^[[:xdigit:]]{64}"  bin/ffprobe"$ ]] || { echo 'binary receipt must name exactly ffmpeg and ffprobe' >&2; return 1; }
+  (cd "$candidate"; sha256sum --check --strict numen-binaries.sha256) || return 1
+  banner=$("$candidate/bin/ffmpeg" -version); [[ $banner == "ffmpeg version $version "* ]] || return 1
+  banner=$("$candidate/bin/ffprobe" -version); [[ $banner == "ffprobe version $version "* ]] || return 1
+  configuration=$("$candidate/bin/ffmpeg" -hide_banner -buildconf 2>&1)
+  expected=$(jq -er '.configure[]' "$manifest" | LC_ALL=C sort)
+  actual=$(awk '/^  configuration:/ { show=1; next } show { sub(/^[ \t]+/, ""); if ($0 ~ /^--/) print }' <<<"$configuration" | grep -Ev '^--(prefix|x86asmexe|extra-cflags|extra-ldflags|extra-libs)=' | LC_ALL=C sort)
+  [[ $actual == "$expected" ]] || { echo 'compiled configuration differs from the provisioning manifest' >&2; return 1; }
+  for table in encoders decoders filters; do
+    local listing
+    listing=$("$candidate/bin/ffmpeg" -hide_banner -"$table" 2>/dev/null)
+    while IFS= read -r value; do
+      awk -v wanted="$value" '$2 == wanted { found=1 } END { exit !found }' <<<"$listing" || { echo "missing $table entry: $value" >&2; return 1; }
+    done < <(jq -er ".$table[]" "$manifest")
+  done
+  "$candidate/bin/ffmpeg" -v error -f lavfi -i testsrc2=s=64x64:r=1:d=1 -vf zscale=w=32:h=32 -frames:v 1 -threads 1 -f null -
+}
+
+if [[ ${1:-} == --check ]]; then check_prefix "$prefix"; exit; fi
+[[ $# == 0 ]] || { echo 'usage: provision-ffmpeg [--check]' >&2; exit 1; }
+[[ $(jq -er '.recipe' "$manifest") == 1 ]] || { echo 'unknown recipe' >&2; exit 1; }
+if [[ -e $prefix || -L $prefix ]]; then
+  [[ ! -L $prefix ]] || { echo "refusing an existing install-prefix symlink" >&2; exit 1; }
+  check_prefix "$prefix"; exit
+fi
+for tool in curl tar xz sha256sum gpg gpgv autoreconf automake libtoolize make cc c++ pkg-config mise numen; do
+  command -v "$tool" >/dev/null || { echo "missing prerequisite: $tool; no packages were installed" >&2; exit 1; }
+done
+nasm=${NASM:-$(command -v nasm || true)}
+[[ $nasm == /* && -x $nasm ]] || { echo 'nasm is required; put an existing managed nasm on PATH or set NASM=/absolute/path' >&2; exit 1; }
+base=$(mise where "ffmpeg@$version")
+[[ -d $base/include && -d $base/lib/pkgconfig ]] || { echo 'the original pinned FFmpeg development prefix is required; run mise install first' >&2; exit 1; }
+work=$(mktemp -d "${TMPDIR:-/tmp}/numen-ffmpeg.XXXXXXXX")
+echo "provision-ffmpeg: evidence/build directory $work" >&2
+trap 'result=$?; if ((result)); then echo "provision-ffmpeg failed; retained $work" >&2; fi' EXIT
+mkdir -m700 "$work/gpg"
+fetch() { curl --fail --location --proto '=https' --tlsv1.2 --retry 2 --connect-timeout 20 --max-time 180 -o "$2" "$1"; }
+fetch "$(jq -er '.ffmpeg.url' "$manifest")" "$work/ffmpeg.tar.xz"
+fetch "$(jq -er '.ffmpeg.signature_url' "$manifest")" "$work/ffmpeg.tar.xz.asc"
+fetch "$(jq -er '.ffmpeg.key_url' "$manifest")" "$work/key.asc"
+fetch "$(jq -er '.zimg.url' "$manifest")" "$work/zimg.tar.gz"
+printf '%s  %s\n' "$(jq -er '.ffmpeg.sha256' "$manifest")" "$work/ffmpeg.tar.xz" "$(jq -er '.zimg.sha256' "$manifest")" "$work/zimg.tar.gz" | sha256sum --check --strict
+fingerprint=$(gpg --homedir "$work/gpg" --no-autostart --batch --no-options --with-colons --show-keys "$work/key.asc" | awk -F: '$1 == "fpr" {print $10; exit}')
+[[ $fingerprint == "$(jq -er '.ffmpeg.fingerprint' "$manifest")" ]] || { echo 'unexpected FFmpeg release key' >&2; exit 1; }
+gpg --homedir "$work/gpg" --no-autostart --batch --no-options --dearmor --output "$work/keyring.gpg" "$work/key.asc"
+gpgv --keyring "$work/keyring.gpg" --status-fd 1 "$work/ffmpeg.tar.xz.asc" "$work/ffmpeg.tar.xz" >"$work/signature.log" 2>&1
+mkdir "$work/ffmpeg" "$work/zimg"
+tar -xf "$work/ffmpeg.tar.xz" -C "$work/ffmpeg" --strip-components=1
+tar -xf "$work/zimg.tar.gz" -C "$work/zimg" --strip-components=1
+(cd "$work/zimg"; autoreconf --install --force; ./configure --prefix="$work/zimg-prefix" --enable-static --disable-shared CXXFLAGS='-O2 -fPIC'; numen run -- make -j2; make install) >"$work/zimg-build.log" 2>&1
+export PKG_CONFIG_PATH=$work/zimg-prefix/lib/pkgconfig:$base/lib/pkgconfig:$base/share/pkgconfig
+mapfile -t flags < <(jq -er '.configure[]' "$manifest")
+(cd "$work/ffmpeg"; ./configure "--prefix=$prefix" "--x86asmexe=$nasm" "${flags[@]}" "--extra-cflags=-I$base/include" "--extra-ldflags=-L$base/lib -Wl,-rpath,$base/lib" '--extra-libs=-lstdc++ -lm'; numen run -- make -j2; make install "DESTDIR=$work/stage") >"$work/ffmpeg-build.log" 2>&1
+payload=$work/stage$prefix
+cp "$manifest" "$payload/numen-provision-manifest.json"
+(cd "$payload"; sha256sum bin/ffmpeg bin/ffprobe > numen-binaries.sha256)
+printf '%s  %s\n' "$(jq -er '.ffmpeg.sha256' "$manifest")" ffmpeg.tar.xz "$(jq -er '.zimg.sha256' "$manifest")" zimg.tar.gz >"$payload/numen-source-sha256.txt"
+cp "$work/signature.log" "$payload/numen-source-signature.log"
+"$payload/bin/ffmpeg" -hide_banner -buildconf >"$payload/numen-build-configuration.log" 2>&1
+check_prefix "$payload"
+mkdir -p "$(dirname "$prefix")"
+publication=$(mktemp -d "$(dirname "$prefix")/.ffmpeg-stage.XXXXXXXX")
+cp -a "$payload/." "$publication/"
+check_prefix "$publication"
+[[ ! -e $prefix ]] || { echo 'another provisioner published first; retained staging prefix' >&2; exit 1; }
+mv -T --no-clobber "$publication" "$prefix"
+[[ ! -e $publication ]] || { echo "another provisioner published first; retained $publication" >&2; exit 1; }
+check_prefix "$prefix"
+echo "provision-ffmpeg: verified $prefix; evidence retained at $work" >&2

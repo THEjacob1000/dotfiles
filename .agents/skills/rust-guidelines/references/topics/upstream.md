@@ -1,17 +1,19 @@
 # Upstream sources
 
-Read the relevant baseline alongside Microsoft's topic rules. Microsoft adds guidance and overrides explicit design choices; it does not replace these sources. Local invariant policy and repository constraints take precedence; language safety requirements still apply.
+Use [Google](google.md) first, subject to local policy and Rust safety. These sources supplement it.
 
+- Google style and API decisions: use the [bounded section index](google.md).
 - API design and known `C-*` IDs: [checklist](../rust-api-guidelines/src/checklist.md). Find the ID's reference definition, then read that local chapter and section. [Contents](../rust-api-guidelines/src/SUMMARY.md) lists every chapter.
 - Formatting and syntax layout: [Style Guide contents](../rust-style-guide/src/doc/style-guide/src/SUMMARY.md). Use the repository's rustfmt configuration; consult the relevant chapter for choices formatting does not settle.
 - Idioms, patterns, and anti-patterns: [Design Patterns contents](../rust-design-patterns/src/SUMMARY.md). Select the specific idiom or pattern relevant to the design; the catalogue does not require introducing a pattern.
 - Performance: [Performance Book contents](../rust-performance-book/src/SUMMARY.md), maintained here for the pinned nightly. Read the chapter for the cost at hand; measure first.
-- Unsafe and soundness: [undefined behavior](../rust-reference/src/behavior-considered-undefined.md), [behavior not considered unsafe](../rust-reference/src/behavior-not-considered-unsafe.md), [unsafety](../rust-reference/src/unsafety.md), and [unsafe keyword](../rust-reference/src/unsafe-keyword.md). The Reference explicitly does not give a complete formal model of Rust's unsafe semantics.
+- Unsafe and soundness: [undefined behavior](../rust-reference/src/behavior-considered-undefined.md), [behavior not considered unsafe](../rust-reference/src/behavior-not-considered-unsafe.md), [unsafety](../rust-reference/src/unsafety.md), and [unsafe keyword](../rust-reference/src/unsafe-keyword.md). The Reference is not a complete formal model of unsafe semantics.
 
 ## Resolve upstream links locally
 
 Vendored text stays byte-for-byte upstream. Resolve relative links from the source file; replace `.html` with `.md` and use the fragment or rule ID to find the section. For website links:
 
+- `google.github.io/styleguide/rustguide.html` maps to `references/google/rustguide.md`; its explicit HTML anchors are preserved.
 - `rust-lang.github.io/api-guidelines/` maps to `references/rust-api-guidelines/src/`.
 - `doc.rust-lang.org/{nightly,stable}/style-guide/` and `doc.rust-lang.org/style-guide/` map to `references/rust-style-guide/src/doc/style-guide/src/`.
 - `rust-unofficial.github.io/patterns/` maps to `references/rust-design-patterns/src/`.
@@ -21,8 +23,9 @@ Reference labels such as `[expr.pointer]` are semantic cross-references, not loc
 
 ## Provenance
 
-Each manifest records the revision, selection, license, and hashes. License files sit beside it. Read these only when auditing or updating:
+Each manifest records the revision, selection, license, and hashes. License files sit beside it. Read only for audits or updates:
 
+- [Google](../google/upstream.json), CC BY 3.0
 - [Microsoft](../microsoft/upstream.json)
 - [Rust API Guidelines](../rust-api-guidelines/upstream.json)
 - [Style Guide](../rust-style-guide/upstream.json)

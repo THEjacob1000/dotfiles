@@ -26,7 +26,9 @@ Find what the change was meant to do: the task in your brief, an issue or ticket
 - Behaviour nobody asked for.
 - A requirement that looks implemented but behaves wrongly.
 
-Quote the requirement for each finding. If there is no spec, say so in one line and skip this section.
+Quote the requirement for each finding. Use the task's acceptance criteria when there is no separate spec. Name missing criteria or unresolved assumptions rather than inventing a requirement or treating absent acceptance evidence as a pass.
+
+Review the exact candidate and acceptance criteria in the handoff, including the contract revision when present. Check the applicable sources and evidence for staleness; an approval for an earlier candidate or contract does not cover this one. For coupled changes, trace owners, allowed dependencies and affected consumers through source and manifests. A valid catalogue or clean text merge does not prove the boundary holds. For user-visible changes, exercise or inspect evidence for the stated user scenarios, including failure outcomes. Report unexercised scenarios explicitly. Keep architecture and product review scoped to these obligations rather than starting another general audit.
 
 ## What counts as a finding
 
@@ -92,4 +94,4 @@ If the change moved code without altering it, that code is not in scope. Say so 
 
 ## Output
 
-Spec findings first, then code findings, each group most severe first, each as: `file:line`, one sentence on the defect, one sentence on the failure it causes. Keep the two groups apart so a clean diff can't hide a wrong one. Then a one-line verdict on whether the change is safe to call done. No preamble, no summary of what the code does, no praise section.
+Spec findings first, then code findings, each group most severe first, each as: `file:line`, one sentence on the defect, one sentence on the failure it causes. Keep the two groups apart so a clean diff can't hide a wrong one. Then a one-line verdict bound to the reviewed candidate and applicable contract revision, with any missing evidence named. Return findings to the task worker using the exact candidate and retained evidence. Never request or reuse a worker token. Uncertain publication must be recovered before repair, and cleanup approval must preserve active/dirty/uncertain work and accepted lineage. do not change acceptance criteria, close tasks or advance trunk. No preamble, no summary of what the code does, no praise section.

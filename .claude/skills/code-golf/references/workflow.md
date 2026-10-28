@@ -18,9 +18,7 @@ For an audit, stop here after evaluating candidates and their likely blast radiu
 
 ## 3. Plan execution by dependencies
 
-Draw edges for producers before consumers: shared types, exported APIs, schemas and generated code, core libraries, adapters, application wiring, then dependent tests and docs. Put a cycle or shared compilation unit in one lane. An independent lane owns disjoint files and a settled interface contract. Assign one integration owner to shared API definitions, manifests, lockfiles, generated artifacts, and cross-package caller migration. Don't let concurrent workers edit the same shared surface; serialize that boundary, not unrelated work. If a proposed change requires a shared edit, hand the requirement to the owner rather than leaving an incompatible caller. No lane can declare a cutover complete while old callers, exports, docs, or tests still depend on the removed path.
-
-Work in stages from foundations toward consumers. Concurrent lanes in one stage can edit independently, but they should not each run a project-wide suite over siblings' half-finished files. The integrating owner reviews interface changes and migrates every caller before the next dependent stage. Small focused changes need no lane machinery. A sweep does not need a custom orchestrator: a simple inventory and agreed ownership suffice.
+Draw edges for producers before consumers: shared types, exported APIs and schemas before dependent libraries, adapters and application wiring. Keep a coupled contract change in one coherent task. Concurrent workers choose distinct outcomes from the task board and use one workspace each; there are no file reservations or designated integration owners. Each worker checks and reviews its settled result, rebases onto current local main, resolves textual and semantic conflicts, revalidates and attempts a conditional main update. A loser repeats that loop. Finish caller, test and documentation cutovers, then clean the workspace and clear the task board before reporting completion. Small focused changes need no extra orchestration.
 
 ## 4. Reduce and prove locally
 

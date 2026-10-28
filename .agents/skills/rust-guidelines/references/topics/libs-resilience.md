@@ -1,8 +1,8 @@
 # libs/resilience
 
-Read the rules relevant to the current change. Paths are relative to this index.
+Read the relevant [Google sections](google.md) first. The rules below supplement them; local policy and Google win conflicts. Paths are relative to this index.
 
-Baseline: [type safety](../rust-api-guidelines/src/type-safety.md), [dependability](../rust-api-guidelines/src/dependability.md). Read the relevant sections alongside the Microsoft rules below.
+Community reference: [type safety](../rust-api-guidelines/src/type-safety.md), [dependability](../rust-api-guidelines/src/dependability.md). Read only the relevant sections and compatible Microsoft additions below.
 
 - [M-AVOID-STATICS: Avoid statics](../microsoft/src/guidelines/libs/resilience/M-AVOID-STATICS.md)
 - [M-BUILD-RESULT: Builders validate in final `.build()`](../microsoft/src/guidelines/libs/resilience/M-BUILD-RESULT.md)

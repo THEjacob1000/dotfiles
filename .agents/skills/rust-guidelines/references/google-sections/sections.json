@@ -1,0 +1,254 @@
+{
+  "source_revision": "572c673d9058242c049fbc8248b17029726c7afa",
+  "source_sha256": "b740a8ba33505615bed9f63624ed325ff9eb8d4a73ce5b36c6833955926f72c4",
+  "sections": {
+    "accept-iterators": {
+      "start_line": 601,
+      "end_line": 625
+    },
+    "accepting-into": {
+      "start_line": 626,
+      "end_line": 648
+    },
+    "api-design-context": {
+      "start_line": 142,
+      "end_line": 166
+    },
+    "assertion-context": {
+      "start_line": 1563,
+      "end_line": 1630
+    },
+    "avoid-abbreviations": {
+      "start_line": 1091,
+      "end_line": 1108
+    },
+    "avoid-rc-arc": {
+      "start_line": 490,
+      "end_line": 508
+    },
+    "catch-unwind": {
+      "start_line": 1745,
+      "end_line": 1769
+    },
+    "closure-accessors": {
+      "start_line": 1289,
+      "end_line": 1315
+    },
+    "combinator-chains": {
+      "start_line": 1631,
+      "end_line": 1744
+    },
+    "const-functions": {
+      "start_line": 1331,
+      "end_line": 1341
+    },
+    "derive": {
+      "start_line": 780,
+      "end_line": 786
+    },
+    "doc-hidden": {
+      "start_line": 1324,
+      "end_line": 1330
+    },
+    "dont-check-then-unwrap": {
+      "start_line": 1469,
+      "end_line": 1495
+    },
+    "enum-vs-bool": {
+      "start_line": 649,
+      "end_line": 658
+    },
+    "expect-over-unwrap": {
+      "start_line": 1496,
+      "end_line": 1502
+    },
+    "expected-api-sets": {
+      "start_line": 1316,
+      "end_line": 1323
+    },
+    "extension-traits": {
+      "start_line": 834,
+      "end_line": 897
+    },
+    "flexible-references": {
+      "start_line": 534,
+      "end_line": 567
+    },
+    "formatting-optout": {
+      "start_line": 471,
+      "end_line": 485
+    },
+    "formatting-other": {
+      "start_line": 447,
+      "end_line": 470
+    },
+    "from-impls": {
+      "start_line": 937,
+      "end_line": 944
+    },
+    "generic-parameters": {
+      "start_line": 1057,
+      "end_line": 1068
+    },
+    "generics-vs-dyn-trait": {
+      "start_line": 787,
+      "end_line": 814
+    },
+    "getters-and-setters": {
+      "start_line": 1248,
+      "end_line": 1315
+    },
+    "glob-imports": {
+      "start_line": 283,
+      "end_line": 321
+    },
+    "global-initialization": {
+      "start_line": 1442,
+      "end_line": 1448
+    },
+    "important-traits": {
+      "start_line": 898,
+      "end_line": 936
+    },
+    "known-traits": {
+      "start_line": 765,
+      "end_line": 779
+    },
+    "lifetimes": {
+      "start_line": 1041,
+      "end_line": 1056
+    },
+    "macros": {
+      "start_line": 986,
+      "end_line": 1019
+    },
+    "must-use-on-functions": {
+      "start_line": 1411,
+      "end_line": 1425
+    },
+    "must-use-on-types": {
+      "start_line": 1426,
+      "end_line": 1441
+    },
+    "naming-extension-traits": {
+      "start_line": 1069,
+      "end_line": 1075
+    },
+    "naming-initialization-functions": {
+      "start_line": 1076,
+      "end_line": 1090
+    },
+    "naming-methods": {
+      "start_line": 1024,
+      "end_line": 1040
+    },
+    "newtypes-vs-type-aliases": {
+      "start_line": 726,
+      "end_line": 741
+    },
+    "non-exhaustive-enum-matching": {
+      "start_line": 1503,
+      "end_line": 1562
+    },
+    "non-exhaustive-enums": {
+      "start_line": 1349,
+      "end_line": 1378
+    },
+    "non-exhaustive-structs": {
+      "start_line": 1379,
+      "end_line": 1410
+    },
+    "non-leaf-modules": {
+      "start_line": 263,
+      "end_line": 282
+    },
+    "operator-overloads": {
+      "start_line": 1342,
+      "end_line": 1348
+    },
+    "options-should-implement-default": {
+      "start_line": 945,
+      "end_line": 956
+    },
+    "poison": {
+      "start_line": 961,
+      "end_line": 967
+    },
+    "prefer-borrows": {
+      "start_line": 509,
+      "end_line": 529
+    },
+    "prefer-format-or-write": {
+      "start_line": 1770,
+      "end_line": 1787
+    },
+    "prefer-local-trait-imports": {
+      "start_line": 352,
+      "end_line": 369
+    },
+    "prefer-named-fields": {
+      "start_line": 742,
+      "end_line": 753
+    },
+    "reporting-errors": {
+      "start_line": 659,
+      "end_line": 721
+    },
+    "return-iterators": {
+      "start_line": 568,
+      "end_line": 600
+    },
+    "small-crates": {
+      "start_line": 183,
+      "end_line": 217
+    },
+    "structure": {
+      "start_line": 218,
+      "end_line": 247
+    },
+    "test-framework": {
+      "start_line": 1788,
+      "end_line": 1801
+    },
+    "toplevel-functions": {
+      "start_line": 370,
+      "end_line": 411
+    },
+    "trait-vs-inherent-impl": {
+      "start_line": 815,
+      "end_line": 833
+    },
+    "traits-yagni": {
+      "start_line": 758,
+      "end_line": 764
+    },
+    "type-inference": {
+      "start_line": 1451,
+      "end_line": 1468
+    },
+    "type-names": {
+      "start_line": 412,
+      "end_line": 436
+    },
+    "unsafe": {
+      "start_line": 1209,
+      "end_line": 1229
+    },
+    "unstable-features": {
+      "start_line": 1230,
+      "end_line": 1247
+    },
+    "use-statement": {
+      "start_line": 322,
+      "end_line": 351
+    },
+    "userdefined-item": {
+      "start_line": 248,
+      "end_line": 262
+    },
+    "writing-doc": {
+      "start_line": 1109,
+      "end_line": 1204
+    }
+  }
+}

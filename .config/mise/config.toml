@@ -53,6 +53,8 @@ ffmpeg = "latest"
 loke = { version = "latest", url = 'https://tools.tail8060d.ts.net:8443/downloads/loke-cli-rs/{{ version }}/loke-{{ os(macos="darwin") }}-{{ arch(x64="amd64") }}.tar.gz', version_list_url = "https://tools.tail8060d.ts.net:8443/downloads/loke-cli-rs/latest" }
 restic = "latest"
 stripe = "latest"
+"http:mysql-shell" = { version = "8.4.0", url = "https://cdn.mysql.com/archives/mysql-shell/mysql-shell-8.4.0-linux-glibc2.28-x86-64bit.tar.gz", checksum = "sha256:7eae0ddb3f8778d105bd7c8634e182d5c02ad73f8a8a2b21335f19f24544f49b" }
+mongosh = "2.14.0"
 
 [tool_alias]
 loke = "http:loke"

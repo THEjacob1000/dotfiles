@@ -1,0 +1,22 @@
+{
+  "recipe": 1,
+  "install_name": "ffmpeg-9.0.2-zscale1",
+  "platform": "linux-x86_64",
+  "ffmpeg": {
+    "version": "9.0.2",
+    "url": "https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz",
+    "sha256": "8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e",
+    "signature_url": "https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz.asc",
+    "key_url": "https://ffmpeg.org/ffmpeg-devel.asc",
+    "fingerprint": "FCF986EA15E6E293A5644F10B4322F04D67658D8"
+  },
+  "zimg": {
+    "version": "3.0.6",
+    "url": "https://github.com/sekrit-twc/zimg/archive/refs/tags/release-3.0.6.tar.gz",
+    "sha256": "be89390f13a5c9b2388ce0f44a5e89364a20c1c57ce46d382b1fcc3967057577"
+  },
+  "configure": ["--disable-doc", "--disable-debug", "--enable-gpl", "--enable-version3", "--enable-pic", "--disable-shared", "--enable-static", "--enable-openssl", "--enable-libzimg", "--enable-libx264", "--enable-libx265", "--enable-libvpx", "--enable-libaom", "--enable-libwebp", "--enable-libass", "--enable-libopus", "--enable-libvorbis", "--enable-libmp3lame", "--enable-libopenh264", "--enable-libfreetype", "--enable-libharfbuzz", "--enable-libfontconfig", "--enable-libplacebo", "--enable-libsvtav1", "--enable-libxml2", "--enable-libjxl", "--enable-libvpl", "--enable-alsa", "--enable-libpulse", "--disable-ffplay"],
+  "encoders": ["libx264", "libx265", "libvpx", "libvpx-vp9", "libopus", "libmp3lame", "aac", "prores_ks", "png", "ffv1", "gif", "pcm_s16le", "pcm_f32le"],
+  "decoders": ["libvpx"],
+  "filters": ["zscale", "tonemap", "alphaextract", "alphamerge"]
+}

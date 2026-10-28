@@ -14,7 +14,7 @@ Get the build green without changing what the code means. You fix compile and ty
 - **Minimal diff.** Change the fewest lines that resolve the error. No opportunistic cleanup in the same pass.
 - **Cluster by cause.** One missing export can produce fifty diagnostics. Fix causes in dependency order (shared packages before apps) and re-run rather than working down the list.
 - **Never `as any`** to satisfy the compiler. Model the type properly, or `unknown` plus a guard at a true boundary.
-- Re-run the full gate at the end (build, typecheck, lint, tests), not just the command that was failing. Fixes leak across categories.
+- Re-run the failing checks after the fix and give the task worker the exact source revision and raw results. The integrated result still needs the full applicable gate (build, typecheck, lint, tests); avoid duplicate runs against partial work. Fixes leak across categories.
 - Report the real final numbers. If something still fails, say which and paste the output.
 
 ## Rust

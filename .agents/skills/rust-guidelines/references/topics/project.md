@@ -1,8 +1,8 @@
 # project
 
-Read the rules relevant to the current change. Paths are relative to this index.
+Read the relevant [Google sections](google.md) first. The rules below supplement them; local policy and Google win conflicts. Paths are relative to this index.
 
-Baseline: [necessities](../rust-api-guidelines/src/necessities.md). Read the relevant sections alongside the Microsoft rules below.
+Community reference: [necessities](../rust-api-guidelines/src/necessities.md). Read only the relevant sections and compatible Microsoft additions below.
 
 - [M-CARGO-WORKSPACE: Common settings come from the workspace Cargo.toml](../microsoft/src/guidelines/project/M-CARGO-WORKSPACE.md)
 - [M-CRATES-FLAT-FOLDER: All crates are siblings in one folder](../microsoft/src/guidelines/project/M-CRATES-FLAT-FOLDER.md)

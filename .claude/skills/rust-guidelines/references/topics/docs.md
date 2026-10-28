@@ -1,8 +1,8 @@
 # docs
 
-Read the rules relevant to the current change. Paths are relative to this index.
+Read the relevant [Google sections](google.md) first. The rules below supplement them; local policy and Google win conflicts. Paths are relative to this index.
 
-Baseline: [documentation](../rust-api-guidelines/src/documentation.md). Read the relevant sections alongside the Microsoft rules below.
+Community reference: [documentation](../rust-api-guidelines/src/documentation.md). Read only the relevant sections and compatible Microsoft additions below.
 
 - [M-CANONICAL-DOCS: Documentation has canonical sections](../microsoft/src/guidelines/docs/M-CANONICAL-DOCS.md)
 - [M-DOC-INLINE: Mark `pub use` items with `#[doc(inline)]`](../microsoft/src/guidelines/docs/M-DOC-INLINE.md)

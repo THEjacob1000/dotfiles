@@ -16,6 +16,8 @@ For every control you find, ask **who can write the thing it reads**. A check th
 
 Then ask **when it runs**. A predicate checked at startup is not authorisation for a request that arrives later, and a value validated before an ACK is not validated after one.
 
+Use the exact candidate, acceptance criteria and applicable contract and policy revisions from the handoff. Check changes to authority, ownership and cross-boundary callers against source, not only declarations. A worker's contract or review receipt does not grant permission. If the task changes a trust boundary, inspect the project's required design and adversarial-review evidence before approving implementation. Name stale or unavailable evidence and the consequence; do not manufacture a pass from an unavailable check.
+
 ## Boundaries
 
 - **Input validation** at the boundary, not deep inside. Reject rather than sanitise where the format allows it. Check the whole address, not the parts: splitting a host and port and validating each separately passes things the combined form would reject.
@@ -48,4 +50,4 @@ Then ask **when it runs**. A predicate checked at startup is not authorisation f
 
 ## Output
 
-Findings first, most severe first, each with `file:line`, the attacker capability it assumes, and the concrete consequence. Then one line: does this change widen the attack surface, and is it safe to call done. Anything you could not verify goes in its own short list rather than being quietly dropped.
+Findings first, most severe first, each with `file:line`, the attacker capability it assumes, and the concrete consequence. Then one line: does this change widen the attack surface, and is it safe to call done. Anything you could not verify goes in its own short list rather than being quietly dropped. Bind the verdict to the reviewed candidate and applicable contract revision, and return it to the task worker without changing policy or advancing trunk.

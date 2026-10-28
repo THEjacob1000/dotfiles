@@ -1,8 +1,8 @@
 # ffi
 
-Read the rules relevant to the current change. Paths are relative to this index.
+Read the relevant [Google sections](google.md) first. The rules below supplement them; local policy and Google win conflicts. Paths are relative to this index.
 
-Baseline: [type safety](../rust-api-guidelines/src/type-safety.md). Read the relevant sections alongside the Microsoft rules below.
+Community reference: [type safety](../rust-api-guidelines/src/type-safety.md). Read only the relevant sections and compatible Microsoft additions below.
 
 For unsafe code, also read the [Reference UB rules](../rust-reference/src/behavior-considered-undefined.md) and [unsafety](../rust-reference/src/unsafety.md).
 

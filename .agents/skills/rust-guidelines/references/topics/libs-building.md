@@ -1,8 +1,8 @@
 # libs/building
 
-Read the rules relevant to the current change. Paths are relative to this index.
+Read the relevant [Google sections](google.md) first. The rules below supplement them; local policy and Google win conflicts. Paths are relative to this index.
 
-Baseline: [necessities](../rust-api-guidelines/src/necessities.md), [naming](../rust-api-guidelines/src/naming.md). Read the relevant sections alongside the Microsoft rules below.
+Community reference: [necessities](../rust-api-guidelines/src/necessities.md), [naming](../rust-api-guidelines/src/naming.md). Read only the relevant sections and compatible Microsoft additions below.
 
 - [M-FEATURES-ADDITIVE: Features are additive](../microsoft/src/guidelines/libs/building/M-FEATURES-ADDITIVE.md)
 - [M-OOBE: Libraries work out of the box](../microsoft/src/guidelines/libs/building/M-OOBE.md)

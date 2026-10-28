@@ -29,7 +29,18 @@ repo's own `docker compose`, testcontainers or a hand-rolled container.
 - Need real data rather than an empty DB: `loke db pull -d <database>`, and only
   when asked, since a pull replaces the local database outright.
 - If Docker isn't running or `loke deps` fails, report it; don't fall back to
-  another way of launching the services.
+  another way of launching the services, except as below.
+- Exception, loke-rs: it pins native PostgreSQL 18.6, Redis and MinIO for its
+  tests (`mise run setup-test-backends`, binaries under
+  `~/.cache/loke/test-backends/`). Use those, not `loke deps` or Docker; Docker
+  being down is not a blocker there. Tests already own them via
+  `makers test-integration`. A smoke run needing a live PostgreSQL starts a
+  throwaway cluster and removes it afterwards:
+  `B=~/.cache/loke/test-backends/postgres-18.6/bin; D=$(mktemp -d)`, then
+  `$B/initdb -D $D/data -U loke --auth=trust`,
+  `$B/pg_ctl -D $D/data -l $D/log -w -o "-k $D -p <free port> -c listen_addresses=127.0.0.1" start`,
+  run the smoke against `127.0.0.1:<port>`, then `$B/pg_ctl -D $D/data -w stop`
+  and `rm -rf $D`. Never leave it running or reuse another agent's cluster.
 
 ## Code navigation: ripwire for graphs, literal search otherwise
 `ripwire` (CLI on PATH, through Bash) maps a repo's call graph offline: what
@@ -123,6 +134,31 @@ Longer clear code beats shorter dense code. Verify changed behavior and keep mea
 - Bias to autonomy: when a sensible default exists, proceed and report rather than
   asking. Jacob steers by interrupting.
 - Report real results (actual test/coverage numbers), never aspirational ones.
+
+### Choose workflow depth
+
+Use the least planning that covers the actual decisions and consequences. A bounded
+repair or feature with settled behavior needs a short acceptance statement, affected
+checks and execution. Coupled interfaces, migrations or unresolved requirements need
+a compact shared contract with testable outcomes, constraints, assumptions and the
+sources that decide them. Trust-boundary changes follow the project's design and
+adversarial-review gate before code. Size, prompt length and labels such as
+"architecture" do not select depth. Reassess when a concrete new risk appears.
+
+Keep mechanics global and ownership, required checks and approval boundaries in the
+project's policy. Reuse the current task identity and contract instead of creating a
+second plan or queue. Record reversible assumptions and continue; ask only when a
+missing decision prevents authorized work. Workflow depth never expands permission.
+
+Choose reviewers for the obligations that need independent judgment. Use the existing
+code reviewer for acceptance and integration, the security reviewer for untrusted
+input or authority, and the build resolver for mechanical failures. Give architecture
+review the actual ownership and dependency decisions; give product review the user
+scenarios and observable outcomes. These are focused review responsibilities, not a
+required cast or a second implementer. Every handoff names the exact source revision,
+acceptance criteria, affected consumers and check evidence, including the contract
+revision when present. Select models by the
+configured task-fit and cost policy; a role name is not escalation evidence.
 
 ### Talking to Jacob
 Length is a tax on him, not proof of effort. Lead with the answer or the verdict.

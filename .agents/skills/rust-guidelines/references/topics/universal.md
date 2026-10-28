@@ -1,8 +1,8 @@
 # universal
 
-Read the rules relevant to the current change. Paths are relative to this index.
+Read the relevant [Google sections](google.md) first. The rules below supplement them; local policy and Google win conflicts. Paths are relative to this index.
 
-Baseline: [naming](../rust-api-guidelines/src/naming.md), [debuggability](../rust-api-guidelines/src/debuggability.md). Read the relevant sections alongside the Microsoft rules below.
+Community reference: [naming](../rust-api-guidelines/src/naming.md), [debuggability](../rust-api-guidelines/src/debuggability.md). Read only the relevant sections and compatible Microsoft additions below.
 
 For formatting and idioms, select a chapter through the [upstream source map](upstream.md).
 

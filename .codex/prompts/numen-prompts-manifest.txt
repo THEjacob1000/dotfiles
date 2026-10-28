@@ -3,6 +3,7 @@ numen-code-refinement.md
 numen-codebase-design.md
 numen-coderabbit-resolve.md
 numen-coverage-target.md
+numen-cowork.md
 numen-deep-interview.md
 numen-diagnosing-bugs.md
 numen-domain-modeling.md

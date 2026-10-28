@@ -1,8 +1,8 @@
 # macros
 
-Read the rules relevant to the current change. Paths are relative to this index.
+Read the relevant [Google sections](google.md) first. The rules below supplement them; local policy and Google win conflicts. Paths are relative to this index.
 
-Baseline: [macros](../rust-api-guidelines/src/macros.md). Read the relevant sections alongside the Microsoft rules below.
+Community reference: [macros](../rust-api-guidelines/src/macros.md). Read only the relevant sections and compatible Microsoft additions below.
 
 - [M-EXAMPLE-OVER-PROC: Prefer 'macros by example' over proc macros](../microsoft/src/guidelines/macros/M-EXAMPLE-OVER-PROC.md)
 - [M-MACRO-HELPERS: Third party items come from hidden `_private` module](../microsoft/src/guidelines/macros/M-MACRO-HELPERS.md)

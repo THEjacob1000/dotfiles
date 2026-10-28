@@ -1,8 +1,8 @@
 # libs/interop
 
-Read the rules relevant to the current change. Paths are relative to this index.
+Read the relevant [Google sections](google.md) first. The rules below supplement them; local policy and Google win conflicts. Paths are relative to this index.
 
-Baseline: [interoperability](../rust-api-guidelines/src/interoperability.md), [flexibility](../rust-api-guidelines/src/flexibility.md). Read the relevant sections alongside the Microsoft rules below.
+Community reference: [interoperability](../rust-api-guidelines/src/interoperability.md), [flexibility](../rust-api-guidelines/src/flexibility.md). Read only the relevant sections and compatible Microsoft additions below.
 
 - [M-DONT-LEAK-TYPES: Don't leak external types](../microsoft/src/guidelines/libs/interop/M-DONT-LEAK-TYPES.md)
 - [M-ESCAPE-HATCHES: Native escape hatches](../microsoft/src/guidelines/libs/interop/M-ESCAPE-HATCHES.md)
