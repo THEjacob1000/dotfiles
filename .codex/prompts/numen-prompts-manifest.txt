@@ -20,6 +20,7 @@ numen-jj-pr-flow.md
 numen-pr-evidence.md
 numen-pr-review-inline.md
 numen-prototype.md
+numen-python-guidelines.md
 numen-retro.md
 numen-reverse-engineer-anything.md
 numen-ripwire-before-you-build.md

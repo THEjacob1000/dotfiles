@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/google/styleguide",
+  "revision": "8e035461436fa0bd20650d7b01fae92dd8f9a77b",
+  "license": "CC-BY-3.0",
+  "selection": "Root LICENSE and pyguide.md copied byte-for-byte; sections preserve each numbered policy with its subordinate headings and examples, with relative links rewritten to pinned upstream URLs; the generated from-future-imports fragment is mapped to its enclosing explicit modern-python-decision anchor. Topic indexes are local navigation.",
+  "sha256": {
+    "LICENSE": "e6bc9e9c474700b708f568bac9e5a8a9bcb2b1dad53442f5ba449fcb848b8e76",
+    "pyguide.md": "7ac0ba7803a5118a6c68c2aef8d8767a1d5a0026e9b3cea813796959a76ee896"
+  }
+}

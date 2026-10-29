@@ -1,6 +1,6 @@
 ---
 name: code-golf
-description: Default for every coding task, including implementation, fixes, refactoring, review and tests. Deliver the smallest readable, safe solution that satisfies the request across Rust, TypeScript/JavaScript and Go. Not character minification or permission for unrequested cleanup.
+description: Default for every coding task, including implementation, fixes, refactoring, review and tests. Deliver the smallest readable, safe solution that satisfies the request across Rust, TypeScript/JavaScript, Go and Python. Not character minification or permission for unrequested cleanup.
 generated-by: numen-sync
 ---
 
@@ -30,7 +30,7 @@ The entry is the default; don't preload the handbook. Open complete relevant sec
 
 - Hunting a real simplification opportunity: [reduction catalog](references/reductions.md).
 - Compiler guarantees, equivalence or test retirement: [proof and tests](references/proof-and-tests.md).
-- Language-specific decisions: [Rust](references/rust.md), [TypeScript/JavaScript](references/typescript-javascript.md), [Go](references/go.md). Keep the project's language guidelines in force.
+- Language-specific decisions: [Rust](references/rust.md), [TypeScript/JavaScript](references/typescript-javascript.md), [Go](references/go.md). For Python, use `python-guidelines` alongside the shared reduction and proof rules. Keep the project's language guidelines in force.
 - An explicitly requested audit or sweep: [workflow](references/workflow.md). For combined guideline enforcement and reduction, use `code-refinement`; if it is already orchestrating, stay in its current lane rather than start another sweep.
 - Skill maintenance only: [evaluations](references/evaluations.md) and [sources](references/sources.md).
 
