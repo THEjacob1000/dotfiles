@@ -45,7 +45,7 @@ export default function cowork(pi: ExtensionAPI) {
    task: z.string().optional(), outcome: z.string().optional(), workspace: z.string().optional(),
    base: z.string().optional(), tip: z.string().optional(),
   }),
-  async execute(_id, args, _update, ctx) {
+  async execute(_id, args, _signal, _update, ctx) {
    const who = ctx.sessionManager.getSessionId();
    if (args.op === "status") return { content: [{ type: "text", text: JSON.stringify(await invoke(ctx, ["status"])) }] };
    if (args.op === "checkpoint") return { content: [{type:"text", text:JSON.stringify(await invoke(ctx,["checkpoint"]))}] };
