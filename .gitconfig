@@ -28,3 +28,5 @@
 # Per-machine: identity, commit signing, coderabbit machineId. Untracked; see README.
 [include]
 	path = ~/.gitconfig.local
+[credential "https://git.heroku.com"]
+	helper = !heroku git:credentials

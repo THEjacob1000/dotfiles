@@ -1,7 +1,6 @@
 // generated-by: numen-sync
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 import type { UsageCredential, UsageProvider, UsageReport, UsageUnit } from "@oh-my-pi/pi-ai/usage";
-import registerKiroProvider from "pi-provider-kiro";
 
 type HostProviderConfig = Parameters<ExtensionAPI["registerProvider"]>[1];
 type HostProviderModels = NonNullable<HostProviderConfig["models"]>;
@@ -123,7 +122,7 @@ function bridgeKiroUsage(name: string, config: UpstreamProviderConfig): UsagePro
 }
 
 // Upstream Pi hooks refreshModels and oauth.fetchUsage live under different OMP provider hooks.
-function adaptExtensionApi(pi: ExtensionAPI): ExtensionAPI {
+export function adaptExtensionApi(pi: ExtensionAPI): ExtensionAPI {
 	return new Proxy(pi, {
 		get(target, property, receiver) {
 			if (property !== "registerProvider") return Reflect.get(target, property, receiver);
@@ -156,8 +155,10 @@ function adaptExtensionApi(pi: ExtensionAPI): ExtensionAPI {
 	});
 }
 
-export default function numenKiro(pi: ExtensionAPI): void {
-	const providerFactory: unknown = registerKiroProvider;
+export default async function numenKiro(pi: ExtensionAPI): Promise<void> {
+	// Kiro needs upstream Pi diagnostics; OMP's legacy import rewriting drops that API.
+	const providerUrl = import.meta.resolve("pi-provider-kiro");
+	const { default: providerFactory }: { default: unknown } = await import(providerUrl);
 	if (typeof providerFactory !== "function") throw new Error("pi-provider-kiro did not export an extension factory");
 	providerFactory(adaptExtensionApi(pi));
 }
