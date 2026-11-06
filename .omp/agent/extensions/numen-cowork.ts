@@ -5,7 +5,7 @@ import { isAbsolute, relative } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 
 interface Task { generation: string; owner: string; workspace: string; phase: string; reason?: string; users: Record<string,{released:boolean}>; }
-type Board = { version?: number; enabled?: boolean; legacy_checkpoint_required?: boolean; tasks: Record<string, Task>; completed: Record<string, Task> };
+type Board = { version?: number; enabled?: boolean; legacy_checkpoint_required?: boolean; tasks: Record<string, Task>; completed: Record<string, Task>; retired?: Record<string, unknown> };
 const KEY = "numen-cowork";
 type Binding = { task: string; generation: string; complete: boolean };
 const inside = (root: string, path: string) => { const r = relative(root, path); return !r || (!r.startsWith("..") && !isAbsolute(r)); };
@@ -34,14 +34,14 @@ export default function cowork(pi: ExtensionAPI) {
    await remember(ctx, {task:binding.task,generation:won?.owner === session ? won.generation : "not-claimed",complete:won?.owner !== session});
    binding = active;
   }
-  if (binding && !binding.complete && !Object.entries(board.tasks).some(([id,t]) => id === binding.task && t.generation === binding.generation) && !board.completed[`${binding.task}@${binding.generation}`]) throw new Error("bound task journal is missing or generation changed; recover before completion");
+  if (binding && !binding.complete && !Object.entries(board.tasks).some(([id,t]) => id === binding.task && t.generation === binding.generation) && !board.completed[`${binding.task}@${binding.generation}`] && !board.retired?.[`${binding.task}@${binding.generation}`]) throw new Error("bound task journal is missing or generation changed; recover before completion");
   return tasks;
  };
  pi.registerTool({
   name: "cowork", label: "Cowork",
-  description: "List taken outcomes and claim one existing JJ task workspace. Keep this OMP controller in a retained checkout; pass workspace cwd explicitly to ordinary edit/check tools. Prepare rebases directly there; land needs exact checked/reviewed tip and observed main. Release only after task users stop accessing it; finish retains the workspace and clears its advertisement. No security boundary or session-termination veto.",
+  description: "List taken outcomes and claim one existing JJ task workspace on the repository's filesystem. Keep this OMP controller in a retained checkout; pass workspace cwd explicitly to ordinary edit/check tools. Prepare rebases directly there; land needs exact checked/reviewed tip and observed main. Release only after task users stop accessing it; finish retains the workspace and clears its advertisement. Retire drops an unlanded claim and leaves its workspace and commits in place. No security boundary or session-termination veto.",
   parameters: z.object({
-   op: z.enum(["status", "checkpoint", "claim", "join", "resume", "prepare", "land", "release", "finish"]),
+   op: z.enum(["status", "checkpoint", "claim", "join", "resume", "prepare", "land", "release", "finish", "retire"]),
    task: z.string().optional(), outcome: z.string().optional(), workspace: z.string().optional(),
    base: z.string().optional(), tip: z.string().optional(),
   }),
@@ -81,7 +81,7 @@ export default function cowork(pi: ExtensionAPI) {
    }
    if (args.op === "claim") await remember(ctx, {task:args.task,generation:"pending",complete:false});
    let result;
-   try { result = await invoke(ctx, command, args.op === "finish" || args.op === "release" ? ctx.cwd : workspace); }
+   try { result = await invoke(ctx, command, ["finish", "release", "retire"].includes(args.op) ? ctx.cwd : workspace); }
    catch (error) {
     if (args.op === "claim") {
      try {
@@ -95,8 +95,8 @@ export default function cowork(pi: ExtensionAPI) {
     throw error;
    }
    if (args.op === "claim") await remember(ctx, { task: args.task, generation: result.tasks[args.task].generation, complete: false });
-   else if (args.op === "finish") {
-    if (!result.completed.includes(taskRef)) throw new Error("cleanup did not confirm completion and board clearing");
+   else if (args.op === "finish" || args.op === "retire") {
+    if (!(args.op === "finish" ? result.completed : result.retired).includes(taskRef)) throw new Error(`${args.op} did not confirm board clearing`);
     await remember(ctx, { task: args.task, generation: record.generation, complete: true });
    } else if (record) await remember(ctx, { task: args.task, generation: record.generation, complete: args.op === "release" && record.owner !== who });
    return { content: [{ type: "text", text: JSON.stringify(result) }] };

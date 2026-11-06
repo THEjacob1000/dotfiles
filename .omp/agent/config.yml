@@ -13,7 +13,7 @@ composer:
 theme:
   dark: titanium
   light: light
-setupVersion: 2
+setupVersion: 3
 enabledProviders:
   - codex
 statusLine:
@@ -87,10 +87,12 @@ browser:
   relay: true
 compaction:
   modelThresholds:
-    anthropic/claude-opus-5-5: 550000
-    kiro/claude-opus-5-5: 550000
+    anthropic/claude-opus-5-5: 450000
+    kiro/claude-opus-5-5: 450000
     anthropic/claude-haiku-5-5: 100000
   thresholdTokens: 100000
   modelThresholdsEnabled: true
 advisor:
   enabled: true
+update:
+  auto: false

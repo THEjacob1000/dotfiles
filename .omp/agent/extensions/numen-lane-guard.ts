@@ -3,7 +3,7 @@ import { existsSync, lstatSync, realpathSync } from "node:fs";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import type { ExtensionAPI, ToolCallEventResult } from "@oh-my-pi/pi-coding-agent";
 import { resolveToCwd } from "@oh-my-pi/pi-coding-agent/tools/path-utils";
-import { unwrapHashlineHeaderPath } from "@oh-my-pi/pi-coding-agent/tools/plan-mode-guard";
+import { unwrapHashlineHeaderPath } from "@oh-my-pi/pi-coding-agent/tools/hashline-header-path";
 import { editInspect } from "@oh-my-pi/pi-natives";
 
 function canonical(path: string): string {

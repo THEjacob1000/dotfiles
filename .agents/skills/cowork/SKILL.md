@@ -12,7 +12,8 @@ existing task workspace explicitly as cwd to implementation, checks and review.
 This skill starts no other session, changes no routing and grants no extra authority.
 
 List taken outcomes with `cowork status`. Choose an unclaimed outcome and atomically
-claim it with a distinct task id, outcome and existing absolute task-workspace path.
+claim it with a distinct task id, outcome and existing absolute task-workspace path
+on the same filesystem as the common JJ repository, so cleanup can quarantine it.
 If another worker wins the claim, list again and choose another outcome. Advertise
 intent only; there are no path reservations, integration owners or submission queues.
 The shared board lives in the common JJ repository, outside disposable workspaces.
@@ -38,6 +39,12 @@ unknown content. It retires only recorded redundant lineage after protecting mai
 named refs, external descendants and other workspaces. Clear the task advertisement
 only after cleanup succeeds. A failure remains unfinished with an exact reason;
 retry `finish` after resolving that blocker. Preserve unique work and `assets/voice/`.
+
+To abandon an unlanded claim, the claiming session uses `retire` once other known
+users have exited or used `release`, which they may do before landing. It clears the
+advertisement and records the workspace head and unique commits on the board; the
+workspace, its registration and its commits stay untouched, so the work can be
+inspected, reclaimed under a new task or forgotten by hand.
 
 This is cooperative ownership, not authentication or protection against arbitrary
 same-UID writers. Every cooperating workspace user must register; known active
