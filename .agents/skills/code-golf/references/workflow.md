@@ -18,7 +18,7 @@ For an audit, stop here after evaluating candidates and their likely blast radiu
 
 ## 3. Plan execution by dependencies
 
-Draw edges for producers before consumers: shared types, exported APIs and schemas before dependent libraries, adapters and application wiring. Keep a coupled contract change in one coherent task. Concurrent workers choose distinct outcomes from the task board and use one workspace each; there are no file reservations or designated integration owners. Each worker checks and reviews its settled result, rebases onto current local main, resolves textual and semantic conflicts, revalidates and attempts a conditional main update. A loser repeats that loop. Finish caller, test and documentation cutovers, then clean the workspace and clear the task board before reporting completion. Small focused changes need no extra orchestration.
+Draw edges for producers before consumers: shared types, exported APIs and schemas before dependent libraries, adapters and application wiring. Keep a coupled contract change in one coherent task. For concurrent task workspaces, use `cowork` as the authority for outcome selection, revalidation, local-main publication and cleanup. Finish caller, test and documentation cutovers before completing that workflow; do not duplicate its mechanics here. Small focused changes need no extra orchestration.
 
 ## 4. Reduce and prove locally
 

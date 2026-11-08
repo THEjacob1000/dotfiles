@@ -24,6 +24,7 @@ Resolve links relative to this skill's installed directory, not the working dire
 | --- | --- |
 | Supplementary sources, formatting, design patterns, known `C-*` rules | [Upstream sources](references/topics/upstream.md) |
 | Naming, standard conventions, static checks, logging | [Universal](references/topics/universal.md) |
+| Ownership, traits/types, sync/async, scoped lifetimes and runtime choice | [Design and concurrency](references/design-and-concurrency.md) |
 | Public APIs, builders, generics, service ownership | [API design](references/topics/libs-ux.md) |
 | Checked types, validation, test boundaries, global state | [Resilience](references/topics/libs-resilience.md) |
 | Trait bounds, I/O abstractions, dependency types | [Interoperability](references/topics/libs-interop.md) |

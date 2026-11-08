@@ -10,6 +10,8 @@ Rules labelled Chrome, Android, Fuchsia or google3 apply only in those environme
 
 ## Find the applicable sections
 
+For ownership, fields/accessors, traits, modules/crates or concurrency, also read local [design and concurrency](../design-and-concurrency.md). It supplies the local policy where a supplementary default would add unnecessary abstraction or scheduling.
+
 | Decision | Google sections |
 | --- | --- |
 | Module and file structure | [Primary item names](../google-sections/userdefined-item.md#userdefined-item), [non-leaf modules](../google-sections/non-leaf-modules.md#non-leaf-modules) |

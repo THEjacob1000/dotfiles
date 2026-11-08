@@ -1,4 +1,5 @@
 [
+  "references/design-and-concurrency.md",
   "references/google-sections/accept-iterators.md",
   "references/google-sections/accepting-into.md",
   "references/google-sections/api-design-context.md",

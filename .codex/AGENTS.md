@@ -30,17 +30,7 @@ repo's own `docker compose`, testcontainers or a hand-rolled container.
   when asked, since a pull replaces the local database outright.
 - If Docker isn't running or `loke deps` fails, report it; don't fall back to
   another way of launching the services, except as below.
-- Exception, loke-rs: it pins native PostgreSQL 18.6, Redis and MinIO for its
-  tests (`mise run setup-test-backends`, binaries under
-  `~/.cache/loke/test-backends/`). Use those, not `loke deps` or Docker; Docker
-  being down is not a blocker there. Tests already own them via
-  `makers test-integration`. A smoke run needing a live PostgreSQL starts a
-  throwaway cluster and removes it afterwards:
-  `B=~/.cache/loke/test-backends/postgres-18.6/bin; D=$(mktemp -d)`, then
-  `$B/initdb -D $D/data -U loke --auth=trust`,
-  `$B/pg_ctl -D $D/data -l $D/log -w -o "-k $D -p <free port> -c listen_addresses=127.0.0.1" start`,
-  run the smoke against `127.0.0.1:<port>`, then `$B/pg_ctl -D $D/data -w stop`
-  and `rm -rf $D`. Never leave it running or reuse another agent's cluster.
+- Exception, loke-rs: follow that checkout's `AGENTS.md`, test skill and task runner for owned test backends, isolation and cleanup. Its native/Docker choices and pinned services belong there, not in global doctrine. Do not substitute `loke deps`, a copied version pin or a manual startup recipe for its supported fixture lifecycle.
 
 ## Code navigation: ripwire for graphs, literal search otherwise
 `ripwire` (CLI on PATH, through Bash) maps a repo's call graph offline: what
@@ -94,7 +84,7 @@ turn: minimize payload. Open files only after the map names them.
   approval does not carry over.
 - Applies to every agent and loop (executor, orchestrator, autopilot, ralph,
   ultrawork, team, child agents) and overrides any "verify before claiming
-  completion" protocol. Stopping at a local commit IS completion.
+  completion" protocol. Stop before remote publication; still finish the requested local workflow, including local-main landing and cleanup when using `cowork`.
 - If a workflow seems to require a push to verify, stop and ask.
 
 ## Code quality
@@ -116,10 +106,7 @@ turn: minimize payload. Open files only after the map names them.
   specifications. The rest of the refactor is a separate ask.
 - Immutability, composition over inheritance, ES modules, named exports, no
   dead/commented-out code.
-- Comments: the default is none. Code should be self-documenting. Write one only
-  when the *why* is non-obvious, and keep it to a single line. Never restate what
-  the code does, never narrate the diff ("now uses X"), never a block comment
-  above a function. A comment a dev would skip should not have been written.
+- Comments follow `write-as-jacob`: keep non-obvious contracts, reasons, units and constraints; remove restatement and diff narration. Required API documentation and safety reasoning follow the language and repository conventions, not a universal one-line limit.
 ### Less code is the best code
 
 `code-golf` is always on for implementation, fixes, refactoring, review and tests. Top-level sessions load it before the first coding task; reread only after a change. Children use brief excerpts, loading missing rules (Delegation below). Load references only for a concrete decision.
@@ -199,7 +186,7 @@ brief excerpts satisfy this load). It is the voice spec; this file does not rest
 ## Delegation
 Delegate independent units concurrently for efficient completion, not to keep agents busy. Correctness first; then minimise elapsed time, duplicate work and coordination.
 
-Before substantial dispatch, map dependencies, interfaces and exclusive file ownership. Launch ready units together; sequence only true dependencies or shared mutations. Start unblocked units as results arrive. Keep tiny work inline when cheaper, and bound resource contention.
+Before substantial dispatch, map dependencies, interfaces and concrete task outcomes. Use `cowork` for concurrent workers in separate task workspaces: its board advertises outcomes, not file reservations or an integration owner. Coordinate overlapping edits when children share a working copy; do not impose that restriction on isolated workspaces. Launch ready units together; sequence true dependencies or shared mutations, and bound resource contention.
 
 Size delegated tasks under ~45 minutes; split long lanes into fix + scoped gate, then final gate. Children commit/fold and describe after each green scoped step. If incomplete, leave a continuation note in the lane; the parent immediately relaunches with the same brief plus that note instead of re-deriving context.
 
@@ -235,9 +222,8 @@ Finish the goal. Don't stop at a natural-looking pause to check in, don't call a
 partial result done, and don't quietly drop a step you couldn't do.
 
 But bail the moment the clean solution isn't available. If the task needs access,
-a decision, or a change you're not allowed to make, stop there and name the exact
-blocker: what you tried, what it needs, what Jacob has to decide. Do not spend
-tokens building the hacky version in the meantime. A workaround that survives
+a decision, or a change you're not allowed to make, stop that action and name the exact
+blocker: what you tried, what it needs, what Jacob has to decide. Continue independent safe work inside the requested scope; do not build a workaround that evades the blocked action. A workaround that survives
 review is the fix and belongs in the work; one you'd have to apologise for while
 presenting it is the blocker, so report it instead of writing it. Blocked early
 and specific beats finished and unusable.

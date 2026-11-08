@@ -4,6 +4,8 @@ Read the relevant [Google sections](google.md) first. The rules below supplement
 
 Community reference: [naming](../rust-api-guidelines/src/naming.md), [debuggability](../rust-api-guidelines/src/debuggability.md). Read only the relevant sections and compatible Microsoft additions below.
 
+For error-event ownership, severity and redaction, read [typed errors](../typed-errors.md#diagnostics-are-an-output-boundary).
+
 For formatting and idioms, select a chapter through the [upstream source map](upstream.md).
 
 - [M-DOCUMENTED-MAGIC: Magic values are documented](../microsoft/src/guidelines/universal/M-DOCUMENTED-MAGIC.md)
@@ -13,7 +15,7 @@ For formatting and idioms, select a chapter through the [upstream source map](up
 - [M-PUBLIC-DISPLAY: Public types meant to be read are Display](../microsoft/src/guidelines/universal/M-PUBLIC-DISPLAY.md)
 - [M-REGULAR-FN: Prefer regular over associated functions](../microsoft/src/guidelines/universal/M-REGULAR-FN.md)
 - [M-SHORT-NAMES: Names of items are short](../microsoft/src/guidelines/universal/M-SHORT-NAMES.md)
-- [M-SMALLER-CRATES: If in doubt, split the crate](../microsoft/src/guidelines/universal/M-SMALLER-CRATES.md)
+- [M-SMALLER-CRATES: If in doubt, split the crate](../microsoft/src/guidelines/universal/M-SMALLER-CRATES.md), qualified by local [ownership and boundary costs](../design-and-concurrency.md#model-the-operation-not-the-plumbing), not a split-by-default rule
 - [M-STATIC-VERIFICATION: Use static verification](../microsoft/src/guidelines/universal/M-STATIC-VERIFICATION.md)
 - [M-UPSTREAM-GUIDELINES: Follow the upstream guidelines](../microsoft/src/guidelines/universal/M-UPSTREAM-GUIDELINES.md)
 - [M-WEASEL-WORDS: Names are free of weasel words](../microsoft/src/guidelines/universal/M-WEASEL-WORDS.md)

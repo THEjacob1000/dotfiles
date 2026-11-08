@@ -19,7 +19,7 @@ An empty Python analyzer report accompanied by `No module named` (for example, `
 
 Read the score channels separately: overall penalizes unresolved findings (`open`, `deferred`, and `triaged_out`), objective covers mechanical checks only, and strict additionally penalizes `wontfix` and `auto_resolved`. Verified strict uses the mechanical pool only and penalizes unresolved findings plus `wontfix`, `fixed`, and `false_positive`, so its gap from strict is not solely a verification gap. Only findings still open can become `auto_resolved` when they disappear in a scan; operator-closed findings retain their status and verified-strict penalty after a confirming scan. Zero wontfix findings therefore does not make overall and strict equal.
 
-Follow queued workflow and triage work before coding. For each accepted finding or cluster, apply the entrypoint's choose/change and proof rules. Fixers edit only their owned files; one verifier checks the stable integrated stage. After the fix and its verification, resolve the exact finding ID or inspected pattern:
+Follow queued workflow and triage work before coding. For each accepted finding or cluster, apply the entrypoint's choose/change and proof rules. Fixers stay within their task outcome and affected contracts, using the active repository/cowork workspace mode; one verifier checks the stable integrated stage. After the fix and its verification, resolve the exact finding ID or inspected pattern:
 
 ```sh
 numen refine resolve ID --status fixed --note 'Concrete change and observed verification' --attest 'I have actually fixed and verified this issue; I am not gaming the score.'

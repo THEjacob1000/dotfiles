@@ -33,6 +33,10 @@ The ranking is by likely maintenance payoff, not by certainty. A smaller candida
 
 ## Remove needless ownership and indirection
 
+### Give the workflow one real owner
+
+Trace a real caller through the operation before extracting helpers. Put policy beside the state or resource that can enforce it, and let the consumer ask for the domain operation instead of assembling it through a chain of pass-through layers. Share parsing, decoding or fixtures when the contracts coincide; keep admission, locking, transaction and authorization decisions explicit. Replace mode flags or generic parameters that expose unsupported combinations with named supported operations when that makes the contract smaller. Preserve lock strength, acquisition order and transaction scope even if the explicit operations add lines. A file split, renamed wrapper or new facade that leaves the same decisions distributed among the same owners has not removed that cost.
+
 ### One-use frameworks, wrappers, factories, and strategies
 
 **Apply:** An abstraction has one concrete implementation and only forwards, selects a constant, or translates names without enforcing an invariant. **Payoff:** Fewer concepts and jumps to follow. **Keep when:** The seam enforces authorization or validation, controls lifetime/transactions, separates trust zones, isolates a platform boundary, enables a supported replacement, or is a deliberately stable public contract. One implementation is not by itself evidence of waste. **Prove:** Compare the wrapper's pre/postconditions, side effects, lifecycle, call sites, and supported swappability against the direct path; migrate all callers and delete the unused interface and wiring only if those obligations survive.

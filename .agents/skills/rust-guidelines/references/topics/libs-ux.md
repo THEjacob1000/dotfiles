@@ -2,9 +2,11 @@
 
 Read the relevant [Google sections](google.md) first. The rules below supplement them; local policy and Google win conflicts. Paths are relative to this index.
 
+For meaningful types/traits, workflow ownership and justified boxing or type erasure, read local [design and concurrency](../design-and-concurrency.md). Module balance is about coherent responsibilities, not a line limit or a requirement to add forwarding layers.
+
 Community reference: [predictability](../rust-api-guidelines/src/predictability.md), [flexibility](../rust-api-guidelines/src/flexibility.md), [future proofing](../rust-api-guidelines/src/future-proofing.md), [interoperability](../rust-api-guidelines/src/interoperability.md). Read only the relevant sections and compatible Microsoft additions below.
 
-- [M-ASYNC-FN: Functions are `async` over returning a Future](../microsoft/src/guidelines/libs/ux/M-ASYNC-FN.md)
+- [M-ASYNC-FN: Functions are `async` over returning a Future](../microsoft/src/guidelines/libs/ux/M-ASYNC-FN.md), for already-async work; preserve required `impl Future + Send` contracts
 - [M-AVOID-WRAPPERS: Avoid smart pointers and wrappers in APIs](../microsoft/src/guidelines/libs/ux/M-AVOID-WRAPPERS.md)
 - [M-BALANCED-MODULES: Modules are balanced in size and scope](../microsoft/src/guidelines/libs/ux/M-BALANCED-MODULES.md)
 - [M-COLLECTION-TRAITS: Collections implement the appropriate iter traits](../microsoft/src/guidelines/libs/ux/M-COLLECTION-TRAITS.md)
@@ -16,5 +18,5 @@ Community reference: [predictability](../rust-api-guidelines/src/predictability.
 - [M-INIT-CASCADED: Complex type initialization hierarchies are cascaded](../microsoft/src/guidelines/libs/ux/M-INIT-CASCADED.md)
 - [M-NO-PRELUDE: Don't define preludes](../microsoft/src/guidelines/libs/ux/M-NO-PRELUDE.md)
 - [M-PARAMETER-CONSISTENCY: Parameter ordering is consistent](../microsoft/src/guidelines/libs/ux/M-PARAMETER-CONSISTENCY.md)
-- [M-SERVICES-CLONE: Services are Clone](../microsoft/src/guidelines/libs/ux/M-SERVICES-CLONE.md)
+- [M-SERVICES-CLONE: Services are Clone](../microsoft/src/guidelines/libs/ux/M-SERVICES-CLONE.md), for shared handles, not sole lifecycle drivers or consuming capabilities
 - [M-SIMPLE-ABSTRACTIONS: Abstractions don't visibly nest](../microsoft/src/guidelines/libs/ux/M-SIMPLE-ABSTRACTIONS.md)

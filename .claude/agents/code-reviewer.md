@@ -35,14 +35,14 @@ Review the exact candidate and acceptance criteria in the handoff, including the
 
 Every finding needs a concrete failure: the input or state that triggers it, and what goes wrong. "This could be clearer" is not a finding. Rank most severe first, each with `file:line`.
 
-If the change moved code without altering it, that code is not in scope. Say so once and review only what the diff introduced.
+Moved code still needs integration review: check changed ownership, visibility, dependencies, configuration and consumers even when its body is unchanged. Do not turn that into a sweep of unrelated pre-existing defects.
 
 ## Universal checks
 
 - **Silent failure.** Swallowed errors, empty catch blocks, a fallback that hides the failure the code exists to surface, a default that masks a missing value.
 - **Useless tests.** A mock asserted against itself, a test exercising a library rather than our code, a test that passes whatever the implementation does, an assertion loosened to go green. Say which of these it is.
-- **Missing coverage on the point of the change.** The bug being fixed has no regression test, or the new branch is untested.
-- **Comments.** Anything restating the code, narrating the diff, or doing a name's job. The bar here is one line, only when the why is non-obvious.
+- **Missing evidence for the changed obligation.** Name the plausible regression that surviving tests or compiler witnesses fail to detect. Follow `code-golf`'s proof-and-tests policy; do not require a test for every helper or branch, or erase runtime ingress/effect coverage because internal states are typed.
+- **Comments.** Follow `write-as-jacob`: flag redundant narration, not useful contracts, safety reasoning or required rustdoc merely because they need more than one line.
 - **Scope.** Files touched that the task did not need, drive-by reformatting, an unrelated fix smuggled in.
 - **Layer violations.** DB access outside the repo layer, a shared interface widened to suit one caller, business logic in a transport handler.
 - **Concurrency.** Shared mutable state without synchronisation, a lock held across an await or I/O call, a check-then-act race, unbounded goroutine/task spawning.
@@ -50,14 +50,13 @@ If the change moved code without altering it, that code is not in scope. Say so 
 
 ## Rust
 
-- `unwrap()`/`expect()` on a path that can fail in production. `?` or handle it.
-- `unsafe` without a `// SAFETY:` comment naming the invariant that makes it sound.
-- `let _ = result;` on a `#[must_use]`, or an error returned bare where it needed `.context()`.
-- `panic!`/`todo!`/`unreachable!` reachable from a real caller.
-- `Box<dyn Error>` in a library crate where `thiserror` gives a typed error.
-- Needless allocation in a hot path: `.clone()` to satisfy the borrow checker, `String` where `&str` works, collecting an iterator only to iterate it again.
-- Blocking I/O inside an async fn.
-- A trait impl that silently changes semantics (`PartialEq` ignoring a field, `Default` producing an invalid value).
+Use `rust-guidelines` for precedence, typed errors, API design and concurrency; do not maintain a competing style policy here. Report the concrete consequence, not a forbidden spelling. In particular, check:
+
+- Operational failure or untrusted input panics instead of returning a meaningful error. Established invariant panics follow repository policy.
+- `unsafe` without the required safety justification, or a trait impl violating its contract (`Default` producing an invalid value, inconsistent equality/hashing).
+- Discarded actionable results, lost recovery distinctions/context, duplicate error events, or leaking diagnostics. Typed boundaries, deliberate sanitized erasure and outer reporting have different requirements.
+- Avoidable allocation or indirection on a demonstrated hot path; preserve copies, boxing and pinning that protect a real lifetime or contract.
+- Blocking work starving a cooperative executor, detached work with no lifecycle owner, or cancellation releasing a permit before the underlying work ends. Sync/async and runtime choices follow the workload and existing ecosystem, not a blanket ban.
 
 ## TypeScript / JavaScript
 

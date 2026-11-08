@@ -57,6 +57,8 @@ pub enum CommandError {
 
 Preserving a source is the default, not permission to expose secrets. Review `Display`, `Debug` and the entire `Error::source()` chain. A database driver or config parser may retain credentials, row values or input text. At a redaction boundary, retain the underlying error privately for classification where needed, provide safe diagnostics, and omit it from the public source chain. `#[from]`, `#[source]`, a field named `source`, transparent forwarding and derived `Debug` can each expose it. Use an explicit conversion and custom `Debug` when required; test all diagnostic surfaces for the sensitive value.
 
+Emit a failure at the boundary that owns reporting or recovery rather than logging the same propagated error at every layer. Use structured operation/outcome fields and bounded, safe context. Expected absence, rejection and retry state are not automatically warnings; retain diagnostics for actionable failures and do not silently discard an error to reduce noise. Verify event count/severity as well as redaction when changing observability. A sanitized erased cause can be justified at a dependency boundary, but callers that need recovery distinctions must retain a typed outcome.
+
 Test meaningful variants and context at failure boundaries, conversion/source preservation where promised, and recovery distinctions. Do not make a text snapshot the only evidence of error semantics.
 
 ## Local examples
