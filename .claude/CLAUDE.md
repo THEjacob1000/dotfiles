@@ -32,6 +32,21 @@ repo's own `docker compose`, testcontainers or a hand-rolled container.
   another way of launching the services, except as below.
 - Exception, loke-rs: follow that checkout's `AGENTS.md`, test skill and task runner for owned test backends, isolation and cleanup. Its native/Docker choices and pinned services belong there, not in global doctrine. Do not substitute `loke deps`, a copied version pin or a manual startup recipe for its supported fixture lifecycle.
 
+## AWS credentials: `mac-aws`
+AWS SSO logins live on Jacob's MacBook. `mac-aws [sso-session...]` (on PATH,
+works from Bash) copies those IAM Identity Center sessions over Tailscale SSH into
+`~/.aws/sso/cache`; the local CLI and SDKs then refresh tokens and mint role
+credentials themselves until the SSO session ends.
+- On `Token for <session> does not exist`, an expired-token error or a refresh
+  failure, run `mac-aws` (default `LokeTools`; e.g. `mac-aws LokeAddonsAU`) and
+  retry. Never run `aws sso login` here: it needs a browser.
+- Select accounts with `--profile`/`AWS_PROFILE` from `~/.aws/config` (`default`
+  is LokeTools, 032281018513). Don't export `AWS_ACCESS_KEY_ID` and friends: they
+  override the profile and expire within the hour.
+- If `mac-aws` reports no refreshable session, ask Jacob to run
+  `aws sso login --sso-session <session>` on the Mac. Credentials grant reads, not
+  authority: AWS mutations still need his explicit approval.
+
 ## Code navigation: ripwire for graphs, literal search otherwise
 `ripwire` (CLI on PATH, through Bash) maps a repo's call graph offline: what
 matters, who calls X, what breaks, which tests cover it. Output is re-read every

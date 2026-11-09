@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Copy AWS IAM Identity Center sessions from the MacBook (over Tailscale SSH) into
+# ~/.aws/sso/cache. The cached session carries its refresh token, so the local AWS CLI
+# and SDKs mint role credentials on demand until the SSO session itself ends, instead
+# of holding exported role credentials that expire within the hour.
+#
+# Usage: mac-aws [sso-session...]   (default: LokeTools; names match ~/.aws/config)
+set -euo pipefail
+
+cache="$HOME/.aws/sso/cache"
+mkdir -p "$cache"
+chmod 700 "$cache"
+
+for session in "${@:-LokeTools}"; do
+  # The CLI keys a session's token cache by the SHA-1 of its sso-session name.
+  file="$cache/$(printf %s "$session" | sha1sum | cut -c1-40).json"
+  tmp="$(mktemp "$cache/.mac-aws.XXXXXX")"
+  if ! ssh -o BatchMode=yes jacob-mac "cat ~/.aws/sso/cache/$(basename "$file")" >"$tmp" || ! grep -q '"refreshToken"' "$tmp"; then
+    rm -f "$tmp"
+    echo "mac-aws: no refreshable $session session on jacob-mac; run 'aws sso login --sso-session $session' there" >&2
+    exit 1
+  fi
+  chmod 600 "$tmp"
+  mv "$tmp" "$file"
+  profile="$(aws configure list-profiles | while read -r p; do
+    [ "$(aws configure get sso_session --profile "$p" 2>/dev/null)" = "$session" ] && { echo "$p"; break; }
+  done)"
+  if [ -z "$profile" ]; then
+    echo "mac-aws: copied $session, but no local profile in ~/.aws/config uses it" >&2
+    continue
+  fi
+  account="$(aws sts get-caller-identity --profile "$profile" --query Account --output text)"
+  echo "$session ready: use --profile $profile (account $account)"
+done
