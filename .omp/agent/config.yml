@@ -5,6 +5,8 @@ modelRoles:
   advisor: openai-codex/gpt-6.1-sol:medium
   smol: openai-codex/gpt-6-luna:medium
   commit: openai-codex/gpt-6-luna:low
+  astra: openai-codex/gpt-6-astra:medium
+  fable: anthropic/claude-fable-5-2:medium
   default: anthropic/claude-opus-5-5
 symbolPreset: nerd
 composer:
@@ -82,6 +84,9 @@ retry:
     anthropic/claude-haiku-5-5:
       - kiro/claude-haiku-4-5
       - openai-codex/gpt-6-luna
+    anthropic/claude-fable-5-2:
+      - kiro/claude-fable-5
+      - openai-codex/gpt-6-astra
 browser:
   relay: true
 compaction:
@@ -89,6 +94,7 @@ compaction:
     anthropic/claude-opus-5-5: 450000
     kiro/claude-opus-5-5: 450000
     anthropic/claude-haiku-5-5: 100000
+    anthropic/claude-fable-5-2: 450000
   thresholdTokens: 100000
   modelThresholdsEnabled: true
 advisor:
