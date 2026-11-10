@@ -6,7 +6,7 @@ modelRoles:
   smol: openai-codex/gpt-6-luna:medium
   commit: openai-codex/gpt-6-luna:low
   astra: openai-codex/gpt-6-astra:medium
-  fable: anthropic/claude-fable-5-2:medium
+  fable: anthropic/claude-fable-5-2:xhigh
   default: anthropic/claude-opus-5-5
 symbolPreset: nerd
 composer:
