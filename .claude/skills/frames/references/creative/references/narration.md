@@ -1,9 +1,9 @@
 <!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes-creative/references/narration.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Narration & Script
 
-How to write narration scripts for video compositions. Read when the composition includes voiceover or TTS.
+How to write narration scripts for video compositions. Read when the composition includes recorded voiceover.
 
-Local narration uses native Kokoro v1.0 through `frames.tts` or `frames.narrate`: choose a supported voice id (default `af_heart`) and `speed` (default `1.0`). Read [the TTS guide](../../media-use/audio/references/tts.md) for the 54-voice catalogue and synthesis contract. Write speakable words rather than display notation, then plan scenes from the generated audio duration and word timings.
+Write speakable words rather than display notation. Use supplied narration recordings, then plan scenes from their measured duration and transcript word timings. Follow [the audio workflow](../../media-use/references/audio.md) for preparation.
 
 ## Pacing
 
@@ -23,7 +23,7 @@ Write like a person, not a brochure:
 
 ## Number Pronunciation
 
-Write what you want the voice to say. TTS reads literally.
+Write the words the narrator should say, including pronunciation of numbers and symbols.
 
 | In the product | Write in script as                |
 | -------------- | --------------------------------- |

@@ -71,7 +71,7 @@ fn receipt(job: &Job) -> Option<&str> {
 }
 ```
 
-If completion without a receipt is real, add a distinct variant or keep the original model. Don't conflate a missing receipt with pending. Likewise use `Option<T>` only when there really is one absence state; `Result<T, E>` when failure carries a distinction. A closed local enum yields useful exhaustive matches. A public enum may be an API compatibility commitment, `#[non_exhaustive]` asks downstream callers to handle future variants, and a protocol's unknown numeric/string tags may need an `Unknown(raw)` representation. Do not reject newer wire values or add a wildcard that silently treats them as a known case. Check serialization discriminants, snapshots, database rows, matching callers and ABI before cutover. [Rust Reference: non-exhaustive](https://doc.rust-lang.org/reference/attributes/type_system.html#the-non_exhaustive-attribute)
+If completion without a receipt is real, add a distinct variant or keep the original model. Don't conflate a missing receipt with pending. Use `Option<T>` for successful absence and `Result<T, E>` for failure even when its cause is obvious; use `Result<Option<T>, E>` when both are possible. A closed local enum yields useful exhaustive matches. A public enum may be an API compatibility commitment, `#[non_exhaustive]` asks downstream callers to handle future variants, and a protocol's unknown numeric/string tags may need an `Unknown(raw)` representation. Do not reject newer wire values or add a wildcard that silently treats them as a known case. Check serialization discriminants, snapshots, database rows, matching callers and ABI before cutover. [Rust Reference: non-exhaustive](https://doc.rust-lang.org/reference/attributes/type_system.html#the-non_exhaustive-attribute)
 
 ## Move a repeated numeric guard to one boundary
 
@@ -168,7 +168,7 @@ fn optional_limit(raw: Option<&str>) -> Result<Option<u32>, std::num::ParseIntEr
 }
 ```
 
-`None` remains distinct from an invalid present value. `Result::ok`, `unwrap_or_default`, an indiscriminate `Box<dyn Error>`, or mapping all variants to a string can merge meaningful rejection, retryable failure and unknown outcome. Preserve actionable context (including field/path), public variants, source chains, logging timing, and retryability. `?` returns early, so don't move it across cleanup or a side effect. Test the representative error boundary, not just the success path. `expect` is for an established programmer invariant, not malformed external input.
+`None` remains distinct from an invalid present value. `Result::ok`, `unwrap_or_default`, an indiscriminate `Box<dyn Error>`, or mapping all variants to a string can merge meaningful rejection, retryable failure and unknown outcome. Preserve actionable context (including field/path), public variants, source chains, logging timing, and retryability. `?` returns early, so don't move it across cleanup or a side effect. Test the representative error boundary, not just the success path. Invariant failures follow the [panic policy](skill://rust-guidelines/references/typed-errors.md#panic-policy); malformed external input returns a typed error. Do not replace a prohibited `expect` with silent defaulting.
 
 ## Borrow or move instead of manufacturing owners
 

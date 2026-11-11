@@ -82,13 +82,12 @@ Renders the project with 5 preset configurations — `30fps draft 2w`, `30fps st
 ## Asset Preprocessing
 
 ```bash
-frames.tts
 frames.transcribe
 ```
 
-These produce assets (narration audio, word-level transcripts) that get dropped into a composition. Background removal (transparent video) is not available in Numen.
+Transcription produces word-level transcripts for supplied recordings. Background removal (transparent video) is not available in Numen.
 
-For voice selection, Whisper model rules, output format choice, and the TTS → transcript → captions chain, invoke the `frames references/media-use.md` skill. This skill stays focused on the dev loop.
+For Whisper model rules, output format choice, and the recording → transcript → captions chain, invoke the `frames references/media-use.md` skill. This skill stays focused on the dev loop.
 
 ## Remaining harness usage
 

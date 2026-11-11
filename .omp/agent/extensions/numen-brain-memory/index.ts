@@ -5,7 +5,7 @@ import { isAbsolute, join } from "node:path";
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 import type { AgentMessage } from "@oh-my-pi/pi-agent-core";
 import { recall, RecallError, SPOTLIGHT_INSTRUCTION, type CommandConfig } from "./recall";
-import { capture } from "./capture";
+import { capture, CaptureError } from "./capture";
 
 interface ClientConfig {
 	version: 1;
@@ -13,6 +13,16 @@ interface ClientConfig {
 	capture: CommandConfig;
 	short_term_dir: string;
 	ttl_seconds: number;
+}
+
+export class ClientConfigError extends Error {
+	constructor(readonly category: "unreadable" | "too-large" | "invalid") { super(category); }
+}
+
+function isCommand(value: unknown): value is CommandConfig {
+	return value !== null && typeof value === "object" && !Array.isArray(value) &&
+		"command" in value && typeof value.command === "string" && value.command.length > 0 && !value.command.includes("\0") &&
+		"args" in value && Array.isArray(value.args) && value.args.every((arg: unknown) => typeof arg === "string" && arg.length < 1024);
 }
 
 const CONFIG_PATH = join(process.env.XDG_CONFIG_HOME || join(homedir(), ".config"), "numen", "brain-client.json");
@@ -24,32 +34,23 @@ const SKIP_SEED: Record<string, true> = Object.fromEntries(["about", "after", "a
 
 async function clientConfig(): Promise<ClientConfig | undefined> {
 	let raw: string;
-	try {
-		raw = await readFile(CONFIG_PATH, "utf8");
-	} catch (error) {
-		if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
-		throw new Error("client config unreadable");
+	try { raw = await readFile(CONFIG_PATH, "utf8"); }
+	catch (error) {
+		if (error !== null && typeof error === "object" && "code" in error && error.code === "ENOENT") return undefined;
+		throw new ClientConfigError("unreadable");
 	}
-	if (Buffer.byteLength(raw) > 16 * 1024) throw new Error("client config too large");
-	const value: unknown = JSON.parse(raw);
-	if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("invalid client config");
-	const config = value as Record<string, unknown>;
-	const command = config.recall;
-	if (!command || typeof command !== "object" || Array.isArray(command)) throw new Error("invalid recall command");
-	const recallConfig = command as Record<string, unknown>;
-	if (config.version !== 1 || typeof config.short_term_dir !== "string" || !isAbsolute(config.short_term_dir)
-		|| !Number.isInteger(config.ttl_seconds) || (config.ttl_seconds as number) < 1 || (config.ttl_seconds as number) > 86400
-		|| typeof recallConfig.command !== "string" || !recallConfig.command || recallConfig.command.includes("\0")
-		|| !Array.isArray(recallConfig.args) || !recallConfig.args.every(arg => typeof arg === "string" && arg.length < 1024)) {
-		throw new Error("invalid client config");
-	}
-	const captureConfig: unknown = config.capture ?? { command: join(homedir(), ".local", "bin", "numen-braincollector"), args: ["enqueue"] };
-	if (!captureConfig || typeof captureConfig !== "object" || Array.isArray(captureConfig)) throw new Error("invalid capture command");
-	const captureCommand = captureConfig as Record<string, unknown>;
-	if (typeof captureCommand.command !== "string" || !captureCommand.command || captureCommand.command.includes("\0")
-		|| !Array.isArray(captureCommand.args) || !captureCommand.args.every(arg => typeof arg === "string" && arg.length < 1024)) throw new Error("invalid capture command");
-	return { version: 1, recall: { command: recallConfig.command, args: recallConfig.args as string[] },
-		capture: { command: captureCommand.command, args: captureCommand.args as string[] }, short_term_dir: config.short_term_dir, ttl_seconds: config.ttl_seconds as number };
+	if (Buffer.byteLength(raw) > 16 * 1024) throw new ClientConfigError("too-large");
+	let config: unknown;
+	try { config = JSON.parse(raw); } catch { throw new ClientConfigError("invalid"); }
+	if (!config || typeof config !== "object" || Array.isArray(config) || !("version" in config) ||
+		!("short_term_dir" in config) || !("ttl_seconds" in config) || !("recall" in config) ||
+		config.version !== 1 || typeof config.short_term_dir !== "string" || !isAbsolute(config.short_term_dir) ||
+		typeof config.ttl_seconds !== "number" || !Number.isInteger(config.ttl_seconds) || config.ttl_seconds < 1 || config.ttl_seconds > 86400 ||
+		!isCommand(config.recall)) throw new ClientConfigError("invalid");
+	const captureCommand: unknown = "capture" in config && config.capture != null ? config.capture :
+		{ command: join(homedir(), ".local", "bin", "numen-braincollector"), args: ["enqueue"] };
+	if (!isCommand(captureCommand)) throw new ClientConfigError("invalid");
+	return { version: 1, recall: config.recall, capture: captureCommand, short_term_dir: config.short_term_dir, ttl_seconds: config.ttl_seconds };
 }
 
 function text(content: string | Array<{ type: string; text?: string }>, limit: number): string {
@@ -114,10 +115,22 @@ export function recallWarning(error: unknown): string {
 			case "protocol": return "numen-brain-memory: recall protocol error (check helper compatibility and response framing)";
 		}
 	}
-	if (error instanceof SyntaxError || (error instanceof Error && ["client config unreadable", "client config too large", "invalid client config", "invalid recall command", "invalid capture command"].includes(error.message))) {
+	if (error instanceof ClientConfigError) {
 		return "numen-brain-memory: recall configuration invalid (check Numen brain client configuration)";
 	}
 	return "numen-brain-memory: recall unavailable";
+}
+
+export function captureWarning(error: unknown): string | undefined {
+	if (error instanceof CaptureError) {
+		switch (error.category) {
+			case "aborted": return undefined;
+			case "queue-full": return "numen-brain-memory: queue full";
+			case "queue-busy": return "numen-brain-memory: queue busy";
+			case "too-large": case "timeout": case "transport": case "protocol": break;
+		}
+	}
+	return "numen-brain-memory: queue unavailable";
 }
 
 export default function numenBrainMemory(pi: ExtensionAPI): void {
@@ -153,8 +166,8 @@ export default function numenBrainMemory(pi: ExtensionAPI): void {
 			if (!content || !turnId || event.signal.aborted) return;
 			await capture(config.capture, `${event.session_id}:${turnId}`, content, config.ttl_seconds, event.signal);
 		} catch (error) {
-			const cause = error instanceof Error && ["queue full", "queue busy", "capture aborted"].includes(error.message) ? error.message : "queue unavailable";
-			if (cause !== "capture aborted") console.warn(`numen-brain-memory: ${cause}`);
+			const warning = captureWarning(error);
+			if (warning) console.warn(warning);
 		}
 	});
 }

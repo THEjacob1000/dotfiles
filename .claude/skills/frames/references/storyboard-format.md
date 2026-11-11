@@ -1,7 +1,7 @@
 <!-- Ported from HyperFrames (https://github.com/heygen-com/hyperframes/blob/e1925d4317fcd13c0e5799cd4767a3e2dd4c9238/skills/hyperframes/references/storyboard-format.md). Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0; see LICENSE in the frames skill. Modified for Numen: commands rewritten to the Numen frames.* MCP tools and remote services removed. -->
 # Storyboard format — `STORYBOARD.md` + parsed manifest
 
-Defines the storyboard's **base data format** only: the `STORYBOARD.md` file shape and the `StoryboardManifest` it parses into. How a workflow _generates_ a storyboard lives in that workflow; the optional narration/TTS file (`SCRIPT.md`) is a separate concern owned by the TTS step, not here.
+Defines the storyboard's **base data format** only: the `STORYBOARD.md` file shape and the `StoryboardManifest` it parses into. How a workflow _generates_ a storyboard lives in that workflow; the optional narration script (`SCRIPT.md`) is a separate concern owned by the recording workflow, not here.
 
 A storyboard is the **plan layer** for a video — an ordered set of **frames** (key moments) in one markdown file. Parser: `@hyperframes/core/storyboard` → `StoryboardManifest`.
 
@@ -56,7 +56,7 @@ StoryboardManifest {
 
 ## `SCRIPT.md` (out of scope here)
 
-Optional, free-form, **not parsed into the manifest** — the locked-narration file that drives TTS. Its format is defined in `references/script-format.md`, and it is absent for videos with no narration/TTS. The per-frame `voiceover` above is the storyboard's own narration guide.
+Optional, free-form, **not parsed into the manifest** — the locked narration script for supplied recordings. Its format is defined in `references/script-format.md`, and it is absent for videos with no narration. The per-frame `voiceover` above is the storyboard's own narration guide.
 
 ## Example
 

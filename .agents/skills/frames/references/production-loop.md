@@ -10,7 +10,7 @@ The shipped narrative workflows implement these stages; a freeform build follows
 | Stage | Needs | Produces | Where the capability lives |
 | --- | --- | --- | --- |
 | **Blocks & assets** | approved plan | registry blocks installed once before parallel work; user assets staged; logos, images, and grades resolved | Use `frames.add {"project": "/absolute/path/to/project", "name": "<block>"}` for each planned block. Stage supplied media in project assets and follow `/frames → references/media-use.md` guidance. |
-| **Audio** | narration text (when narrated); storyboard music mood | voice files, word timings, BGM, and SFX in `audio_meta.json`; carve the bed under voice before verification | Use `frames.tts`, `frames.transcribe`, and `frames.normalize_audio` where applicable. For BGM/SFX or mixing not covered by a Numen tool, follow `/frames → references/audio.md` references and perform the file edits manually. |
+| **Audio** | supplied recordings, music, and SFX; approved script when narrated | measured durations and word timings in authored `audio_meta.json`; carve the bed under voice before verification | Use `frames.transcribe` and `frames.normalize_audio` where applicable. Follow `/frames → references/media-use/references/audio.md` for supplied files and author metadata manually. |
 | **Frames** | design spec and plan, plus confirmed sketch cells when present | scene files in `compositions/frames/fNN-*.html`, marked animated in the storyboard | `frame.md`, `/frames → references/animation.md` blueprints/rules, genre lens, and `subagent-dispatch.md`; assemble each worker packet from the shared role and workflow delta by hand. |
 | **Duration sync** | word timings and frames | scene durations matched to real voice length; silent scenes keep estimates | Apply the timing rule by hand: real voice duration wins, and synced values are not hand-edited later. |
 | **Assembly** | frames | index composition with scenes as sub-compositions on tracks | Follow `sub-compositions.md` and `tracks-and-clips.md`; assemble the index by hand. |
@@ -23,7 +23,7 @@ The Frames stage follows the plan's citations: a scene planned on a blueprint or
 
 ## Scheduling economics (facts you can't see from inside the session)
 
-- **External generations are independent work.** Image plates, TTS, BGM, video gen: fire every generation whose prompt is already known **concurrently or in the background**, and overlap the wait with reading or building. Three image plates generated one-after-another cost ~3× the wall time of firing them together.
+- **External generations are independent work.** Image plates, BGM, video gen: fire every generation whose prompt is already known **concurrently or in the background**, and overlap the wait with reading or building. Three image plates generated one-after-another cost ~3× the wall time of firing them together.
 - **Attaching an image re-prices your whole context.** A mid-session image inspection (especially at original detail) invalidates the prompt cache — the next request re-sends your entire history at full price. Batch visual checks (one contact sheet beats N single-frame views) and schedule them at phase boundaries, not mid-build.
 
 Two attach points carry the user's voice into this loop: the plan that starts it was approved at `review-loop.md` § 1 (collaborative) or posted as a heads-up (autonomous), and nothing renders before the § 4 final look. Everything between those two is yours to schedule.

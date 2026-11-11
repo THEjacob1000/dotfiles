@@ -5,11 +5,11 @@
 
 The media OS for HyperFrames: resolve · generate · operate · remember - every media type, one skill, zero context noise.
 
-Asset search and resolution for BGM, SFX, images, icons, logos, and fonts are not available in Numen. Use assets supplied by the user. HeyGen TTS is also unavailable; local voice generation is available through `frames.tts`. Setup and provider details: `media-use/references/setup-providers.md`.
+Use supplied local BGM, SFX, images, icons, logos, fonts, and narration recordings. Setup details: `media-use/references/setup-providers.md`.
 
 ## Resolve - the one verb
 
-Remote asset search (upstream `resolve`) remains unavailable. Use supplied local assets and `frames.media_index` to persist inventory. Local voice uses `frames.tts`; exact error diffusion uses `frames.dither`; reusable cube generation/validation/ingestion uses `frames.lut`; remembered defaults and approved bundles use `frames.media_prefs` and `frames.media_recipe`.
+Use supplied local assets and `frames.media_index` to persist inventory. Exact error diffusion uses `frames.dither`; reusable cube generation/validation/ingestion uses `frames.lut`; remembered defaults and approved bundles use `frames.media_prefs` and `frames.media_recipe`.
 
 | Type    | One-line intent                                                                  |
 | ------- | -------------------------------------------------------------------------------- |
@@ -18,7 +18,7 @@ Remote asset search (upstream `resolve`) remains unavailable. Use supplied local
 | `image` | user-supplied photos and backgrounds |
 | `icon` | user-supplied icons and symbols |
 | `logo` | supplied official brand marks; never redrawn |
-| `voice` | TTS voiceover (local Kokoro voice through `frames.tts`)                           |
+| `voice` | supplied narration recording |
 | `grade` | measured correction candidate; broad polish/stylization follows Media Treatments |
 | `lut`   | local parametric generation or supplied validated `.cube` through `frames.lut` |
 
@@ -63,7 +63,7 @@ The human usually can't tell which media would lift the piece. You can. When you
 Surface an opportunity only when a concrete signal is present:
 
 | Signal detected                                          | Offer                                                                                                  |
-| On-screen text / a script with no voiceover | Offer local voiceover via `frames.tts` |
+| On-screen text / a script with no voiceover | Offer to place a supplied narration recording |
 | Emoji or a `<div>` styled as an icon | Offer to use a user-supplied icon |
 | Image that is a placeholder, tiny, or upscaled-looking | Offer to replace it with a user-supplied image |
 | Hard scene cuts / transitions with no sound | Offer to use a user-supplied SFX |
@@ -80,7 +80,7 @@ Rules that keep this a help, not nagware: **grounded, not generic** (no signal �
 | ---- | ---- |
 | User-supplied assets and their placement | `media-use/references/operations.md` |
 | Color grading, LUTs, smart grade, grade-compare | `media-use/references/grading.md` |
-| Local voiceover / TTS, captions, transcription | `media-use/references/audio.md` |
+| Supplied voiceover, captions, transcription | `media-use/references/audio.md` |
 | Source-aware creative treatments, realtime effects, overlays, reveals | `media-use/references/media-treatments.md` |
 | Remembered preferences and frozen recipes | `media-use/references/memory.md` |
 Remote host-gateway and OAuth access, HeyGen catalog/avatars/voice clones, ElevenLabs, and Gemini remain unavailable even when upstream provider environment variables are set; see `media-use/references/setup-providers.md`. Use an available host music/sound tool before proposing remote catalog search, or use supplied files.

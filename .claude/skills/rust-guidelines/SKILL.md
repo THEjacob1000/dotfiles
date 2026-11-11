@@ -6,19 +6,35 @@ generated-by: numen-sync
 
 # Rust guidelines
 
-Follow Google's Rust Style Guide closely. Precedence is user instructions and repository constraints, the local policy below, Google, then supplementary community and Microsoft guidance. Microsoft does not override Google; use its advice where compatible. Language safety requirements cannot be overridden by style preferences. Apply guidance to the requested change, not as a mandate to restructure existing code.
+Precedence: user instructions and repository constraints (including configured lints), local policy, Google, then compatible community and Microsoft guidance. Apply it to the requested change, not unrelated restructuring. The [panic policy](references/typed-errors.md#panic-policy) overrides Google's "prefer `expect`" and developer-binary exception and Microsoft's M-PANIC-ON-BUG.
 
 ## Local policy
 
-- Return `Result<T, E>` when an operation can fail, even if the cause is obvious. `Option<T>` means successful absence; use `Result<Option<T>, E>` when absence and failure are both possible. Operational failures in developer-facing CLIs also return `Result`, not panics. True invariant bugs follow the repository's panic policy.
-- Prefer exhaustive enums and directly constructible structs where the API permits them. Do not add `#[non_exhaustive]` to either by default; it needs an explicit API-evolution requirement. This overrides Google's cross-team enum and public-field struct defaults. Respect existing published contracts and third-party non-exhaustive types.
-- Use focused domain/subsystem error enums with `thiserror`, typed context and deliberate source preservation. Read [typed errors](references/topics/errors.md) whenever designing or changing an error boundary. This overrides Microsoft's public error-struct default; don't erase typed failures merely because the code is an application.
-- Make meaningful invariants compiler-enforced where practical, through checked types, private fields and consuming transitions. Constructors, deserialization, mutation, `Default` and `Clone` must preserve them. Avoid wrappers without a useful distinction. Numeric invariants may justify checked public types despite `M-STRONG-TYPES`; external facts such as permission and liveness still need runtime checks.
-- Test the enforcing boundary. For guarantees enforced by types, pair focused compile-fail coverage with a valid compiling use; test deserialization and external effects separately. Mocks and compilation do not establish production protocol or authorization behaviour.
+- Use `Result` for failure and `Option` for successful absence, including in CLIs. Read the [error index](references/topics/errors.md) when changing an error boundary.
+- Prefer exhaustive enums and constructible structs unless API evolution requires otherwise. Follow [checked invariants and API shape](references/design-and-concurrency.md#checked-invariants-and-api-shape), including its boundary tests.
+- Use focused `thiserror` enums, not Microsoft's public error-struct default. Read [typed errors](references/typed-errors.md) for source preservation, redaction and reporting.
+
+## Traps agents fall into here
+
+1. **Failure as absence.** `.ok()`, `unwrap_or*`, `let _ =` and `Path::exists` erase errors. Use `Path::try_exists`; map only expected absence and propagate the rest.
+2. **Branching on error text.** Match variants, fields or `io::ErrorKind`, never `to_string().contains(..)`.
+3. **Erased causes.** Use `map_err(|source| Error::Op { path, source })`, not `map_err(|_| ..)`. `Result<_, String>` and `Box<dyn Error>` erase recovery below the final renderer. Show a source in `#[error]` or via `source()`, not both.
+4. **JSON as a type system.** Deserialize into validated types at ingress; keep `serde_json::Value` for opaque payloads.
+5. **Bool-shaped enums.** Name real states, not variants invented to pass a lint. For independent bools, apply trap 14.
+6. **Per-step timeouts.** Carry one deadline through every relevant await, including shutdown; timeouts cannot preempt non-yielding work.
+7. **Detached tasks.** Own a `JoinSet` or retain and await handles; observe errors and panics and define shutdown.
+8. **Blocking in async.** Use async APIs or bounded blocking work; cancelling its waiter does not stop a started closure.
+9. **Unbounded reads.** Enforce a byte ceiling with limit-plus-one reads; reject overflow, check length prefixes and bound queues before allocation.
+10. **Publishing before validation.** Validate the whole candidate first; replace durable files by temp write, sync and rename as required.
+11. **Second parsers.** Reuse the owning argv, path, config or header parser; preserve wire and platform semantics.
+12. **Wildcards on owned enums.** List variants; keep fallback handling for foreign non-exhaustive types and open wire values.
+13. **Accidental `pub`.** Export supported boundaries; use narrower visibility for internal consumers.
+14. **Satisfying the lint, not the obligation.** Fix the model first, not with responsibility-free splits or ownership-hiding clones. When a lint's premise is false, use `#[expect(lint, reason = "<property that makes this site correct>")]` on the narrowest item; see [exception reasons](references/topics/universal.md). Panic-family lints (`unwrap_used`, `expect_used`, `panic`, indexing and slicing) follow the panic policy and its single production exception.
+15. **Go-parity numerics.** In crates that depend on `numen-gomath`, keep specified operand order and call it; no reassociation, `mul_add` or libm replacement outside it.
 
 ## Load only what the task needs
 
-Resolve links relative to this skill's installed directory, not the working directory. First use the [Google section index](references/topics/google.md) to read the sections relevant to the decision, including their exceptions and library/application scope. Then use the supplementary topic index below only for questions those sections leave open. Read a few relevant rules, not the whole reference tree; reuse guidance already in context. Platform-labelled Google rules apply only to that platform, not every Rust repository.
+Resolve links from this skill's installed directory. Start with the relevant [Google sections](references/topics/google.md), including their exceptions and platform scope; use supplementary indexes only for remaining questions. Load relevant rules, not the whole tree.
 
 | Task | Index |
 | --- | --- |
@@ -38,8 +54,6 @@ Resolve links relative to this skill's installed directory, not the working dire
 | Rustdoc and public examples | [Documentation](references/topics/docs.md) |
 | Agent-facing APIs and meaningful tests | [AI](references/topics/ai.md) |
 
-For a known `M-*` rule, locate its file directly under `references/microsoft/src/guidelines/`. Upstream cross-references use website anchors; resolve their `M-*` IDs to individual local files. `C-*` references resolve through the local [API checklist](references/rust-api-guidelines/src/checklist.md). Its reference definitions map each ID to a chapter and anchor; open that local chapter and find the ID. For upstream website links, use the [source map](references/topics/upstream.md) instead of fetching a baseline already vendored. Treat `.html` chapter links as `.md` when reading the source. Screenshots are not vendored; the linked upstream website supplies them if needed. These are design guidelines, not a substitute for the pinned dependency's API documentation, especially for cancellation and unsafe contracts.
+For rule-ID lookup and vendored-source maintenance, read [maintenance](references/maintenance.md).
 
-Use the repository's verification commands. In review, cite the Google section or applicable supplementary rule ID with the concrete consequence; a stylistic preference alone does not establish a correctness defect.
-
-Each vendored source directory has an `upstream.json` recording its repository, pinned revision, selection, file hashes, and license, alongside the original license files. The performance book is maintained in this repository instead and keeps only its licenses. The [source map](references/topics/upstream.md) links the manifests, including [Microsoft](references/microsoft/upstream.json). Read them only when auditing or updating the vendored source.
+Before done, name the applicable trap for each changed boundary or confirm none applies. Run assigned checks. Review findings name a governing rule, mechanism and consequence, not a preference.

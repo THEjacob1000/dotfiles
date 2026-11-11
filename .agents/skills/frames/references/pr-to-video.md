@@ -85,16 +85,13 @@ After drafting, run the review loop's plan pass - `review-loop.md` § 1: present
 
 ## Step 3.1: Audio
 
-Goal: Generate narration, word timings, music, and audio metadata from the approved script.
+Goal: Prepare supplied narration, word timings, music, and audio metadata for the approved script.
 
-Narration uses native Kokoro v1.0 with 54 voice IDs (default `af_heart`, speed `1.0`), not a provider login or voice download. `frames.narrate` normalizes each take to -16 LUFS by default (`target_lufs` overrides), transcribes it and records measured durations and word timings. Kokoro synthesis produces mono 24 kHz WAV; supplied `audio` lines keep their sample rate and channels, and need `language` for non-English recordings rather than the default voice's language. Optional `bgm` names supplied local audio; `sfx_library` names a supplied local SFX manifest and audio directory for the later pass.
-
-Start audio after Step 3 approval, alongside Step 4 when background calls are supported. Choose a Kokoro voice from the user's ask; otherwise read the remembered `voice` with `frames.media_prefs` before falling back to `af_heart`. Say which voice was used and record an explicit pick with `frames.media_prefs`. Call `frames.narrate {"project": "/absolute/path/to/project", "mode": "pr-to-video", "command": "generate", "script": "SCRIPT.md", "storyboard": "STORYBOARD.md", "out": "audio_meta.json", "voice": "<kokoro-voice-id>", "speed": 1.0}`. Transcription language defaults from the voice prefix: a/b→en, e→es, f→fr, h→hi, i→it, j→ja, p→pt, z→zh; `language` overrides it. Use only supplied BGM/SFX; hosted music lookup remains excluded. No narration means no voice generation.
-Use a remembered voice only if it is one of the 54 Kokoro IDs; otherwise use `af_heart` and say so.
+After Step 3 approval, follow [the supplied-audio workflow](media-use/references/audio.md). Transcribe recordings with the matching language, measure durations, and author `audio_meta.json` for the scene IDs. Use supplied BGM and SFX.
 
 **The canonical fully-silent marker:** `music: none` in the STORYBOARD.md top YAML block, no `SCRIPT.md`, no `sfx:` cues and no host audio. Remove stale `audio_meta.json` in that case; absent audio metadata means silent assembly. With narration or supplied host audio, `music: none` turns off only BGM.
 
-**Gate:** audio job has started, or the project is marked silent (`music: none`, no `SCRIPT.md`, and no `sfx:` cues or host audio).
+**Gate:** supplied audio and metadata are ready, or the project is marked silent (`music: none`, no `SCRIPT.md`, and no `sfx:` cues or host audio).
 
 ---
 
@@ -122,9 +119,7 @@ Do not change story, script, `transition_in`, `asset_candidates`, or the PR sour
 
 Goal: Build every storyboard frame as an HTML composition and assemble the playable video.
 
-Wait for Step 3.1 audio to finish if audio was started. Then sync durations and fetch SFX; skip both if silent.
-
-Call `frames.narrate {"project": "/absolute/path/to/project", "mode": "pr-to-video", "command": "sync-durations", "audio_meta": "audio_meta.json", "storyboard": "STORYBOARD.md"}`, then `frames.narrate {"project": "/absolute/path/to/project", "mode": "pr-to-video", "command": "fetch-sfx", "audio_meta": "audio_meta.json", "storyboard": "STORYBOARD.md"}` after SFX cues exist. Real voice durations replace estimates without an estimated tail; silent frames retain estimates. SFX merges supplied local cues without replacing voice/BGM metadata. Never change measured timing to fit an estimate.
+Match storyboard durations to measured recordings and add supplied local SFX cues to `audio_meta.json`, preserving voice/BGM metadata. Silent frames keep estimates; never alter measured timing to fit estimates. Skip audio metadata for fully silent projects.
 
 **Pre-install the registry blocks** named across `STORYBOARD.md` once, before dispatch, so parallel workers don't race on the registry:
 
@@ -204,7 +199,7 @@ The reusable, domain-agnostic shot shapes live in `animation/blueprints` (indexe
 | `[animation/blueprints-index.md](animation/blueprints-index.md)`                                                              | Step 3: role→blueprint menu. Step 4: pick the shot shape.                                                |
 | `[storyboard-format.md](storyboard-format.md)`                                                          | Step 3: write `STORYBOARD.md`.                                                                           |
 | `[script-format.md](script-format.md)`                                                                  | Step 3: write `SCRIPT.md`.                                                                               |
-| `[media-use/audio/references/tts.md](media-use/audio/references/tts.md)`                                                                              | Step 3.1: choose or understand TTS providers.                                                            |
+| `[media-use/references/audio.md](media-use/references/audio.md)` | Step 3.1: prepare supplied recordings and word timings. |
 | `[pr-to-video/references/visual-design.md](pr-to-video/references/visual-design.md)`                                                                                                | Step 4: write the frame's shot sequence (+ Layout vocabulary).                                           |
 | `[pr-to-video/references/code-vocabulary.md](pr-to-video/references/code-vocabulary.md)`                                                                                            | Step 4 + 5: pick + fill the `code-*` block for a code beat.                                              |
 | `[pr-to-video/references/motion-language.md](pr-to-video/references/motion-language.md)`                                                                                            | Step 4: the motion vocabulary + the motion doctrine.                                                     |

@@ -93,12 +93,9 @@ After drafting, run the review loop's plan pass - `review-loop.md` § 1: present
 
 ## Step 3.1: Audio
 
-Goal: Generate narration, word timings, music, and audio metadata from the approved script.
+Goal: Prepare supplied narration, word timings, music, and audio metadata for the approved script.
 
-Narration uses native Kokoro v1.0 with 54 voice IDs (default `af_heart`, speed `1.0`), not a provider login or voice download. `frames.narrate` normalizes each take to -16 LUFS by default (`target_lufs` overrides), transcribes the resulting audio to obtain word timestamps, and records measured durations. For generated script lines, it aligns the script's words to those transcript timestamps; supplied audio uses transcript words and timings directly. Kokoro synthesis produces mono 24 kHz WAV; supplied `audio` lines keep their sample rate and channels, and need `language` for non-English recordings rather than the default voice's language. Optional `bgm` names supplied local audio; `sfx_library` names a supplied local SFX manifest and audio directory for the later pass.
-
-Start audio after Step 3 approval; let it run alongside Step 4 when the host supports background calls. Choose a Kokoro voice from the user's ask; otherwise read the remembered `voice` with `frames.media_prefs` before falling back to `af_heart`. Say which voice was used and record an explicit pick with `frames.media_prefs`. Call `frames.narrate {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "command": "generate", "script": "SCRIPT.md", "storyboard": "STORYBOARD.md", "out": "audio_meta.json", "voice": "<kokoro-voice-id>", "speed": 1.0}`. Transcription language defaults from the voice prefix: a/b→en, e→es, f→fr, h→hi, i→it, j→ja, p→pt, z→zh; `language` overrides it. Use only supplied BGM/SFX; hosted catalog retrieval and HeyGen audio remain unavailable.
-Use a remembered voice only if it is one of the 54 Kokoro IDs; otherwise use `af_heart` and say so.
+After Step 3 approval, follow [the supplied-audio workflow](media-use/references/audio.md). Transcribe recordings with the matching language, measure durations, and author `audio_meta.json` for the scene IDs. Use supplied BGM and SFX.
 
 Use `music: none` in the STORYBOARD.md top YAML block to turn BGM off. The fully-silent marker additionally requires no `SCRIPT.md`, no `sfx:` cues and no host audio; together these mean no narration, BGM or SFX. With narration, `music: none` turns off only BGM.
 
@@ -106,7 +103,7 @@ Use `music: none` in the STORYBOARD.md top YAML block to turn BGM off. The fully
 
 ---
 
-If there is no narration and no `SCRIPT.md`, skip voice generation. Numen does not provide HeyGen music retrieval or SFX catalog access; do not promise those services.
+When no recordings or other audio are supplied, keep the project silent. Use supplied music and effects; Numen does not provide hosted music retrieval or SFX catalog access.
 
 
 ---
@@ -135,9 +132,7 @@ Do not change story, script, `transition_in`, or the source text. Do not write H
 
 Goal: Build every storyboard frame as an HTML composition and assemble the playable video.
 
-Wait for narration to finish, then call `frames.narrate {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "command": "sync-durations", "audio_meta": "audio_meta.json", "storyboard": "STORYBOARD.md"}`. Real voice duration wins; silent frames keep estimates. After storyboard SFX cues exist, call `frames.narrate {"project": "/absolute/path/to/project", "mode": "faceless-explainer", "command": "fetch-sfx", "audio_meta": "audio_meta.json", "storyboard": "STORYBOARD.md"}` to merge supplied local SFX while preserving voice/BGM metadata. Skip both calls for fully silent projects; never alter measured timing to fit estimates.
-
-The synchronization report returns usable numeric-frame, nonzero-duration `voices` and their summed `total_duration_s`, plus `updated` duration-row count and `missing` frame numbers without a matching row. Partial or malformed voice entries remain skippable; missing paths and transcripts are represented as empty values, and discarded malformed transcript words produce warnings. Supported music/SFX records and the pending-music flag are preserved in the summary, including default gain/timing for host-authored tracks. The sum includes voices whose storyboard rows are missing; it is narration duration, not the assembled video's total. Synchronization rewrites the storyboard, not `audio_meta.json`.
+Match storyboard durations to measured recordings and add supplied local SFX cues to `audio_meta.json`, preserving voice/BGM metadata. Silent frames keep estimates; never alter measured timing to fit estimates. Skip audio metadata for fully silent projects.
 
 **Pre-install registry blocks** named across `STORYBOARD.md` before dispatch so parallel workers do not race. For each distinct block name, call `frames.add {"name": "<block>", "project": "/absolute/path/to/project"}` once. Use `frames.catalog {"query": "<block or visual>"}` first. Index/metadata-unavailable and cancellation/deadline `warnings` mean discovery failed or is incomplete; asset-origin/license warnings concern provenance, not lookup completeness. Only an empty result without lookup-failure warnings proves no match. Report installation fetch failures rather than treating them as empty search results.
 
@@ -204,7 +199,7 @@ Do not rerun `lint`, `check`, or `snapshot` after rendering unless the user asks
 
 **Faceless deltas vs a captured-asset workflow:** no Step 1 capture (synthetic `tokens.json` + `visible-text.txt`); no `asset-descriptions.md` and no `capture/assets/`; no asset-staging in Step 4; `asset_candidates` empty by default; every visual is invented by the Step 5 workers (typography / abstract graphics / diagrams / data-viz). Supplied images live under `public/<basename>`; local fonts are provisioned in Step 2 under `assets/fonts/`.
 
-**Workflow tools:** `frames.storyboard`, `frames.build_frame`, `frames.narrate` (`generate`, `sync-durations`, `fetch-sfx`), `frames.frame_packets`, `frames.captions`, `frames.assemble` and `frames.transitions` replace upstream helpers. Pass the explicit `faceless-explainer` mode and project root; hyphenated CLI flags become snake_case fields. These local workflow tools do not enable hosted media catalogs, authentication or remote mutations.
+**Workflow tools:** `frames.storyboard`, `frames.build_frame`, `frames.frame_packets`, `frames.captions`, `frames.assemble` and `frames.transitions` replace upstream helpers. Pass the explicit `faceless-explainer` mode and project root; hyphenated CLI flags become snake_case fields. These local workflow tools do not enable hosted media catalogs, authentication or remote mutations.
 
 The reusable, domain-agnostic shot shapes live in `animation/blueprints` (indexed by `animation/blueprints-index.md`).
 
@@ -218,7 +213,7 @@ The reusable, domain-agnostic shot shapes live in `animation/blueprints` (indexe
 | `[animation/blueprints-index.md](animation/blueprints-index.md)`                                                              | Step 3: role→blueprint menu. Step 4: pick the shot shape.                                                |
 | `[storyboard-format.md](storyboard-format.md)`                                                          | Step 3: write `STORYBOARD.md`.                                                                           |
 | `[script-format.md](script-format.md)`                                                                  | Step 3: write `SCRIPT.md`.                                                                               |
-| `[media-use/audio/references/tts.md](media-use/audio/references/tts.md)`                                                                              | Step 3.1: choose or understand TTS providers and voices.                                                 |
+| `[media-use/references/audio.md](media-use/references/audio.md)` | Step 3.1: prepare supplied recordings and word timings. |
 | `[faceless-explainer/references/visual-design.md](faceless-explainer/references/visual-design.md)`                                                                                                | Step 4: write the frame's shot sequence (+ Layout vocabulary).                                           |
 | `[faceless-explainer/references/motion-language.md](faceless-explainer/references/motion-language.md)`                                                                                            | Step 4: the motion vocabulary + the motion doctrine.                                                     |
 | `[faceless-explainer/references/cut-catalog.md](faceless-explainer/references/cut-catalog.md)`                                                                                                    | Step 4-5: the cut catalog (worker builds within-frame seams).                                            |

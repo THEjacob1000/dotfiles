@@ -8,6 +8,8 @@ For error-event ownership, severity and redaction, read [typed errors](../typed-
 
 For formatting and idioms, select a chapter through the [upstream source map](upstream.md).
 
+Fix the model first; never suppress a lint merely to get green. When its premise is false at a site, put `#[expect(lint, reason = "<property that makes this site correct>")]` on the narrowest item. Apply the same standard when writing and reviewing exceptions: the lint name or "false positive" is not a reason. Remove obsolete exceptions and dead code. Panic-family lints (`unwrap_used`, `expect_used`, `panic`, indexing and slicing) follow the [panic policy](../typed-errors.md#panic-policy) and its single production exception.
+
 - [M-DOCUMENTED-MAGIC: Magic values are documented](../microsoft/src/guidelines/universal/M-DOCUMENTED-MAGIC.md)
 - [M-LINT-OVERRIDE-EXPECT: Lint overrides should use `#[expect]`](../microsoft/src/guidelines/universal/M-LINT-OVERRIDE-EXPECT.md)
 - [M-LOG-STRUCTURED: Use structured logging with message templates](../microsoft/src/guidelines/universal/M-LOG-STRUCTURED.md)

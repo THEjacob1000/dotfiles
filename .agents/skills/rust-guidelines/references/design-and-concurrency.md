@@ -2,6 +2,14 @@
 
 Use this local policy when changing Rust ownership, API shape or execution. Preserve repository architecture, public contracts, MSRV and supported targets. Read the relevant [Google sections](topics/google.md); use supplementary advice only where compatible. A cleanup should remove a concrete cost for a real caller, not recreate another language's framework in Rust.
 
+## Checked invariants and API shape
+
+Prefer exhaustive enums and directly constructible structs where the API permits them. Add `#[non_exhaustive]` only for an explicit API-evolution requirement, not Google's cross-team defaults. Respect published contracts and foreign non-exhaustive types.
+
+Make meaningful invariants compiler-enforced through checked types, private fields and consuming transitions. Constructors, deserialization, mutation, `Default` and `Clone` must preserve them. Numeric invariants can justify checked public types despite M-STRONG-TYPES; external permission and liveness still require runtime checks.
+
+Test the enforcing boundary. Pair compile-fail coverage with valid compiling use for type guarantees; test deserialization and external effects separately. Mocks and compilation do not establish production protocol or authorization behaviour.
+
 ## Model the operation, not the plumbing
 
 - Give a workflow one owner for its state, effects and lifecycle. Pass stable configuration or snapshots to consumers instead of handing every layer the mutable driver. Prefer a named operation on the resource owner to a facade that relays its low-level steps. Keep real trust, transaction, protocol and supported replacement seams even with one implementation.
@@ -34,6 +42,10 @@ Measure the relevant dimensions before claiming an improvement: representative c
 Keep child work attached to an owner that observes completion and failure. Prefer borrowing within a scope when the work cannot outlive it; don't manufacture `Arc`, locks and `'static` clones merely to satisfy an unnecessary detached spawn. Real shared or independent lifetimes still need ownership and synchronization.
 
 Name the cancellation/shutdown contract: what stops admission, what signals cancellation, what drains or is abandoned, who observes panics/errors, and when resources are released. Dropping a future or handle does not universally stop a task; APIs differ. In particular, cancelling an await or timing out `spawn_blocking` does not stop work that has started. Capacity permits and resource guards must remain owned by the underlying work until it actually finishes. Bound cooperative operations or supervise and reap child processes where their contract permits it; a timeout around the waiter alone is not a resource bound.
+
+In Tokio, use an owned `JoinSet`, retained awaited handles, or a `TaskTracker` with separate outcome collection; waiting for tracked tasks alone does not inspect their errors. Carry one `Instant` deadline through `timeout_at` calls, and check a cancellation token inside `spawn_blocking` loops.
+
+These design guidelines do not replace the pinned dependency's API documentation, especially for cancellation and unsafe contracts.
 
 For bounded background passes, test eventual progress across multiple ticks as well as the per-pass limit, including stale cursors, failed items and cancellation. Avoid restarting at the first page forever or retrying one poisoned item without a bounded recovery policy. Check the actual dependency's cancellation contract rather than assuming an executor supplies structured concurrency.
 

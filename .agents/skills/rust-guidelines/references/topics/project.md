@@ -2,6 +2,8 @@
 
 Read the relevant [Google sections](google.md) first. The rules below supplement them; local policy and Google win conflicts. Paths are relative to this index.
 
+Respect the repository's crate layout; flat-folder guidance is not a mandate to reorganize an existing layered workspace. Add a crate only for a coherent ownership, dependency, release or measured build boundary.
+
 Community reference: [necessities](../rust-api-guidelines/src/necessities.md). Read only the relevant sections and compatible Microsoft additions below.
 
 - [M-CARGO-WORKSPACE: Common settings come from the workspace Cargo.toml](../microsoft/src/guidelines/project/M-CARGO-WORKSPACE.md)

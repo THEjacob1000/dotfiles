@@ -6,6 +6,8 @@ Community reference: [dependability](../rust-api-guidelines/src/dependability.md
 
 For unsafe code, also read the [Reference UB rules](../rust-reference/src/behavior-considered-undefined.md) and [unsafety](../rust-reference/src/unsafety.md).
 
+For panic contracts, follow the local [panic policy](../typed-errors.md#panic-policy); it overrides M-PANIC-ON-BUG.
+
 - [M-PANIC-CONTINUATION: Panic continuation is last resort](../microsoft/src/guidelines/correctness/M-PANIC-CONTINUATION.md)
 - [M-PANIC-IS-STOP: Panic means 'stop the program'](../microsoft/src/guidelines/correctness/M-PANIC-IS-STOP.md)
 - [M-PANIC-MESSAGE: Custom panics have a helpful message](../microsoft/src/guidelines/correctness/M-PANIC-MESSAGE.md)

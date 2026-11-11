@@ -4,26 +4,99 @@ import { join } from "node:path";
 import { isAbsolute, relative } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 
-interface Task { generation: string; owner: string; workspace: string; phase: string; reason?: string; users: Record<string,{released:boolean}>; }
-type Board = { version?: number; enabled?: boolean; legacy_checkpoint_required?: boolean; tasks: Record<string, Task>; completed: Record<string, Task>; retired?: Record<string, unknown> };
+interface Task { generation: string; owner: string; workspace: string; phase: string; reason?: string | null; users: Record<string, {released:boolean}>; }
+interface Completion { phase: string; owner: string; tip: string; workspace: string; quarantine: string; recovery: string; device: number; inode: number; }
+interface Retirement { owner: string; workspace: string; name: string; head: string; unique: string[]; }
+type Board = { version?: 1; enabled?: false; legacy_checkpoint_required?: boolean; tasks: Record<string, Task>; completed: Record<string, Completion>; retired?: Record<string, Retirement> };
+type Mutation = { tasks: Record<string, Task>; completed: string[]; retired: string[] };
 const KEY = "numen-cowork";
 type Binding = { task: string; generation: string; complete: boolean };
 const inside = (root: string, path: string) => { const r = relative(root, path); return !r || (!r.startsWith("..") && !isAbsolute(r)); };
+
+export class CoworkProtocolError extends Error {
+ constructor(readonly category: "response" | "binding", readonly operation: string, readonly field: string, readonly file?: string) {
+  super(category === "response" ? `invalid cowork response for ${operation} at ${field}; run numen sync to align the helper and extension` :
+   `invalid cowork binding for ${operation} at ${field} in ${file ?? "the unsaved session"}; claim, join or resume the task to replace this binding`);
+  this.name = "CoworkProtocolError";
+ }
+}
+function isRecord(value: unknown): value is Record<string, unknown> { return value !== null && typeof value === "object" && !Array.isArray(value); }
+const isString = (value: unknown): value is string => typeof value === "string";
+const isNonempty = (value: unknown): value is string => isString(value) && value.length > 0;
+const isStrings = (value: unknown): value is string[] => Array.isArray(value) && value.every(isString);
+function isDictionary<T>(value: unknown, guard: (entry: unknown) => entry is T): value is Record<string, T> { return isRecord(value) && Object.values(value).every(guard); }
+function isTask(value: unknown): value is Task {
+ return isRecord(value) && isNonempty(value.generation) && isString(value.owner) && isString(value.workspace) && isAbsolute(value.workspace) &&
+  isString(value.phase) && (value.reason == null || isString(value.reason)) &&
+  isDictionary(value.users, (user): user is {released:boolean} => isRecord(user) && typeof user.released === "boolean");
+}
+function isCompletion(value: unknown): value is Completion {
+ return isRecord(value) && [value.phase, value.owner, value.tip, value.workspace, value.quarantine, value.recovery].every(isString) &&
+  typeof value.device === "number" && typeof value.inode === "number";
+}
+function isRetirement(value: unknown): value is Retirement {
+ return isRecord(value) && [value.owner, value.workspace, value.name, value.head].every(isString) && isStrings(value.unique);
+}
+function isBoard(value: unknown): value is Board {
+ return isRecord(value) && isDictionary(value.tasks, isTask) && isDictionary(value.completed, isCompletion) &&
+  (value.version === 1 ? isDictionary(value.retired, isRetirement) : !('version' in value) && value.enabled === false &&
+   typeof value.legacy_checkpoint_required === "boolean" && Object.keys(value.tasks).length === 0 && Object.keys(value.completed).length === 0);
+}
+function isMutation(value: unknown): value is Mutation { return isRecord(value) && isDictionary(value.tasks, isTask) && isStrings(value.completed) && isStrings(value.retired); }
+function bindingField(value: unknown): string | undefined {
+ if (!isRecord(value) || !isNonempty(value.task)) return "numen-cowork.task";
+ if (!isNonempty(value.generation)) return "numen-cowork.generation";
+ if (typeof value.complete !== "boolean") return "numen-cowork.complete";
+}
+function isBinding(value: unknown): value is Binding { return bindingField(value) === undefined; }
+function responseField(value: unknown, operation: string): string {
+ if (!isRecord(value)) return "$";
+ if (operation === "status" && "version" in value && value.version !== 1) return "version";
+ if (!isDictionary(value.tasks, isTask)) {
+  if (!isRecord(value.tasks)) return "tasks";
+  for (const task of Object.values(value.tasks)) {
+   if (!isRecord(task)) return "tasks[]";
+   if (!isNonempty(task.generation)) return "tasks[].generation";
+   if (!isString(task.owner)) return "tasks[].owner";
+   if (!isString(task.workspace) || !isAbsolute(task.workspace)) return "tasks[].workspace";
+   if (!isString(task.phase)) return "tasks[].phase";
+   if (task.reason != null && !isString(task.reason)) return "tasks[].reason";
+   if (!isRecord(task.users)) return "tasks[].users";
+   if (Object.values(task.users).some(user => !isRecord(user) || typeof user.released !== "boolean")) return "tasks[].users[].released";
+  }
+  return "tasks[]";
+ }
+ if (operation === "status") {
+  if (!isDictionary(value.completed, isCompletion)) return "completed[]";
+  if (value.version === 1 && !isDictionary(value.retired, isRetirement)) return "retired[]";
+  return "enabled/legacy_checkpoint_required";
+ }
+ return !isStrings(value.completed) ? "completed[]" : "retired[]";
+}
 
 /** OMP owns goals and continuation. The helper owns only cooperative task state and JJ operations. */
 export default function cowork(pi: ExtensionAPI) {
  const z = pi.zod;
  let active: Binding | undefined;
- const restored = (ctx: ExtensionContext): Binding | undefined => {
-  const entries = ctx.sessionManager.getEntries().filter(e => e.type === "custom" && e.customType === KEY);
-  return (entries.at(-1) as { data?: Binding } | undefined)?.data;
+ const restored = (ctx: ExtensionContext, operation = "status"): Binding | undefined => {
+  const entry = ctx.sessionManager.getEntries().findLast(e => e.type === "custom" && e.customType === KEY);
+  if (!entry) return undefined;
+  if (entry.type !== "custom" || !isBinding(entry.data)) throw new CoworkProtocolError("binding", operation,
+   entry.type === "custom" ? bindingField(entry.data) ?? "numen-cowork" : "numen-cowork", ctx.sessionManager.getSessionFile() ?? undefined);
+  return entry.data;
  };
  const remember = async (ctx: ExtensionContext, binding: Binding) => { active = binding; pi.appendEntry(KEY, binding); await ctx.sessionManager.ensureOnDisk(); };
- const invoke = async (ctx: ExtensionContext, args: string[], cwd = ctx.cwd) => {
+ function invoke(ctx: ExtensionContext, args: ["status"], cwd?: string): Promise<Board>;
+ function invoke(ctx: ExtensionContext, args: string[], cwd?: string): Promise<Mutation>;
+ async function invoke(ctx: ExtensionContext, args: string[], cwd = ctx.cwd): Promise<Board | Mutation> {
   const result = await pi.exec("numen", ["cowork", ...args], { cwd, timeout: args[0] === "status" ? 5000 : 120_000 });
   if (result.code !== 0) throw new Error(result.stderr || result.stdout || "task helper failed");
-  return JSON.parse(result.stdout);
- };
+  let value: unknown;
+  try { value = JSON.parse(result.stdout); } catch { throw new CoworkProtocolError("response", args[0], "$ (JSON)"); }
+  if (args[0] === "status") { if (isBoard(value)) return value; }
+  else if (isMutation(value)) return value;
+  throw new CoworkProtocolError("response", args[0], responseField(value, args[0]));
+ }
  const pending = async (ctx: ExtensionContext): Promise<[string, Task][]> => {
   const board: Board = await invoke(ctx, ["status"]);
   const session = ctx.sessionManager.getSessionId();
@@ -65,7 +138,8 @@ export default function cowork(pi: ExtensionAPI) {
     if (await repository(ctx.cwd) !== await repository(workspace)) throw new Error("controller and task workspace must share a JJ repository");
    }
    const record = tasks[args.task];
-   const binding = active ?? restored(ctx);
+   const recovering = ["claim", "join", "resume"].includes(args.op);
+   const binding = recovering ? undefined : active ?? restored(ctx, args.op);
    if (args.op !== "claim" && binding?.task === args.task && binding.generation !== "pending" && record?.generation !== binding.generation) throw new Error("stale task generation");
    const taskRef = record ? `${args.task}@${record.generation}` : args.task;
    let command: string[];
@@ -79,8 +153,14 @@ export default function cowork(pi: ExtensionAPI) {
      command = ["land", taskRef, who, args.base, args.tip]; break;
     default: command = [args.op, taskRef, who];
    }
-   if (args.op === "claim") await remember(ctx, {task:args.task,generation:"pending",complete:false});
-   let result;
+   if (args.op === "claim") {
+    const pendingBinding = {task:args.task,generation:"pending",complete:false};
+    let corrupt = false;
+    try { restored(ctx, args.op); } catch (error) { if (!(error instanceof CoworkProtocolError)) throw error; corrupt = true; }
+    if (corrupt) active = pendingBinding;
+    else await remember(ctx, pendingBinding);
+   }
+   let result: Mutation;
    try { result = await invoke(ctx, command, ["finish", "release", "retire"].includes(args.op) ? ctx.cwd : workspace); }
    catch (error) {
     if (args.op === "claim") {
@@ -94,9 +174,14 @@ export default function cowork(pi: ExtensionAPI) {
     }
     throw error;
    }
-   if (args.op === "claim") await remember(ctx, { task: args.task, generation: result.tasks[args.task].generation, complete: false });
+   if (args.op === "claim") {
+    const claimed = result.tasks[args.task];
+    if (!claimed || claimed.owner !== who) throw new CoworkProtocolError("response", args.op, "tasks[].owner");
+    await remember(ctx, { task: args.task, generation: claimed.generation, complete: false });
+   }
    else if (args.op === "finish" || args.op === "retire") {
-    if (!(args.op === "finish" ? result.completed : result.retired).includes(taskRef)) throw new Error(`${args.op} did not confirm board clearing`);
+    if (!(args.op === "finish" ? result.completed : result.retired).includes(taskRef)) throw new CoworkProtocolError("response", args.op, args.op === "finish" ? "completed[]" : "retired[]");
+    if (!record) throw new CoworkProtocolError("response", args.op, "tasks[]");
     await remember(ctx, { task: args.task, generation: record.generation, complete: true });
    } else if (record) await remember(ctx, { task: args.task, generation: record.generation, complete: args.op === "release" && record.owner !== who });
    return { content: [{ type: "text", text: JSON.stringify(result) }] };
@@ -109,11 +194,33 @@ export default function cowork(pi: ExtensionAPI) {
    const tasks = await pending(ctx);
    if (tasks.length) return { block: true, reason: `Task remains unfinished: ${tasks.map(([id, t]) => `${id}: ${t.phase}${t.reason ? ` (${t.reason})` : ""}`).join("; ")}. Land, release, finish cleanup and clear the board before completing the goal.` };
   } catch (error) {
-   if ((active ?? restored(ctx))?.complete === false) return { block: true, reason: `Cannot confirm task completion: ${String(error)}. Preserve and recover its task board.` };
+   let binding: Binding | undefined;
+   try { binding = active ?? restored(ctx, "goal complete"); }
+   catch (bindingError) { return { block: true, reason: `Cannot confirm task completion: ${String(bindingError)}` }; }
+   if (binding?.complete === false) return { block: true, reason: `Cannot confirm task completion: ${String(error)}. Preserve and recover its task board.` };
+   ctx.ui.notify(`Cowork warning: ${String(error)}`, "warning");
   }
  });
  pi.on("session_start", async (_event, ctx) => {
   active = restored(ctx);
-  try { const entry = (await pending(ctx))[0]; if(entry) active = {task:entry[0], generation:entry[1].generation, complete:false}; } catch { /* Not a JJ repository: no cowork task is inferred. */ }
+  try {
+   const entry = (await pending(ctx))[0];
+   if(entry) active = {task:entry[0], generation:entry[1].generation, complete:false};
+  } catch (error) {
+   if (error instanceof CoworkProtocolError) throw error;
+   // An unavailable helper or repository cannot infer a cowork task.
+  }
+ });
+ // Subagents share the OMP PID; session teardown, not host exit, releases their participation.
+ pi.on("session_shutdown", async (_event, ctx) => {
+  try {
+   const board = await invoke(ctx, ["status"]);
+   const who = ctx.sessionManager.getSessionId();
+   for (const [id, task] of Object.entries(board.tasks)) {
+    if (!task.users[who] || task.users[who].released || (task.owner === who && task.phase !== "landed")) continue;
+    try { await invoke(ctx, ["release", `${id}@${task.generation}`, who]); }
+    catch (error) { ctx.ui.notify(`Cowork release warning: ${String(error)}`, "warning"); }
+   }
+  } catch (error) { ctx.ui.notify(`Cowork shutdown warning: ${String(error)}`, "warning"); }
  });
 }

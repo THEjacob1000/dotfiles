@@ -5,7 +5,7 @@ Composition playback belongs to the frames runtime. Media preparation uses the f
 
 | Capability | Numen route |
 | --- | --- |
-| Voice generation | `frames.tts` with Kokoro v1.0; `frames.transcribe` for word timing |
+| Supplied narration timing | `frames.transcribe` |
 | Provided-media inventory | `frames.media_index` |
 | Transcript-driven cutting | `frames.transcript_cut` |
 | Voice/music ducking and loudness | `frames.audio_duck`, `frames.audio_carve`, `frames.normalize_audio` |

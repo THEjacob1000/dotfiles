@@ -3,7 +3,7 @@
 # It cannot establish authorship, assess voice, or decide whether a reader has
 # enough context. The write-as-jacob skill covers those editorial judgments.
 #
-#   voice-lint --mode comment reply.txt     # lint a file (or stdin with -)
+#   voice-lint --mode comment reply.txt [more.txt ...]  # lint every file (or stdin with -)
 #   voice-lint --hook                       # stdin = PreToolUse JSON; exit 2 blocks
 #
 # Modes: comment (review replies, issue comments) | pr (PR bodies) | commit |
@@ -13,15 +13,24 @@ set -euo pipefail
 
 MODE=comment
 HOOK=0
-FILE=""
+FILES=()
 while [[ $# -gt 0 ]]; do
   case $1 in
     --mode) MODE=$2; shift 2 ;;
     --hook) HOOK=1; shift ;;
     -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
-    *) FILE=$1; shift ;;
+    *) FILES+=("$1"); shift ;;
   esac
 done
+
+if [[ $HOOK == 0 && ${#FILES[@]} -gt 1 ]]; then
+  STATUS=0
+  for FILE in "${FILES[@]}"; do
+    bash "$0" --mode "$MODE" "$FILE" || STATUS=$?
+  done
+  exit "$STATUS"
+fi
+FILE=${FILES[0]:-}
 
 TEXT=""
 if [[ $HOOK == 1 ]]; then
@@ -145,7 +154,7 @@ if [[ $MODE == commit ]]; then
 fi
 
 if (( ${#FAIL[@]} )); then
-  { echo "voice-lint ($MODE): rewrite before sending."
+  { echo "voice-lint ($MODE${FILE:+: $FILE}): rewrite before sending."
     printf ' - %s\n' "${FAIL[@]}"
     echo "Rules: the write-as-jacob skill. Passing lint does not establish voice or sufficient context."
   } >&2

@@ -3,9 +3,9 @@
 
 The **locked narration** for a project: the final spoken lines + voice + delivery. It is an _optional_ plan-layer file — a video with no narration (bgm-only, silent overlay) has none. The storyboard's per-frame `voiceover` is the lighter, editable _guide_; `SCRIPT.md` is the _commit_. (Storyboard format → `references/storyboard-format.md`.)
 
-This file defines the SCRIPT.md **shape** only. Synthesizing the spoken lines into audio is a capability owned by `frames references/media-use.md` → `media-use/audio/references/tts.md`.
+This file defines the SCRIPT.md **shape** only. Use supplied recordings and [the audio workflow](media-use/references/audio.md) for transcription and measured timing.
 
-Free-form markdown — there is no strict parser; the TTS step extracts the indented spoken lines.
+Free-form markdown — there is no strict parser; the indented blocks identify spoken lines.
 
 ## Shape
 
@@ -13,18 +13,18 @@ A header block, then one section per spoken line.
 
 | Part                            | Holds                                                                                                                                   |
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Header                          | `**Voice:**` (Kokoro voice ID), `**Voice direction:**` (overall delivery) |
+| Header                          | `**Voice:**` (speaker or recording identity), `**Voice direction:**` (overall delivery) |
 | `## Line N — <label> (Frame N)` | one spoken line, tied to its storyboard frame                                                                                           |
-| `**Time:**`                     | the frame's rough window — a _guide_, not authoritative (real timing comes from transcribing the generated audio) |
+| `**Time:**`                     | the frame's rough window — a guide, not authoritative (real timing comes from transcribing the supplied recording) |
 | `**Delivery:**`                 | per-line delivery note                                                                                                                  |
-| indented block                  | the **spoken text** — the only part fed to TTS                                                                                          |
+| indented block                  | the **spoken text** |
 
 ## Example
 
 ```markdown
 # SCRIPT — acme-launch
 
-**Voice:** af_heart (Kokoro)
+**Voice:** Supplied narrator recording
 **Voice direction:** Confident, warm, a little playful.
 
 ---
@@ -44,11 +44,8 @@ A header block, then one section per spoken line.
     The old way? Prompt, wait twenty minutes, get something that misses.
 ```
 
-## To TTS
+## Recordings and timing
 
-Feed each line's spoken text to the engine documented in
-`frames/references/media-use/audio/references/tts.md`. `frames.tts` speaks with
-the selected Kokoro voice (default `af_heart`) and returns no word timestamps;
-run `frames.transcribe` on its output for them. Pass the voice id as `voice`
-to `frames.narrate`/`frames.tts`; the `**Voice:**` header does not select it.
-Real per-word timing replaces the `**Time:**` guides.
+Associate supplied recordings with each line's frame ID. Run `frames.transcribe`
+with the recording's language for word timing, then review alignment against
+the locked script. Real per-word timing replaces the `**Time:**` guides.

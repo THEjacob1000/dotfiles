@@ -1,6 +1,6 @@
 ---
 name: frames
-description: Create, edit, animate, inspect, validate, preview, or render HyperFrames HTML videos, interactive decks, and browser lessons with Numen's frames tools. Teach codebase architecture through source-grounded lessons or explore an authored system model. Covers custom videos, promos, PR and topic videos, music-driven edits, captions, overlays, motion graphics, Remotion ports, composition structure, animation, creative direction, media, audio and registry components. Read this entry first, then only the references needed. Figma import, Studio, hosted publishing and remote asset services are unavailable.
+description: Create, edit, animate, inspect, validate, preview, or render HyperFrames HTML videos and interactive decks with Numen's frames tools. Covers custom videos, promos, PR and topic videos, music-driven edits, captions, overlays, motion graphics, Remotion ports, composition structure, animation, creative direction, media, audio and registry components. Read this entry first, then only the references needed. Figma import, Studio, hosted publishing and remote asset services are unavailable.
 generated-by: numen-sync
 ---
 
@@ -8,20 +8,14 @@ generated-by: numen-sync
 
 # Frames
 
-Frames provides local HTML video compositions, interactive decks and source-grounded browser lessons through `frames.*` tools. Choose the requested experience before authoring: teach with a lesson, inspect its authored model in explore mode, or produce a video composition. For a linear video of a saved v2 lesson, use `frames.lesson_export` as described in [lesson operations](references/lesson.md).
-
-## Architecture teaching and exploration
-
-For “teach me this codebase,” a mechanism walkthrough or architecture exploration, read [architecture learning](references/architecture-learning.md) first, then [lesson operations](references/lesson.md). Define objectives, inspect one bounded slice, assemble evidence, outline, storyboard, preflight and save, then teach and adapt. Guided and explore modes share an authored lesson; exploration is not automatic repository discovery or code execution. Load [scene rules](references/lesson-scenes.md) for causal animation and [evidence rules](references/lesson-evidence.md) for grounding and uncertainty.
-
-An explicit video request follows the video workflows below, even when its subject is code. An interactive explanation follows the lesson workflow, not the composition init/lint/render pipeline.
+Frames provides local HTML video compositions and interactive decks through `frames.*` tools.
 
 ## Core workflow: init → lint → render
 
-1. **Start from state.** For an existing project, read its `BRIEF.md` and `STORYBOARD.md` when relevant. Perform the requested edit or operation without restarting intake. Use `frames.timeline` to inspect what plays, where, and when. For a fresh creation request, read [the intent interview](references/intent-interview.md), choose the deliverable workflow below, and read its intake contract in `references/routes/`. An explicit Remotion port goes directly to its guide; lessons and architecture teaching use the routes above. A question or hold does not authorize an edit.
+1. **Start from state.** For an existing project, read its `BRIEF.md` and `STORYBOARD.md` when relevant. Perform the requested edit or operation without restarting intake. Use `frames.timeline` to inspect what plays, where, and when. For a fresh creation request, read [the intent interview](references/intent-interview.md), choose the deliverable workflow below, and read its intake contract in `references/routes/`. An explicit Remotion port goes directly to its guide. A question or hold does not authorize an edit.
 2. **Init and author.** Read [the composition contract](references/core.md) before writing HTML. Use `frames.init` to initialize a new project, then write the confirmed `BRIEF.md`; initialization requires an empty destination. Follow the selected workflow and load domain references only as needed. Before scripting about code, read the exact repository files and symbols. Show code verbatim from those files and narrate only behaviour the source shows. Fetch a needed revision into a separate workspace without modifying the caller's tree.
 3. **Lint and inspect.** Use `frames.lint` for fast feedback while authoring; gate with `frames.check` (it runs lint) and fix reported defects. Inspect `frames.snapshot` output at representative times and use `frames.preview` for the live player. Follow the [review loop](references/review-loop.md) for storyboard and final-look approvals. A plan or sketch approval is not final-video approval.
-4. **Render.** After the final approval required by the review contract, call `frames.render` and deliver the local output. For an interactive deck, use `frames.present`; for an interactive lesson, use `frames.lesson`. Do not assume an MP4 is the deliverable. Tool arguments and diagnostics live in [the CLI guide](references/cli.md).
+4. **Render.** After the final approval required by the review contract, call `frames.render` and deliver the local output. For an interactive deck, use `frames.present`. Do not assume an MP4 is the deliverable. Tool arguments and diagnostics live in [the CLI guide](references/cli.md).
 
 ## Deliverable workflows
 
@@ -38,8 +32,6 @@ Choose by the requested output, not an incidental input format. A caption or ove
 | Captions or subtitles on unchanged talking-head footage | [references/embedded-captions.md](references/embedded-captions.md) |
 | Designed graphic overlays on unchanged interview or podcast footage | [references/talking-head-recut.md](references/talking-head-recut.md) |
 | Presentation, pitch deck, or interactive slideshow | [references/slideshow.md](references/slideshow.md) |
-| Codebase architecture teaching, mechanism walkthrough, or authored-model exploration | [references/architecture-learning.md](references/architecture-learning.md) |
-| Interactive lesson or concept explanation the learner can inspect and question | [references/lesson.md](references/lesson.md) |
 | Explicitly port existing Remotion source to HyperFrames | [references/remotion-to-hyperframes.md](references/remotion-to-hyperframes.md) |
 
 ## Domain guides
@@ -50,7 +42,7 @@ Choose by the requested output, not an incidental input format. A caption or ove
 | Motion rules, scene blueprints, transitions, animation runtimes | [references/animation.md](references/animation.md) |
 | Seek-safe zooms, reframing, paths, masks, SVG, 2D/3D keyframes | [references/keyframes.md](references/keyframes.md) |
 | Design specs, palettes, typography, narration, beat planning | [references/creative.md](references/creative.md) |
-| Supplied assets, captions, local voiceover, grading, media treatments | [references/media-use.md](references/media-use.md) |
+| Supplied assets, captions, recorded voiceover, grading, media treatments | [references/media-use.md](references/media-use.md) |
 | Placed-track gain, fades, automation, ducking, effects, submix buses | [references/audio.md](references/audio.md) |
 | Init, inspection, history, lint, checks, snapshots, preview, render | [references/cli.md](references/cli.md) |
 | Discover and install pinned upstream registry blocks, components, named effects | [references/registry.md](references/registry.md) |

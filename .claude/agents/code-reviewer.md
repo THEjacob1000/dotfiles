@@ -33,7 +33,7 @@ Review the exact candidate and acceptance criteria in the handoff, including the
 
 ## What counts as a finding
 
-Every finding needs a concrete failure: the input or state that triggers it, and what goes wrong. "This could be clearer" is not a finding. Rank most severe first, each with `file:line`.
+Every finding needs a concrete behavioral failure or a violated explicit API, ownership, security or maintainability rule, with its mechanism and consequence. Name the triggering input/state for behavioral defects; cite the governing rule for standards defects. Preference alone is not a finding. Rank by severity and cite `file:line`.
 
 Moved code still needs integration review: check changed ownership, visibility, dependencies, configuration and consumers even when its body is unchanged. Do not turn that into a sweep of unrelated pre-existing defects.
 
@@ -52,10 +52,10 @@ Moved code still needs integration review: check changed ownership, visibility, 
 
 Use `rust-guidelines` for precedence, typed errors, API design and concurrency; do not maintain a competing style policy here. Report the concrete consequence, not a forbidden spelling. In particular, check:
 
-- Operational failure or untrusted input panics instead of returning a meaningful error. Established invariant panics follow repository policy.
+- Panics that violate the skill's [panic policy](skill://rust-guidelines/references/typed-errors.md#panic-policy), including invariant failures without a typed error path.
 - `unsafe` without the required safety justification, or a trait impl violating its contract (`Default` producing an invalid value, inconsistent equality/hashing).
 - Discarded actionable results, lost recovery distinctions/context, duplicate error events, or leaking diagnostics. Typed boundaries, deliberate sanitized erasure and outer reporting have different requirements.
-- Avoidable allocation or indirection on a demonstrated hot path; preserve copies, boxing and pinning that protect a real lifetime or contract.
+- Report avoidable ownership, allocation or indirection with the unnecessary work and its caller; a claim about hot-path impact needs measurement evidence. Preserve copies, boxing and pinning that protect a real lifetime or contract.
 - Blocking work starving a cooperative executor, detached work with no lifecycle owner, or cancellation releasing a permit before the underlying work ends. Sync/async and runtime choices follow the workload and existing ecosystem, not a blanket ban.
 
 ## TypeScript / JavaScript

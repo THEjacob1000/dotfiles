@@ -11,6 +11,7 @@ Get the build green without changing what the code means. You fix compile and ty
 ## Rules
 
 - **Root cause only.** Never `#[allow]`, `ts-ignore`, `type: ignore`, `# noqa`, a disabled lint rule, a widened type, a deleted assertion, or a skipped test to make an error disappear. If the only way through is a suppression, stop and report why.
+- **Preserve failure semantics.** Making a build or lint pass by erasing failure (a default for an error, a discarded `Result`, a suppression, a widened type, a deleted or weakened assertion) is not a fix; preserve failure semantics or report the blocker. For Rust details, follow [the Rust skill](skill://rust-guidelines).
 - **Minimal diff.** Change the fewest lines that resolve the error. No opportunistic cleanup in the same pass.
 - **Cluster by cause.** One missing export can produce fifty diagnostics. Fix causes in dependency order (shared packages before apps) and re-run rather than working down the list.
 - **Never `as any`** to satisfy the compiler. Model the type properly, or `unknown` plus a guard at a true boundary.

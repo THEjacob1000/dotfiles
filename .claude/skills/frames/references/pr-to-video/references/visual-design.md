@@ -63,7 +63,7 @@ The lightweight tags:
 - **`blueprint:`** — the id you instantiated (with `(Reproduce)` / `(Adapt)`), or `compose`. One id per frame.
 - **`focal:`** — for a concept/mechanism beat, the **invented** hero (a hero word, a diagram, a number-lockup); for a **code beat**, the **`code-*` block** (name the block + the hunk); for the **credits** close, the avatar row.
 - **`roles:`** — each element's role: `foreground subject` · `background` (full-bleed, dim 30–50%) · `supporting`. Invented elements you **design**; the only real assets are the credits `assets/<login>.png` avatars (named in story's `asset_candidates`).
-- **`sfx:`** — name the sound the beat wants. The orchestrator calls `frames.narrate {"project": "/absolute/path/to/project", "mode": "pr-to-video", "command": "fetch-sfx", "storyboard": "STORYBOARD.md", "audio_meta": "audio_meta.json", "sfx_library": "<supplied-local-SFX-library>"}` to merge local cues; `frames.assemble` mounts them at root. Only **name** cues here; never embed `<audio>` or request hosted retrieval.
+- **`sfx:`** — name the sound the beat wants. The orchestrator maps supplied local effects into `audio_meta.json` by hand; `frames.assemble` mounts them at root. Only **name** cues here; never embed `<audio>` or request hosted retrieval.
 
 **Layout + motion are stated INLINE in each Scene line** — name the template / density / depth as part of "where it sits", and name the move from `motion-language.md`'s vocabulary; let it settle on a long-tail curve (`power3` default). Never write px / scale / ease curves / ms (the worker writes those).
 

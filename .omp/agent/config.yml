@@ -1,13 +1,14 @@
+---
 modelRoles:
-  slow: openai-codex/gpt-6-astra:medium
-  plan: anthropic/claude-opus-5-5:medium
-  task: openai-codex/gpt-6.1-sol:medium
-  advisor: openai-codex/gpt-6.1-sol:medium
-  smol: openai-codex/gpt-6-luna:medium
-  commit: openai-codex/gpt-6-luna:low
-  astra: openai-codex/gpt-6-astra:medium
-  fable: anthropic/claude-fable-5-2:xhigh
-  default: anthropic/claude-opus-5-5
+  slow: "openai-codex/gpt-6-astra:medium"
+  plan: "anthropic/claude-opus-5-5:medium"
+  task: "openai-codex/gpt-6.1-sol:medium"
+  advisor: "openai-codex/gpt-6.1-sol:medium"
+  smol: "openai-codex/gpt-6-luna:medium"
+  commit: "openai-codex/gpt-6-luna:low"
+  astra: "openai-codex/gpt-6-astra:medium"
+  fable: "anthropic/claude-fable-5-2:xhigh"
+  default: "anthropic/claude-opus-5-5:medium"
 symbolPreset: nerd
 composer:
   shape: band
@@ -30,9 +31,9 @@ task:
   isolation:
     enabled: true
   agentModelOverrides:
-    code-reviewer: anthropic/claude-opus-5-5:high
-    security-reviewer: openai-codex/gpt-6.1-sol:high
-    build-resolver: openai-codex/gpt-5.6-terra:medium
+    code-reviewer: "anthropic/claude-opus-5-5:high"
+    security-reviewer: "openai-codex/gpt-6.1-sol:high"
+    build-resolver: "openai-codex/gpt-5.6-terra:medium"
   softRequestBudget: 0
 dev:
   autoqaConsent: granted
@@ -95,6 +96,7 @@ compaction:
     kiro/claude-opus-5-5: 450000
     anthropic/claude-haiku-5-5: 100000
     anthropic/claude-fable-5-2: 450000
+    openai-codex/gpt-6.1-sol: 200000
   thresholdTokens: 100000
   modelThresholdsEnabled: true
 advisor:

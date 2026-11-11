@@ -4,7 +4,7 @@ The `frames` skill and its references are ported from HyperFrames (https://githu
 
 Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0 (see `LICENSE` beside this file).
 
-Modified for Numen: CLI commands and helper scripts map to the Numen `frames.*` MCP tools, separate upstream skills are consolidated into this skill's references, remote services are unavailable, and helper scripts, tests and binary assets are not carried over. Preset fonts are remotely staged from the pinned revision and SHA-256 verified; native Kokoro narration replaces upstream remote voice providers.
+Modified for Numen: CLI commands and helper scripts map to the Numen `frames.*` MCP tools, separate upstream skills are consolidated into this skill's references, remote services are unavailable, and helper scripts, tests and binary assets are not carried over. Preset fonts are remotely staged from the pinned revision and SHA-256 verified; audio workflows use supplied recordings and local transcription.
 
 Every ported text file carries this attribution in a leading comment, except the JSON files below, because JSON has no comment syntax:
 

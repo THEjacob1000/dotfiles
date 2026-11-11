@@ -6,18 +6,24 @@ const MAX_REQUEST = 256 * 1024;
 const MAX_RESPONSE = 1024;
 const TIMEOUT_MS = 2500;
 
+export class CaptureError extends Error {
+	constructor(readonly category: "aborted" | "too-large" | "timeout" | "transport" | "protocol" | "queue-full" | "queue-busy") {
+		super(category);
+	}
+}
+
 export function capture(command: CommandConfig, itemId: string, content: string, ttlSeconds: number, signal: AbortSignal): Promise<void> {
-	if (signal.aborted) return Promise.reject(new Error("capture aborted"));
+	if (signal.aborted) return Promise.reject(new CaptureError("aborted"));
 	const now = Date.now();
 	const request = Buffer.from(`${JSON.stringify({ version: 1, source: "omp", item_id: itemId,
 		observed_at: new Date(now).toISOString(), expires_at: new Date(now + ttlSeconds * 1000).toISOString(), content })}\n`);
-	if (Buffer.byteLength(content) > 64 * 1024 || request.length > MAX_REQUEST) return Promise.reject(new Error("capture too large"));
+	if (Buffer.byteLength(content) > 64 * 1024 || request.length > MAX_REQUEST) return Promise.reject(new CaptureError("too-large"));
 	const { promise, resolve, reject } = Promise.withResolvers<void>();
 	const child = spawn(command.command, command.args, { stdio: ["pipe", "pipe", "ignore"] });
 	let complete = false;
 	let response = Buffer.alloc(0);
 	let escalation: NodeJS.Timeout | undefined;
-	const finish = (error?: Error, terminate = true) => {
+	const finish = (error?: CaptureError, terminate = true) => {
 		if (complete) return;
 		complete = true;
 		clearTimeout(timer);
@@ -30,35 +36,35 @@ export function capture(command: CommandConfig, itemId: string, content: string,
 		if (error) reject(error);
 		else resolve();
 	};
-	const onAbort = () => finish(new Error("capture aborted"));
-	const timer = setTimeout(() => finish(new Error("capture timeout")), TIMEOUT_MS);
+	const onAbort = () => finish(new CaptureError("aborted"));
+	const timer = setTimeout(() => finish(new CaptureError("timeout")), TIMEOUT_MS);
 	signal.addEventListener("abort", onAbort, { once: true });
-	child.on("error", () => finish(new Error("capture unavailable")));
-	child.stdin.on("error", () => finish(new Error("capture transport closed")));
+	child.on("error", () => finish(new CaptureError("transport")));
+	child.stdin.on("error", () => finish(new CaptureError("transport")));
 	child.stdout.on("data", (chunk: Buffer) => {
 		if (complete) return;
-		if (response.length + chunk.length > MAX_RESPONSE) return finish(new Error("capture response too large"));
+		if (response.length + chunk.length > MAX_RESPONSE) return finish(new CaptureError("protocol"));
 		response = Buffer.concat([response, chunk]);
 	});
 	child.on("close", code => {
 		clearTimeout(escalation);
 		if (complete) return;
 		if (code !== 0 || response.length < 2 || response[response.length - 1] !== 10 || response.subarray(0, -1).includes(10)) {
-			return finish(new Error("capture transport closed"), false);
+			return finish(new CaptureError("transport"), false);
 		}
 		let value: unknown;
 		try {
 			value = JSON.parse(response.subarray(0, -1).toString("utf8"));
 		} catch {
-			return finish(new Error("capture rejected"), false);
+			return finish(new CaptureError("protocol"), false);
 		}
-		if (!value || typeof value !== "object" || !("ok" in value)) return finish(new Error("capture rejected"), false);
+		if (!value || typeof value !== "object" || !("ok" in value)) return finish(new CaptureError("protocol"), false);
 		if (value.ok === false && "error" in value) {
-			if (value.error === "QUEUE_FULL") return finish(new Error("queue full"), false);
-			if (value.error === "QUEUE_BUSY") return finish(new Error("queue busy"), false);
-			return finish(new Error("capture rejected"), false);
+			if (value.error === "QUEUE_FULL") return finish(new CaptureError("queue-full"), false);
+			if (value.error === "QUEUE_BUSY") return finish(new CaptureError("queue-busy"), false);
+			return finish(new CaptureError("protocol"), false);
 		}
-		if (value.ok !== true || !("status" in value) || (value.status !== "queued" && value.status !== "duplicate")) return finish(new Error("capture rejected"), false);
+		if (value.ok !== true || !("status" in value) || (value.status !== "queued" && value.status !== "duplicate")) return finish(new CaptureError("protocol"), false);
 		finish(undefined, false);
 	});
 	child.stdin.end(request);

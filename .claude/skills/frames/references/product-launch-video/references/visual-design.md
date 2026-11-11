@@ -64,7 +64,7 @@ The lightweight tags:
 - **`blueprint:`** — the id you instantiated (with `(Reproduce)` / `(Adapt)`), or `compose`. One id per frame.
 - **`focal:`** — which existing candidate is the hero of this beat.
 - **`roles:`** — each candidate's role: `cutout` (foreground subject, lay text around it) · `background` (full-bleed, dim 30–50%) · `supporting` (secondary). You **consume** the candidates story chose — never add, swap, or drop one (coverage is story's call; if a frame truly has the wrong candidates, flag it back, don't reach into `capture/`).
-- **`sfx:`** — name the sound the beat wants (an impact for a slam, a whoosh for a push, a riser into a reveal). The orchestrator calls `frames.narrate {"project": "/absolute/path/to/project", "mode": "product-launch-video", "command": "fetch-sfx", "storyboard": "STORYBOARD.md", "audio_meta": "audio_meta.json", "sfx_library": "<supplied-local-SFX-library>"}` to merge local cues; `frames.assemble` mounts them at the root. Only **name** cues here; never embed `<audio>` or request hosted retrieval.
+- **`sfx:`** — name the sound the beat wants (an impact for a slam, a whoosh for a push, a riser into a reveal). The orchestrator maps supplied local effects into `audio_meta.json` by hand; `frames.assemble` mounts them at the root. Only **name** cues here; never embed `<audio>` or request hosted retrieval.
 
 **Layout is stated INLINE in each Scene line** — name the template, density, depth, and hierarchy as part of "where it sits" (`Centered, ~50% of frame`, `asymmetric 60/40, 3 depth layers`), drawing on the **Layout** vocabulary below; never write px / scale / shadow recipes (the worker writes those).
 

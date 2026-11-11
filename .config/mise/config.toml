@@ -56,6 +56,9 @@ stripe = "latest"
 "http:mysql-shell" = { version = "8.4.0", url = "https://cdn.mysql.com/archives/mysql-shell/mysql-shell-8.4.0-linux-glibc2.28-x86-64bit.tar.gz", checksum = "sha256:7eae0ddb3f8778d105bd7c8634e182d5c02ad73f8a8a2b21335f19f24544f49b" }
 mongosh = "2.14.1"
 "npm:@mermaid-js/mermaid-cli" = "latest"
+"http:ghidra" = { version = "12.1.4", url = "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.1.4_build/ghidra_12.1.4_PUBLIC_20260921.zip", checksum = "sha256:ddac49f903da9d5bac833e5cc79395098b9c33cfd3279be5f31bd00387d2d4db", bin_path = "support", strip_components = "1" }
+java = "temurin-21"
+"npm:rea-agents" = "6.8.0"
 
 [tool_alias]
 loke = "http:loke"

@@ -111,7 +111,6 @@ Do not hide the slideshow manifest behind an alternate `<script type="applicatio
 | `hotspots`                                  | no       | Interactive overlays that trigger a branch - see Branching below.                                                                                       |
 | `startTime`                                 | no       | Optional. Override the matched scene's time bounds; defaults to the scene's start/end.                                                                  |
 | `endTime`                                   | no       | Optional. Override the matched scene's time bounds; defaults to the scene's start/end.                                                                  |
-| `ttsScript`, `ttsAudioUrl`, `ttsDurationMs` | no       | **Reserved.** Schema fields exist but TTS playback is not yet wired. Omit unless you are pre-populating for a future build.                             |
 
 ### `SlideHotspot`
 

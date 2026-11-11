@@ -39,13 +39,13 @@ case "$cmd" in
     temporary="$(mktemp "$DIR/handoff-$ts-XXXXXX")"
     out="$temporary.md"
     trap 'rm -f "$temporary"' EXIT
-    ln "$temporary" "$out"
+    trap 'exit 1' HUP INT TERM
     if [[ "${2:-}" == "-" || ! -t 0 ]]; then
       # body piped on stdin
-      cat > "$out"
+      cat > "$temporary"
     else
       # scaffold + open $EDITOR
-      cat > "$out" <<EOF
+      cat > "$temporary" <<EOF
 # Session handoff — $(date '+%Y-%m-%d %H:%M')
 
 ## Goal
@@ -56,8 +56,9 @@ case "$cmd" in
 
 ## Next step
 EOF
-      "${EDITOR:-vi}" "$out"
+      "${EDITOR:-vi}" "$temporary"
     fi
+    ln "$temporary" "$out"
     echo "$out"
     ;;
   ingest)

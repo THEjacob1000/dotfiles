@@ -371,7 +371,7 @@ machine doing it.
 voices, then inspect the returned bands and automation. For example:
 
 ```json
-{"project":"/absolute/path/to/lesson","comp":"index.html","bed":"music-bed","voice":["narration","interview-guest"],"strength":0.8}
+{"project":"/absolute/path/to/project","comp":"index.html","bed":"music-bed","voice":["narration","interview-guest"],"strength":0.8}
 ```
 
 Send those options to `frames.audio_carve`; omit `bed` and `voice` for automatic
