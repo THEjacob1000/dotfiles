@@ -1,10 +1,10 @@
 # /frontend-design
 
-Design, redesign, critique, polish or animate a frontend or native mobile app interface using the maintained Impeccable, Taste Skill and Emil Kowalski design engineering skills, built from the project's shared components and tokens so every surface reads as one design system. Use for landing pages, product UI, dashboards, iOS and Android app screens in any framework, components, visual style, typography, color, layout, motion and anti-slop review. Not for frontend work that leaves the look, motion and copy unchanged.
+Design, redesign, critique, polish or animate a frontend or native mobile app interface using the maintained Impeccable, Taste Skill and Emil Kowalski design engineering skills, built from the project's shared components and tokens so every surface reads as one design system, with web markup, CSS and client-side behaviour built on current platform features from Chrome's Modern Web Guidance. Use for landing pages, product UI, dashboards, iOS and Android app screens in any framework, components, visual style, typography, color, layout, motion, anti-slop review and modernising legacy web UI patterns. Not for frontend work that leaves the look, motion and copy unchanged.
 
 # Frontend design
 
-Route the design task to one upstream skill, read its `SKILL.md`, and follow it. Load only the skill the task needs; don't read every source or blend rules from several of them.
+Route the design task to one upstream skill, read its `SKILL.md`, and follow it. Load only the skill the task needs; don't read every source or blend rules from several of them. Modern Web Guidance is the one exception: it decides how web code is built, not how it looks, so it runs alongside whichever design skill is routed (see Web platform below).
 
 The upstream skills live in live checkouts under `~/.local/share/numen/upstream` (`$NUMEN_UPSTREAM_DIR` when set), refreshed daily by `numen-upstream-skills`. If a path below is missing, run `numen-upstream-skills` once, then retry. Relative links inside an upstream skill resolve against that skill's own directory.
 
@@ -44,6 +44,7 @@ Paths are relative to the upstream directory.
 | Name a motion the user describes vaguely | `emil/skills/animation-vocabulary/SKILL.md` |
 | Gestures, springs, sheets, momentum, materials, Apple-style motion on the web | `emil/skills/apple-design/SKILL.md` |
 | Make a web app feel native on a phone | `emil/skills/mobile-native/SKILL.md` |
+| Modernise legacy web platform patterns across a codebase, with no specific component named | `modern-web-guidance/skills/modern-web-guidance/SKILL.md`, its legacy-scan flow |
 
 These run only when the user asks for them by name, as their upstream frontmatter disables automatic invocation:
 
@@ -53,8 +54,18 @@ These run only when the user asks for them by name, as their upstream frontmatte
 | Build several variants behind a live picker | `emil/skills/prototype/SKILL.md` |
 | Pick a UI library for a task | `emil/skills/pick-ui-library/SKILL.md` |
 
+## Web platform
+
+Whenever a route above produces HTML, CSS or client-side JavaScript, read `modern-web-guidance/skills/modern-web-guidance/SKILL.md` as well and follow its search, retrieve and verify steps before writing that code. It steers dialogs, popovers, anchored tooltips, forms and validation, layout, colour, scroll and view-transition animation, accessibility and Core Web Vitals toward native platform features instead of hand-rolled JavaScript or a new dependency. The routed design skill still owns how the surface looks and moves; Modern Web Guidance owns which platform mechanism builds it. Native iOS and Android work skips it.
+
+The project's design system still wins. When the project already has a dialog or popover component, use it; the guide shapes that component's implementation when you build or extend it, not a second one beside it.
+
 ## Local differences
 
 - Impeccable's `<skill-base-dir>` is `impeccable/.claude/skills/impeccable` in the upstream directory. Its launcher downloads the engine binary it needs to `~/.impeccable` on first run.
 - Upstream "go all out" and "complete deliverable" instructions don't widen scope. A small styling fix stays small, and repository conventions and code-golf still apply to the code.
 - Verify on the rendered surface, not from the source alone: desktop and mobile widths on the web, each shipped device class from the simulator or emulator on native.
+- Run Modern Web Guidance's CLI as `modern-web-guidance`, installed at its latest release by the global mise config and upgraded with the checkout, in place of `npx -y modern-web-guidance@latest`, keeping its arguments, including `--skill-version`. If it isn't on PATH, run `mise install npm:modern-web-guidance`.
+- Where its framework notes cast new HTML attributes through `as any`, declare them by augmenting the framework's JSX or DOM attribute types instead.
+- Its disclosure step doesn't add a `### Modern Web Guidance` heading to the reply. Name the guide ids that shaped the code, with the reason each mattered, in the ordinary summary of what changed.
+- A browser support policy in the project's AGENTS.md, CLAUDE.md or browserslist decides which of its fallbacks apply; with none, use its Baseline defaults.
