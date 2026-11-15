@@ -39,14 +39,4 @@ for source in "${SOURCES[@]}"; do
     failed=1
   fi
 done
-
-# The Modern Web Guidance CLI's --skill-version comes from the checkout above, so
-# it moves with it. The tool itself is declared in the global mise config.
-mise=$(command -v mise || echo "$HOME/.local/bin/mise")
-if MISE_FETCH_REMOTE_VERSIONS_CACHE=0 "$mise" upgrade --quiet npm:modern-web-guidance; then
-  echo "modern-web-guidance CLI $("$mise" latest --installed npm:modern-web-guidance)"
-else
-  echo "modern-web-guidance CLI: upgrade failed" >&2
-  failed=1
-fi
 exit "$failed"
