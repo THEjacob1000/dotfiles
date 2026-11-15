@@ -1,12 +1,12 @@
 ---
 name: frontend-design
-description: Design, redesign, critique, polish or animate a frontend or native mobile app interface using the maintained Impeccable, Taste Skill and Emil Kowalski design engineering skills, built from the project's shared components and tokens so every surface reads as one design system, with web markup, CSS and client-side behaviour built on current platform features from Chrome's Modern Web Guidance. Use for landing pages, product UI, dashboards, iOS and Android app screens in any framework, components, visual style, typography, color, layout, motion, anti-slop review and modernising legacy web UI patterns. Not for frontend work that leaves the look, motion and copy unchanged.
+description: Design, redesign, critique, polish or animate a frontend or native mobile app interface using the maintained Impeccable, Taste Skill and Emil Kowalski design engineering skills, built from the project's shared components and tokens so every surface reads as one design system, with web markup, CSS and client-side UI code built on current platform features from Chrome's Modern Web Guidance. Use for landing pages, product UI, dashboards, iOS and Android app screens in any framework, components, visual style, typography, color, layout, motion, anti-slop review and replacing hand-rolled web UI code with platform features. Not for frontend work that leaves the look, motion, copy and UI mechanism unchanged.
 generated-by: numen-sync
 ---
 
 # Frontend design
 
-Route the design task to one upstream skill, read its `SKILL.md`, and follow it. Load only the skill the task needs; don't read every source or blend rules from several of them. Modern Web Guidance is the one exception: it decides how web code is built, not how it looks, so it runs alongside whichever design skill is routed (see Web platform below).
+Route the task to one upstream skill, read its `SKILL.md`, and follow it. Load only the skill the task needs; don't read every source or blend rules from several of them. The one exception is Modern Web Guidance, which decides how web code is built rather than how it looks, so it runs alongside whichever design skill is routed (see Web platform below).
 
 The upstream skills live in live checkouts under `~/.local/share/numen/upstream` (`$NUMEN_UPSTREAM_DIR` when set), refreshed daily by `numen-upstream-skills`. If a path below is missing, run `numen-upstream-skills` once, then retry. Relative links inside an upstream skill resolve against that skill's own directory.
 
@@ -34,7 +34,7 @@ Paths are relative to the upstream directory.
 | Native iOS or Android app, in any framework (SwiftUI, Compose, React Native, Expo, Flutter): any design pass above | `impeccable/.claude/skills/impeccable/SKILL.md`, with the platform recorded as `ios`, `android` or `adaptive` so it loads its native references in place of the web ones |
 | Mobile app screen or flow concepts as images, before anything is built | `taste-skill/skills/imagegen-frontend-mobile/SKILL.md` |
 | Landing page or portfolio that must not look templated | `taste-skill/skills/taste-skill/SKILL.md` |
-| Audit and upgrade an existing site without breaking it | `taste-skill/skills/redesign-skill/SKILL.md` |
+| Audit and upgrade an existing site's look without breaking it | `taste-skill/skills/redesign-skill/SKILL.md` |
 | The brief names a soft, premium agency look | `taste-skill/skills/soft-skill/SKILL.md` |
 | The brief names an editorial, restrained monochrome look | `taste-skill/skills/minimalist-skill/SKILL.md` |
 | The brief names a brutalist, Swiss or terminal look | `taste-skill/skills/brutalist-skill/SKILL.md` |
@@ -46,7 +46,7 @@ Paths are relative to the upstream directory.
 | Name a motion the user describes vaguely | `emil/skills/animation-vocabulary/SKILL.md` |
 | Gestures, springs, sheets, momentum, materials, Apple-style motion on the web | `emil/skills/apple-design/SKILL.md` |
 | Make a web app feel native on a phone | `emil/skills/mobile-native/SKILL.md` |
-| Modernise legacy web platform patterns across a codebase, with no specific component named | `modern-web-guidance/skills/modern-web-guidance/SKILL.md`, its legacy-scan flow |
+| Modernise legacy web platform code across a codebase, the look unchanged and no specific component named | `modern-web-guidance/skills/modern-web-guidance/SKILL.md`, its modernize-an-existing-codebase flow alone |
 
 These run only when the user asks for them by name, as their upstream frontmatter disables automatic invocation:
 
@@ -58,7 +58,7 @@ These run only when the user asks for them by name, as their upstream frontmatte
 
 ## Web platform
 
-Whenever a route above produces HTML, CSS or client-side JavaScript, read `modern-web-guidance/skills/modern-web-guidance/SKILL.md` as well and follow its search, retrieve and verify steps before writing that code. It steers dialogs, popovers, anchored tooltips, forms and validation, layout, colour, scroll and view-transition animation, accessibility and Core Web Vitals toward native platform features instead of hand-rolled JavaScript or a new dependency. The routed design skill still owns how the surface looks and moves; Modern Web Guidance owns which platform mechanism builds it. Native iOS and Android work skips it.
+Whenever a design route above produces HTML, CSS or client-side JavaScript, read `modern-web-guidance/skills/modern-web-guidance/SKILL.md` as well and follow its primary workflow: search and retrieve before writing that code, check the code against the guides after, then disclose. It steers dialogs, popovers, anchored tooltips, forms and validation, layout, colour, scroll and view-transition animation, accessibility and Core Web Vitals toward native platform features instead of hand-rolled JavaScript or a new dependency. The routed design skill still owns how the surface looks and moves; Modern Web Guidance owns which platform mechanism builds it. Native iOS and Android work skips it.
 
 The project's design system still wins. When the project already has a dialog or popover component, use it; the guide shapes that component's implementation when you build or extend it, not a second one beside it.
 
@@ -67,7 +67,7 @@ The project's design system still wins. When the project already has a dialog or
 - Impeccable's `<skill-base-dir>` is `impeccable/.claude/skills/impeccable` in the upstream directory. Its launcher downloads the engine binary it needs to `~/.impeccable` on first run.
 - Upstream "go all out" and "complete deliverable" instructions don't widen scope. A small styling fix stays small, and repository conventions and code-golf still apply to the code.
 - Verify on the rendered surface, not from the source alone: desktop and mobile widths on the web, each shipped device class from the simulator or emulator on native.
-- Run Modern Web Guidance's CLI as `modern-web-guidance`, installed at its latest release by the global mise config and upgraded with the checkout, in place of `npx -y modern-web-guidance@latest`, keeping its arguments, including `--skill-version`. If it isn't on PATH, run `mise install npm:modern-web-guidance`.
-- Where its framework notes cast new HTML attributes through `as any`, declare them by augmenting the framework's JSX or DOM attribute types instead.
-- Its disclosure step doesn't add a `### Modern Web Guidance` heading to the reply. Name the guide ids that shaped the code, with the reason each mattered, in the ordinary summary of what changed.
-- A browser support policy in the project's AGENTS.md, CLAUDE.md or browserslist decides which of its fallbacks apply; with none, use its Baseline defaults.
+- Every Modern Web Guidance CLI call, offline retries included, runs the installed `modern-web-guidance` binary with upstream's arguments, `--skill-version` included, in place of `npx -y modern-web-guidance@latest`. The global mise config installs it at its latest release and `numen-upstream-skills` upgrades it with the checkout; if it isn't on PATH, run `mise install npm:modern-web-guidance`. Its `npx`/`pnpx`, allowlisting and `NPM_CONFIG_CACHE` notes don't apply.
+- Where its framework notes cast new HTML attributes through `as any`, declare only the attributes the installed types lack, in one shared declaration file augmenting the framework's JSX or DOM types, and delete each once the types ship it. Redeclaring an attribute the types already have fails typecheck.
+- Its disclosure step doesn't add a `### Modern Web Guidance` heading to the reply. In the ordinary summary of what changed, name each guide id that shaped the code with the pitfall it prevented and its short verbatim quote, or say which guides were checked when none applied. Its rule against recalling ids or quotes from memory after compaction still holds.
+- A browser support policy the user states, or the project records in AGENTS.md or CLAUDE.md, decides which of its fallbacks apply; with none, use its Baseline defaults.
