@@ -14,5 +14,5 @@ vim.api.nvim_create_autocmd("User", {
 })
 
 return {
-  { "nvim-treesitter/nvim-treesitter", opts = { ensure_installed = { "rust", "lua", "gritql" } } },
+  { "nvim-treesitter/nvim-treesitter", opts = { ensure_installed = { "rust", "lua", "gritql", "templ" } } },
 }

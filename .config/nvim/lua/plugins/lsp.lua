@@ -78,6 +78,22 @@ return {
             end
           end,
         },
+        templ = {
+          mason = false,
+          -- the LSP must match the module's templ runtime, or its generated Go calls runtime functions that don't exist;
+          -- modules pinning templ as a go tool get that exact version, others fall back to templ on PATH
+          cmd = function(dispatchers, config)
+            local root = config.root_dir
+            local gomod = root and io.open(root .. "/go.mod")
+            local pinned = false
+            if gomod then
+              pinned = gomod:read("*a"):find("github.com/a-h/templ/cmd/templ", 1, true) ~= nil
+              gomod:close()
+            end
+            local cmd = pinned and { "go", "tool", "templ", "lsp" } or { "templ", "lsp" }
+            return vim.lsp.rpc.start(cmd, dispatchers, { cwd = root })
+          end,
+        },
       },
     },
   },
