@@ -9,7 +9,7 @@ ROOT="${NUMEN_UPSTREAM_DIR:-$HOME/.local/share/numen/upstream}"
 
 # name|repository|directories to check out (space-separated; root files always come along)
 SOURCES=(
-  "impeccable|https://github.com/pbakaus/impeccable|.claude/skills/impeccable"
+  "impeccable|https://github.com/pbakaus/impeccable|.omp/skills/impeccable"
   "taste-skill|https://github.com/Leonxlnx/taste-skill|skills"
   "emil|https://github.com/emilkowalski/skill|skills"
   "modern-web-guidance|https://github.com/GoogleChrome/modern-web-guidance|skills/modern-web-guidance"

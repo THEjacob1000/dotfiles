@@ -28,8 +28,8 @@ Paths are relative to the upstream directory.
 
 | Task | Read |
 | --- | --- |
-| New surface, redesign or any named design pass: shape, critique, audit, polish, typeset, layout, colorize, bolder, quieter, distill, clarify, harden, adapt, onboard, optimize, delight, overdrive, extract, document, live, generate | `impeccable/.claude/skills/impeccable/SKILL.md` |
-| Native iOS or Android app, in any framework (SwiftUI, Compose, React Native, Expo, Flutter): any design pass above | `impeccable/.claude/skills/impeccable/SKILL.md`, with the platform recorded as `ios`, `android` or `adaptive` so it loads its native references in place of the web ones |
+| New surface, redesign or any named design pass: shape, critique, audit, polish, typeset, layout, colorize, bolder, quieter, distill, clarify, harden, adapt, onboard, optimize, delight, overdrive, extract, document, live, generate | `impeccable/.omp/skills/impeccable/SKILL.md` |
+| Native iOS or Android app, in any framework (SwiftUI, Compose, React Native, Expo, Flutter): any design pass above | `impeccable/.omp/skills/impeccable/SKILL.md`, with the platform recorded as `ios`, `android` or `adaptive` so it loads its native references in place of the web ones |
 | Mobile app screen or flow concepts as images, before anything is built | `taste-skill/skills/imagegen-frontend-mobile/SKILL.md` |
 | Landing page or portfolio that must not look templated | `taste-skill/skills/taste-skill/SKILL.md` |
 | Audit and upgrade an existing site's look without breaking it | `taste-skill/skills/redesign-skill/SKILL.md` |
@@ -62,7 +62,8 @@ The project's design system still wins. When the project already has a dialog or
 
 ## Local differences
 
-- Impeccable's `<skill-base-dir>` is `impeccable/.claude/skills/impeccable` in the upstream directory. Its launcher downloads the engine binary it needs to `~/.impeccable` on first run.
+- Impeccable's `<skill-base-dir>` is `impeccable/.omp/skills/impeccable` in the upstream directory. Its launcher downloads the engine binary it needs to `~/.impeccable` on first run.
+- In OMP, `/impeccable <command>` is numen's extension command: it hands you Impeccable's SKILL.md with the command as its arguments. When Impeccable tells the user to run `/impeccable <command>`, that's what it means.
 - Upstream "go all out" and "complete deliverable" instructions don't widen scope. A small styling fix stays small, and repository conventions and code-golf still apply to the code.
 - Verify on the rendered surface, not from the source alone: desktop and mobile widths on the web, each shipped device class from the simulator or emulator on native.
 - Every Modern Web Guidance CLI call, offline retries included, runs the installed `modern-web-guidance` binary with upstream's arguments, `--skill-version` included, in place of `npx -y modern-web-guidance@latest`. The global mise config installs it at `latest`; if it isn't on PATH, run `mise install npm:modern-web-guidance`. Its `npx`/`pnpx`, allowlisting and `NPM_CONFIG_CACHE` notes don't apply.
