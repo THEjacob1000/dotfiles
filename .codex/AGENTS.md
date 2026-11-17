@@ -252,10 +252,10 @@ could outlast a sentence or two, background it instead.
 ### Delegation → Codex model tiers
 When running inside OMP, use its configured model roles from `harness/canonical/omp/config.yml`. Leave the task model unset to use the configured agent tier, or select a role such as `@slow`, `@task` or `@smol`. The Codex CLI tier table below does not select OMP models.
 
-GPT-5.6 splits into three durable tiers (the number is the generation; the name is
+OpenAI ships three durable tiers (the number is the generation; the name is
 the tier, advancing on its own cadence). Pick by how much judgment the work needs,
 the same capable-for-thinking / cheap-for-grunt split as above:
-- **sol** (`gpt-5.6-sol`): flagship, and the orchestrator: the main thread runs it
+- **sol** (`gpt-6.2-sol`): flagship, and the orchestrator: the main thread runs it
   at `max` effort. Reserve it for hard multi-step work: implementation,
   debugging/root-cause, architecture, code/security review, long-running agentic
   tasks.
@@ -281,7 +281,7 @@ Map the roles in `~/.codex/config.toml` to those tiers:
 - **docs-researcher**: verify APIs, framework behavior, and release notes instead
   of guessing from memory. terra (luna for a single quick lookup).
 
-Default model is `gpt-5.6-sol` (set in `~/.codex/config.toml`). Use `/agent` to
+Default model is `gpt-6.2-sol` (set in `~/.codex/config.toml`). Use `/agent` to
 inspect and steer child agents; `multi_agent`, `hooks`, and `goals` are enabled.
 Prefer the `strict` profile (read-only sandbox) for exploration; reserve `yolo` for
 trusted, well-scoped local work.
@@ -326,19 +326,4 @@ A local `jj` MCP server is also configured, prefer it for jj operations. Context
 is available; use it only when a task needs it. The `ripwire` MCP entry exposes
 only its audit verbs (analyze, quality_delta, flags, doc_drift) and runs under a
 4 GB memory cap; everything else is the CLI.
-
-## AWS credentials: `mac-aws`
-AWS SSO logins live on Jacob's MacBook. `mac-aws [sso-session...]` (on PATH,
-works from Bash) copies those IAM Identity Center sessions over Tailscale SSH into
-`~/.aws/sso/cache`; the local CLI and SDKs then refresh tokens and mint role
-credentials themselves until the SSO session ends.
-- On `Token for <session> does not exist`, an expired-token error or a refresh
-  failure, run `mac-aws` (default `LokeTools`; e.g. `mac-aws LokeAddonsAU`) and
-  retry. Never run `aws sso login` here: it needs a browser.
-- Select accounts with `--profile`/`AWS_PROFILE` from `~/.aws/config` (`default`
-  is LokeTools, 032281018513). Don't export `AWS_ACCESS_KEY_ID` and friends: they
-  override the profile and expire within the hour.
-- If `mac-aws` reports no refreshable session, ask Jacob to run
-  `aws sso login --sso-session <session>` on the Mac. Credentials grant reads, not
-  authority: AWS mutations still need his explicit approval.
 <!-- numen:sync:end -->

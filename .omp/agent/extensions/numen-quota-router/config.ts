@@ -98,7 +98,7 @@ export const config: RouterConfig = {
 			},
 			{
 				id: "sol-medium",
-				selector: "openai-codex/gpt-6.1-sol:medium",
+				selector: "openai-codex/gpt-6.2-sol:medium",
 				active: true,
 				costRank: 2,
 				criteria: {
@@ -120,7 +120,7 @@ export const config: RouterConfig = {
 			},
 			{
 				id: "sol-high",
-				selector: "openai-codex/gpt-6.1-sol:high",
+				selector: "openai-codex/gpt-6.2-sol:high",
 				active: true,
 				costRank: 3,
 				criteria: {
@@ -153,7 +153,7 @@ export const config: RouterConfig = {
 			},
 			{
 				id: "astra-high",
-				selector: "openai-codex/gpt-6-astra:high",
+				selector: "openai-codex/gpt-6.2-astra:high",
 				active: true,
 				requiresEscalationEvidence: true,
 				costRank: 6,

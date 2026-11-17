@@ -147,14 +147,8 @@ emits a flat `<cand r= s= n= id= k= p= l=>` top-K — identity + score + signatu
 9c. **"Where does this content live?"** — `ripwire <dir> --whereis=SYM --legend=compact`. Which ref's tree defines or mentions
     a symbol, HEAD first; `on-head="0"` alongside branch hits is content that exists ONLY on a branch. Each
     distinct blob is read once (git is content-addressed), so 30 branches cost about one tree. `kind="def"`
-    is a parser's answer on every row — HEAD's from the index, a branch row's from the same extraction over that
-    branch's blob (only blobs holding a line a loose lexical test calls worth parsing are parsed; `kind="text"` is
-    such a line no parse read, never a definition). By default only the `kind="def"` rows are listed and the mentions are
-    counted in one `<refs count=N next=…>` row (its `next=` lists them) when that page lists MORE definitions than
-    the all page does under the same row cap (a capped all page can list fewer), or the same ones in strictly fewer
-    bytes; otherwise, and with `--whereis-listing=all`, every row is listed. A line over 300 bytes prints its `t=` as a
-    200-byte preview (`t_bytes=` is the whole line's size) when that makes the page shorter; the page's `<t_cut next=…>` replays
-    it with `--whereis-full-text`, every line whole.
+    on a branch row is a lexical heuristic — branch blobs are raw text, never ingested; for HEAD's parsed
+    answer use `--expand`/`--callers`.
     A tree scan only finds what some ref *still carries*, so `hits="0"` cannot by itself tell a name this repo
     never had from one it deleted. Add `--with-history` and a `<fate>` row says which: `v="never"`, or
     `v="removed" commit=… date=… p=…` naming the commit that took it out. One `git log` pass, memoized per
@@ -196,7 +190,7 @@ emits a flat `<cand r= s= n= id= k= p= l=>` top-K — identity + score + signatu
     1-hop `callers=`, the transitive `--impact` blast radius (`impact_reaches=`), every `--uses`
     read/write/import/call/extends site (`uses=`), how much of that radius the `tested=` lens covers
     (`radius_tested=`/`radius_untested=`), and `--dead-code`'s own zero-caller/internal-linkage shape at
-    `defs=1` (`dead_code_candidate=`), into ONE call. `risk=` NAMES what was found — `none-found` / `uses-exist` / `unmodelled` /
+    `defs=1` (`dead_code_candidate=`), into ONE call. `risk=` NAMES what was found — `none-found` / `uses-exist` /
     `untested-radius` — never a go/no-go verdict; `radius_untested=` equal to `impact_reaches=` is the
     strongest signal ("nothing downstream is test-covered"). `ambiguous_callers=`/per-row `amb="1"` disclose
     the same call-graph resolution limit `--edit-check`'s `incompatible=` and `--for`'s `amb=` already carry.
