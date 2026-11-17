@@ -103,3 +103,5 @@ advisor:
   enabled: true
 update:
   auto: false
+commit:
+  enabled: false
