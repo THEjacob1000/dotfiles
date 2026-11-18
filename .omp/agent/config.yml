@@ -3,7 +3,7 @@ modelRoles:
   slow: "openai-codex/gpt-6.2-astra:medium"
   plan: "anthropic/claude-opus-5-5:medium"
   task: "openai-codex/gpt-6.2-sol:medium"
-  advisor: "openai-codex/gpt-6.2-sol:medium"
+  advisor: "openai-codex/gpt-6.2-astra:medium"
   smol: "openai-codex/gpt-6-luna:medium"
   commit: "openai-codex/gpt-6-luna:low"
   astra: "openai-codex/gpt-6.2-astra:medium"

@@ -41,3 +41,4 @@ settings.local.json
 **/.DS_Store
 .ripwire_*
 .numen-refine
+__pycache__
