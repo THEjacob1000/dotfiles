@@ -1,0 +1,87 @@
+#!/bin/sh
+# Ctrl+V for tmux on Linux, run as `tmux-paste CLIENT_PID CLIENT_TTY PANE_ID PANE_TTY`.
+# omp decides whether the clipboard is local from SSH_CONNECTION in its own environment, which goes
+# stale when a desktop client and an ssh client share a session. tmux runs this for the client that
+# pressed the key, so a press into an omp pane pastes the clipboard of the device that pressed it:
+# this desktop's through xclip, the Mac's fetched over ssh. An image arrives as a saved file path omp
+# attaches, text as a bracketed paste. A press from any other client is dropped, since an omp started
+# without SSH_CONNECTION would read this host's clipboard for it. Panes not running omp get a plain Ctrl+V.
+client_pid=$1 client_tty=$2 pane=$3 pane_tty=$4
+mac=jacob-mac # ssh alias of the Mac that attaches over ssh
+
+passthrough() {
+    tmux send-keys -t "$pane" C-v
+    exit 0
+}
+refuse() {
+    tmux display-message -c "$client_tty" "Ctrl+V: $1"
+    exit 0
+}
+
+procs=$(ps -o stat=,args= -t "${pane_tty#/dev/}" 2>/dev/null)
+[ -n "$procs" ] && ! printf '%s\n' "$procs" |
+    awk '$1 ~ /\+/ && $0 ~ /\/omp( |$)/ { found = 1 } END { exit !found }' && passthrough
+
+env=$(tr '\0' '\n' 2>/dev/null <"/proc/$client_pid/environ") && [ -n "$env" ] ||
+    refuse "can't tell which device pressed it"
+client_ip=$(printf '%s\n' "$env" | sed -n 's/^SSH_CONNECTION=\([^ ]*\) .*/\1/p')
+if [ -n "$client_ip" ]; then
+    mac_host=$(ssh -G "$mac" 2>/dev/null | awk '$1 == "hostname" { print $2 }')
+    [ "$client_ip" = "$(getent hosts "$mac_host" | awk '{ print $1; exit }')" ] ||
+        refuse "no clipboard route back to $client_ip"
+fi
+# Only a local press may fall back to omp's own Ctrl+V, which reads this host's clipboard.
+fail() {
+    [ -z "$client_ip" ] && passthrough
+    refuse "$1"
+}
+
+# Clipboard contents can be private: keep them owner-only.
+umask 077
+dir=${XDG_CACHE_HOME:-$HOME/.cache}/tmux-paste
+mkdir -p "$dir" && chmod 700 "$dir" || fail "can't create $dir"
+find "$dir" -type f -mtime +1 -delete
+raw=$(mktemp "$dir/XXXXXXXXXX") || fail "can't create a file in $dir"
+trap 'rm -f "$raw"' EXIT
+
+if [ -n "$client_ip" ]; then
+    # First line names what follows: a PNG as osascript's «data PNGf…» hex, or the clipboard text.
+    timeout 5s ssh -o BatchMode=yes -o ConnectTimeout=3 "$mac" /bin/sh -s >"$raw" 2>/dev/null <<'EOF' ||
+if hex=$(osascript -e 'the clipboard as «class PNGf»' 2>/dev/null); then
+    echo png
+    printf '%s\n' "$hex"
+else
+    echo text
+    LANG=en_US.UTF-8 pbpaste
+fi
+EOF
+        refuse "couldn't read the clipboard on $mac"
+    if [ "$(head -n 1 "$raw")" = png ]; then
+        image=$(mktemp --suffix=.png "$dir/XXXXXXXXXX") || refuse "can't create a file in $dir"
+        tail -n +2 "$raw" | tr -d '\n' | sed 's/.*PNGf//; s/[^0-9A-Fa-f]//g' | xxd -r -p >"$image"
+    else
+        tail -n +2 "$raw" | tmux load-buffer -b tmux-paste -
+    fi
+else
+    # An ssh client attaching strips DISPLAY from the session; the server's global copy still points at the desktop.
+    DISPLAY=${DISPLAY:-$(tmux show-environment -g DISPLAY 2>/dev/null | sed 's/^DISPLAY=//')}
+    export DISPLAY
+    type=$(timeout 2s xclip -selection clipboard -t TARGETS -out 2>/dev/null |
+        grep -m1 -xE 'image/(png|jpeg|webp|gif)')
+    if [ -n "$type" ]; then
+        image=$(mktemp --suffix=".${type#image/}" "$dir/XXXXXXXXXX") || passthrough
+        timeout 2s xclip -selection clipboard -t "$type" -out >"$image" 2>/dev/null
+    else
+        timeout 2s xclip -selection clipboard -out 2>/dev/null | tmux load-buffer -b tmux-paste -
+    fi
+fi
+
+if [ -n "${image:-}" ]; then
+    [ -s "$image" ] || {
+        rm -f "$image"
+        fail "couldn't read the clipboard image"
+    }
+    tmux set-buffer -b tmux-paste -- "$image"
+fi
+# An empty clipboard leaves no buffer, so the paste fails.
+tmux paste-buffer -p -d -b tmux-paste -t "$pane" 2>/dev/null || fail "clipboard is empty"
