@@ -47,31 +47,31 @@ retry:
     anthropic/claude-fable-5-1:
       - openai-codex/gpt-6-astra
     openai-codex/gpt-6-astra:
-      - kiro/gpt-5-6-sol
+      - kiro/gpt-5.6-sol
       - anthropic/claude-opus-5-5
     anthropic/claude-opus-5-5:
-      - kiro/claude-opus-5-5
+      - kiro/claude-opus-5.5
       - openai-codex/gpt-6.2-sol
     openai-codex/gpt-6-sol:
-      - kiro/gpt-5-6-sol
+      - kiro/gpt-5.6-sol
       - anthropic/claude-opus-5-5
     anthropic/claude-haiku-4-5:
-      - kiro/claude-haiku-4-5
+      - kiro/claude-haiku-4.5
       - openai-codex/gpt-6-luna
     openai-codex/gpt-6-luna:
-      - kiro/gpt-5-6-luna
+      - kiro/gpt-5.6-luna
       - anthropic/claude-haiku-5-5
     openai-codex/gpt-5.6-sol:
-      - kiro/gpt-5-6-sol
+      - kiro/gpt-5.6-sol
       - anthropic/claude-opus-5
     anthropic/claude-opus-5:
       - kiro/claude-opus-5
       - openai-codex/gpt-6.2-sol
     openai-codex/gpt-5.6-luna:
-      - kiro/gpt-5-6-luna
+      - kiro/gpt-5.6-luna
       - anthropic/claude-haiku-5-5
     openai-codex/gpt-5.6-terra:
-      - kiro/gpt-5-6-terra
+      - kiro/gpt-5.6-terra
       - anthropic/claude-opus-5-5
     anthropic/claude-sonnet-5:
       - kiro/claude-sonnet-5
@@ -80,26 +80,26 @@ retry:
       - kiro/claude-sonnet-5
       - openai-codex/gpt-6.2-sol
     openai-codex/gpt-6.1-sol:
-      - kiro/gpt-5-6-sol
+      - kiro/gpt-5.6-sol
       - anthropic/claude-opus-5-5
     anthropic/claude-haiku-5-5:
-      - kiro/claude-haiku-4-5
+      - kiro/claude-haiku-4.5
       - openai-codex/gpt-6-luna
     anthropic/claude-fable-5-2:
       - kiro/claude-fable-5
       - openai-codex/gpt-6.2-astra
     openai-codex/gpt-6.2-astra:
-      - kiro/gpt-5-6-sol
+      - kiro/gpt-5.6-sol
       - anthropic/claude-opus-5-5
     openai-codex/gpt-6.2-sol:
-      - kiro/gpt-5-6-sol
+      - kiro/gpt-5.6-sol
       - anthropic/claude-opus-5-5
 browser:
   relay: true
 compaction:
   modelThresholds:
     anthropic/claude-opus-5-5: 450000
-    kiro/claude-opus-5-5: 450000
+    kiro/claude-opus-5.5: 450000
     anthropic/claude-haiku-5-5: 100000
     anthropic/claude-fable-5-2: 450000
     openai-codex/gpt-6.1-sol: 200000
