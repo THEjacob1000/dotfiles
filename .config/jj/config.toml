@@ -6,3 +6,9 @@ default-command = "log"
 [gg.ui]
 recent-workspaces = ["/home/jacob/Documents/Developer/jfit"]
 
+[fsmonitor]
+backend = "watchman"
+
+[fsmonitor.watchman]
+register-snapshot-trigger = true
+
