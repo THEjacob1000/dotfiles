@@ -25,6 +25,7 @@ rust-analyzer = "latest"
 taplo = "latest"
 cargo-binstall = "latest"
 "cargo:bacon" = "latest"
+"cargo:jj-musubi" = "latest"
 cargo-llvm-cov = "latest"
 cargo-make = "latest"
 cargo-nextest = { version = "latest", version_prefix = "cargo-nextest-" }
