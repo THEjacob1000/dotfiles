@@ -8,23 +8,22 @@ import type {
 	ContextUsage,
 	ExtensionAPI,
 	ExtensionContext,
+	ExtensionTheme,
 } from "@oh-my-pi/pi-coding-agent";
 import { limitMatchesActiveAccount } from "@oh-my-pi/pi-coding-agent/slash-commands/helpers/active-oauth-account";
-import {
-	formatContextUsage,
-	getContextUsageLevel,
-	getContextUsageThemeColor,
-} from "@oh-my-pi/pi-tui/chrome/context-thresholds";
-import { renderProgressBar } from "@oh-my-pi/pi-tui/components/progress-bar";
-import { formatBytes } from "@oh-my-pi/pi-tui/render/render-utils";
-import type { Theme } from "@oh-my-pi/pi-tui/theme";
-import { truncateToWidth, visibleWidth } from "@oh-my-pi/pi-tui/utils";
+import { contextColor, contextLevel, formatContextUsage } from "@oh-my-pi/pi-coding-agent/ui/status/format";
+import { truncate, visibleWidth } from "@oh-my-pi/pi-tui/text/width";
+import { formatBytes } from "@oh-my-pi/pi-utils";
 
 const KEY = "numen-jj";
 const TIMEOUT_MS = 1500;
 const MAX_OUTPUT = 4096;
+const BYTES_PER_KIBIBYTE = 1024;
+const MILLISECONDS_PER_SECOND = 1000;
 const clean = (text: string) => Bun.stripANSI(text).replace(/\p{Cc}/gu, " ");
 const MEMORY_CAPACITY = totalmem();
+
+type StatusTheme = Pick<ExtensionTheme, "fg" | "has" | "style" | "symbols">;
 
 export interface StatusSnapshot {
 	model: string;
@@ -101,10 +100,10 @@ export function fetchUsageReports(
 		: Promise.resolve(null);
 }
 
-function glyphs(theme: Theme) {
-	return theme.getSymbolPreset() === "nerd"
+function glyphs(theme: StatusTheme) {
+	return theme.symbols.preset === "nerd"
 		? { context: "\uf51e", cpu: "\uf4bc", memory: "\uefc5" }
-		: { context: theme.icon.context, cpu: "cpu", memory: "mem" };
+		: { context: theme.symbols.icon("context"), cpu: "cpu", memory: "mem" };
 }
 
 function duration(reset: number, now: number): string {
@@ -117,7 +116,7 @@ function duration(reset: number, now: number): string {
 			: `${minutes}m`;
 }
 
-function contextSegment(snapshot: StatusSnapshot, theme: Theme): string {
+function contextSegment(snapshot: StatusSnapshot, theme: StatusTheme): string {
 	const context = snapshot.context;
 	const tokens = context && Number.isFinite(context.tokens) && context.tokens >= 0 ? context.tokens : undefined;
 	const window = context && Number.isFinite(context.contextWindow) && context.contextWindow > 0
@@ -125,24 +124,19 @@ function contextSegment(snapshot: StatusSnapshot, theme: Theme): string {
 	const ratio = tokens !== undefined && window > 0 && Number.isFinite(context?.percent)
 		? tokens / window * 100 : undefined;
 	const percent = snapshot.contextUnknown || !Number.isFinite(ratio) ? undefined : ratio;
-	const contextText = tokens === undefined ? "?" : formatContextUsage(percent, window, tokens);
-	const contextColor = percent === undefined
+	const contextText = tokens === undefined ? "?" : formatContextUsage(percent ?? null, window, tokens);
+	const color = percent === undefined
 		? "statusLineContext"
-		: getContextUsageThemeColor(getContextUsageLevel(percent, window));
-	const bar = percent === undefined ? "" : ` ${renderProgressBar(Math.max(0, Math.min(percent, 100)), 8, {
-		min: 0,
-		max: 100,
-		style: {
-			filled: theme.symbol("progress.filled"),
-			empty: theme.symbol("progress.empty"),
-			styleFilled: (text) => theme.fg(contextColor, text),
-			styleEmpty: (text) => theme.fg("muted", text),
-		},
-	})}`;
-	return theme.fg(contextColor, `${glyphs(theme).context} ${contextText}`) + bar;
+		: contextColor(contextLevel(percent, window));
+	const label = theme.fg(color, `${glyphs(theme).context} ${contextText}`);
+	if (percent === undefined) return label;
+	const filled = Math.round(Math.max(0, Math.min(percent, 100)) * 8 / 100);
+	const fill = theme.symbols.symbol("progress.filled").repeat(filled);
+	const rest = theme.symbols.symbol("progress.empty").repeat(8 - filled);
+	return `${label} ${theme.fg(color, fill)}${theme.fg("muted", rest)}`;
 }
 
-function resourceSegment(resources: StatusSnapshot["resources"], theme: Theme): string {
+function resourceSegment(resources: StatusSnapshot["resources"], theme: StatusTheme): string {
 	if (!resources) return "";
 	const cpuColor = resources.cpu !== undefined && resources.cpu >= 400
 		? "error" : resources.cpu !== undefined && resources.cpu >= 100 ? "warning" : "statusLineOutput";
@@ -151,37 +145,39 @@ function resourceSegment(resources: StatusSnapshot["resources"], theme: Theme): 
 	return [
 		theme.fg(cpuColor, `${glyphs(theme).cpu} ${resources.cpu === undefined ? "?" : `${Math.round(resources.cpu)}%`}`),
 		theme.fg(memoryColor, `${glyphs(theme).memory} ${formatBytes(resources.memory)}`),
-	].join(theme.fg("statusLineSep", theme.sep.dot));
+	].join(theme.fg("statusLineSep", theme.symbols.symbol("sep.dot")));
 }
 
 export function renderStatus(
 	snapshot: StatusSnapshot,
 	width: number,
-	theme: Theme,
+	theme: StatusTheme,
 	now = Date.now(),
 ): string[] {
-	const sep = theme.fg("statusLineSep", theme.sep.dot);
+	const sep = theme.fg("statusLineSep", theme.symbols.symbol("sep.dot"));
+	const effort = snapshot.effort;
+	const effortColor = effort ? `thinking${effort.charAt(0).toUpperCase()}${effort.slice(1)}` : "muted";
 	const first = [
-		theme.fg("statusLineModel", `${theme.icon.model} ${clean(snapshot.model)}`),
-		snapshot.effort ? theme.getThinkingBorderColor(snapshot.effort)(clean(snapshot.effort)) : "",
+		theme.fg("statusLineModel", `${theme.symbols.icon("model")} ${clean(snapshot.model)}`),
+		effort ? theme.fg(theme.has(effortColor) ? effortColor : "muted", clean(effort)) : "",
 	].filter(Boolean).join(sep);
 	const quota = snapshot.usage.map((window) => {
 		const color = window.percent >= 80 ? "error" : window.percent >= 50 ? "warning" : "muted";
 		const reset = window.reset === undefined ? "" : theme.fg("muted", ` (${duration(window.reset, now)})`);
 		return `${window.weekly ? "7d" : "5h"} ${theme.fg(color, `${window.percent}%`)}${reset}`;
 	});
-	const usage = quota.length ? `${theme.icon.time} ${quota.join(sep)}` : "";
+	const usage = quota.length ? `${theme.symbols.icon("time")} ${quota.join(sep)}` : "";
 	return [
 		withRight(first, contextSegment(snapshot, theme), width),
 		withRight(snapshot.repository ?? "", resourceSegment(snapshot.resources, theme), width),
 		usage,
-	].map((line) => truncateToWidth(line, Math.max(0, width)));
+	].map((line) => truncate(line, width));
 }
 
 function withRight(left: string, right: string, width: number): string {
-	if (!right || visibleWidth(right) >= width) return left;
-	const room = Math.max(0, width - visibleWidth(right) - 1);
-	return `${truncateToWidth(left, room, undefined, true)} ${right}`;
+	const rightWidth = visibleWidth(right);
+	if (!right || rightWidth >= width) return left;
+	return `${truncate(left, width - rightWidth - 1, undefined, true)} ${right}`;
 }
 
 export interface ProcessStat {
@@ -227,12 +223,12 @@ export async function sampleProcessTree(
 	return sumProcessTree(root, at, stats, async (pid) => {
 		try {
 			const pss = /^Pss:\s+(\d+)\s+kB/m.exec(await read(pid, "smaps_rollup"));
-			if (pss) return Number(pss[1]) * 1024;
+			if (pss) return Number(pss[1]) * BYTES_PER_KIBIBYTE;
 		} catch {
 			// Rollup may be inaccessible while status remains readable.
 		}
 		try {
-			return Number(/^VmRSS:\s+(\d+)\s+kB/m.exec(await read(pid, "status"))?.[1] ?? 0) * 1024;
+			return Number(/^VmRSS:\s+(\d+)\s+kB/m.exec(await read(pid, "status"))?.[1] ?? 0) * BYTES_PER_KIBIBYTE;
 		} catch {
 			return 0; // A process can exit between reading stat and memory.
 		}
@@ -266,7 +262,7 @@ async function sumProcessTree(
 		if (oldTicks !== undefined) delta += Math.max(0, stat.ticks - oldTicks);
 		memory += await memoryOf(stat.pid);
 	}
-	const seconds = previous ? (at - previous.at) / 1000 : 0;
+	const seconds = previous ? (at - previous.at) / MILLISECONDS_PER_SECOND : 0;
 	return { at, ticks, cpu: seconds > 0 && rootStat ? delta / seconds : undefined, memory };
 }
 
@@ -346,7 +342,7 @@ async function jj(
 	}
 }
 
-export async function repositoryLine(cwd: string, theme: Theme): Promise<string | undefined> {
+export async function repositoryLine(cwd: string, theme: StatusTheme): Promise<string | undefined> {
 	const signal = AbortSignal.timeout(TIMEOUT_MS);
 	const [root, id, bookmark, stat, description] = await Promise.all([
 		jj(["root"], cwd, signal),
@@ -402,18 +398,18 @@ export function formatRepositoryLine(
 		stat: string | null;
 		description: string | null;
 	},
-	theme: Theme,
+	theme: StatusTheme,
 ): string {
 	const last = stat?.split("\n").at(-1) ?? "";
 	const added = /(\d+) insertion/.exec(last)?.[1] ?? "0";
 	const removed = /(\d+) deletion/.exec(last)?.[1] ?? "0";
-	const sep = theme.fg("statusLineSep", theme.sep.dot);
+	const sep = theme.fg("statusLineSep", theme.symbols.symbol("sep.dot"));
 	const [prefix = "", rest = ""] = id?.split("\t") ?? [];
 	return [
-		theme.fg("statusLinePath", `${theme.icon.folder} ${clean(root.split("/").at(-1) ?? root)}`),
+		theme.fg("statusLinePath", `${theme.symbols.icon("folder")} ${clean(root.split("/").at(-1) ?? root)}`),
 		`${theme.fg("toolDiffAdded", `+${added}`)}${theme.fg("statusLineSep", "/")}${theme.fg("toolDiffRemoved", `-${removed}`)}`,
-		bookmark ? theme.fg("statusLineCost", `${theme.icon.branch} ${clean(bookmark)}`) : "",
-		prefix ? theme.bold(theme.fg("accent", clean(prefix))) + theme.fg("dim", clean(rest)) : "",
+		bookmark ? theme.fg("statusLineCost", `${theme.symbols.icon("branch")} ${clean(bookmark)}`) : "",
+		prefix ? theme.style("strong accent", clean(prefix)) + theme.fg("dim", clean(rest)) : "",
 		description ? theme.fg("muted", clean(description)) : "",
 	].filter(Boolean).join(sep);
 }

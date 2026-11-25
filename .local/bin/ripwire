@@ -6,7 +6,7 @@ set -euo pipefail
 
 real="${RIPWIRE_REAL:-$HOME/.local/share/ripwire/bin/ripwire}"
 if [ ! -x "$real" ]; then
-  echo "ripwire: no binary at $real (run: mise run install-ripwire)" >&2
+  echo "ripwire: no binary at $real (run: makers install-ripwire)" >&2
   exit 127
 fi
 

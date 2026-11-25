@@ -113,3 +113,6 @@ update:
 commit:
   enabled: false
 hideThinkingBlock: true
+display:
+  hideToolActivity: true
+  advisorCollapsedLines: 2

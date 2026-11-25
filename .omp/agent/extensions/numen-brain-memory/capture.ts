@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import type { CommandConfig } from "./recall";
 
 const MAX_REQUEST = 256 * 1024;
+const MAX_CONTENT_BYTES = 64 * 1024;
 const MAX_RESPONSE = 1024;
 const TIMEOUT_MS = 2500;
 
@@ -17,7 +18,7 @@ export function capture(command: CommandConfig, itemId: string, content: string,
 	const now = Date.now();
 	const request = Buffer.from(`${JSON.stringify({ version: 1, source: "omp", item_id: itemId,
 		observed_at: new Date(now).toISOString(), expires_at: new Date(now + ttlSeconds * 1000).toISOString(), content })}\n`);
-	if (Buffer.byteLength(content) > 64 * 1024 || request.length > MAX_REQUEST) return Promise.reject(new CaptureError("too-large"));
+	if (Buffer.byteLength(content) > MAX_CONTENT_BYTES || request.length > MAX_REQUEST) return Promise.reject(new CaptureError("too-large"));
 	const { promise, resolve, reject } = Promise.withResolvers<void>();
 	const child = spawn(command.command, command.args, { stdio: ["pipe", "pipe", "ignore"] });
 	let complete = false;

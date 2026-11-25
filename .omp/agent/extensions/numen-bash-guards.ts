@@ -1,10 +1,7 @@
 // generated-by: numen-sync
 import { statSync } from "node:fs";
-import {
-	isToolCallEventType,
-	type ExtensionAPI,
-	type ToolCallEventResult,
-} from "@oh-my-pi/pi-coding-agent";
+import type { ExtensionAPI, ToolCallEventResult } from "@oh-my-pi/pi-coding-agent";
+import { isToolCallEventType } from "@oh-my-pi/pi-coding-agent/extensibility/extensions/types";
 import { resolveToCwd } from "@oh-my-pi/pi-coding-agent/tools/path-utils";
 import { lexShellCommand, tokenizeShellSegments } from "@oh-my-pi/pi-coding-agent/tools/shell-tokenize";
 

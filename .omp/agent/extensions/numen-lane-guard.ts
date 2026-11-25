@@ -18,7 +18,7 @@ function canonical(path: string): string {
 	}
 }
 
-function editPaths(input: Record<string, unknown>, cwd: string): string[] {
+function editPaths(input: object, cwd: string): string[] {
 	const paths = new Set<string>();
 	const args = JSON.stringify(input);
 	for (const mode of ["hashline", "sloppy", "apply_patch", "replace", "patch"]) {

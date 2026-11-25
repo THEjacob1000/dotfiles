@@ -9,7 +9,6 @@ numen-diagnosing-bugs.md
 numen-domain-modeling.md
 numen-error-cleanup.md
 numen-find-skills.md
-numen-frames.md
 numen-frontend-design.md
 numen-go-guidelines.md
 numen-grill-me.md

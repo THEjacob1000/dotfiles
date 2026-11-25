@@ -22,10 +22,15 @@ export class ClientConfigError extends Error {
 function isCommand(value: unknown): value is CommandConfig {
 	return value !== null && typeof value === "object" && !Array.isArray(value) &&
 		"command" in value && typeof value.command === "string" && value.command.length > 0 && !value.command.includes("\0") &&
-		"args" in value && Array.isArray(value.args) && value.args.every((arg: unknown) => typeof arg === "string" && arg.length < 1024);
+		"args" in value && Array.isArray(value.args) && value.args.every((arg: unknown) => typeof arg === "string" && arg.length < COMMAND_ARG_LENGTH_LIMIT);
 }
 
 const CONFIG_PATH = join(process.env.XDG_CONFIG_HOME || join(homedir(), ".config"), "numen", "brain-client.json");
+const COMMAND_ARG_LENGTH_LIMIT = 1024;
+const MAX_CONFIG_BYTES = 16 * 1024;
+const MAX_TTL_SECONDS = 24 * 60 * 60;
+const MAX_MESSAGE_BYTES = 8 * 1024;
+const SEED_PROMPT_TAIL_CHARS = 3000;
 const MAX_CONTENT_BYTES = 16 * 1024;
 const MAX_RESULT_BYTES = 768;
 const MAX_RECALL_BYTES = 12 * 1024;
@@ -39,13 +44,13 @@ async function clientConfig(): Promise<ClientConfig | undefined> {
 		if (error !== null && typeof error === "object" && "code" in error && error.code === "ENOENT") return undefined;
 		throw new ClientConfigError("unreadable");
 	}
-	if (Buffer.byteLength(raw) > 16 * 1024) throw new ClientConfigError("too-large");
+	if (Buffer.byteLength(raw) > MAX_CONFIG_BYTES) throw new ClientConfigError("too-large");
 	let config: unknown;
 	try { config = JSON.parse(raw); } catch { throw new ClientConfigError("invalid"); }
 	if (!config || typeof config !== "object" || Array.isArray(config) || !("version" in config) ||
 		!("short_term_dir" in config) || !("ttl_seconds" in config) || !("recall" in config) ||
 		config.version !== 1 || typeof config.short_term_dir !== "string" || !isAbsolute(config.short_term_dir) ||
-		typeof config.ttl_seconds !== "number" || !Number.isInteger(config.ttl_seconds) || config.ttl_seconds < 1 || config.ttl_seconds > 86400 ||
+		typeof config.ttl_seconds !== "number" || !Number.isInteger(config.ttl_seconds) || config.ttl_seconds < 1 || config.ttl_seconds > MAX_TTL_SECONDS ||
 		!isCommand(config.recall)) throw new ClientConfigError("invalid");
 	const captureCommand: unknown = "capture" in config && config.capture != null ? config.capture :
 		{ command: join(homedir(), ".local", "bin", "numen-braincollector"), args: ["enqueue"] };
@@ -64,14 +69,14 @@ export function experience(messages: AgentMessage[], terminal?: AgentMessage): s
 	for (; start >= 0; start--) {
 		const message = messages[start];
 		if (message.role !== "user" || message.synthetic || message.attribution === "agent") continue;
-		prompt = text(message.content, 8 * 1024);
+		prompt = text(message.content, MAX_MESSAGE_BYTES);
 		break;
 	}
 	if (start < 0) return undefined;
 	if (!prompt || SENSITIVE.test(prompt)) return undefined;
 	const finalAssistant = terminal ?? messages.findLast(message => message.role === "assistant");
 	if (finalAssistant?.role !== "assistant" || finalAssistant.stopReason !== "stop") return undefined;
-	const answer = text(finalAssistant.content, 8 * 1024);
+	const answer = text(finalAssistant.content, MAX_MESSAGE_BYTES);
 	if (!answer || SENSITIVE.test(answer)) return undefined;
 	let recalled = false;
 	const outcomes: string[] = [];
@@ -88,7 +93,7 @@ export function experience(messages: AgentMessage[], terminal?: AgentMessage): s
 }
 export function recallSeeds(prompt: string): string[] {
 	if (SENSITIVE.test(prompt)) return [];
-	return [...new Set((prompt.slice(-3000).toLowerCase().match(/[a-z][a-z0-9_-]{3,23}/g) || [])
+	return [...new Set((prompt.slice(-SEED_PROMPT_TAIL_CHARS).toLowerCase().match(/[a-z][a-z0-9_-]{3,23}/g) || [])
 		.filter(seed => !SKIP_SEED[seed] && !/\d{4}/.test(seed)))].slice(0, 8);
 }
 

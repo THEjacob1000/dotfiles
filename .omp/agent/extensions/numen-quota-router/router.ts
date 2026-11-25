@@ -17,12 +17,9 @@ import type {
 } from "@oh-my-pi/pi-ai";
 import type { ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 import { isAuthenticated, kNoAuth, settings } from "@oh-my-pi/pi-coding-agent";
+import { splitThinkingSuffix, splitUpstreamRouting } from "@oh-my-pi/pi-coding-agent/config/model-selector";
 import { cfgDisabledProviders } from "@oh-my-pi/pi-coding-agent/config/model-settings";
 import { cfgRetryFallbackChains } from "@oh-my-pi/pi-coding-agent/session/settings";
-import {
-	splitThinkingSuffix,
-	splitUpstreamRouting,
-} from "@oh-my-pi/pi-tui/overlays/model-selector";
 import { getAgentDir, logger } from "@oh-my-pi/pi-utils";
 import { config, routingEnabled } from "./config";
 import {

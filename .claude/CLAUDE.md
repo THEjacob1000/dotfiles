@@ -7,8 +7,8 @@ Single source of truth for coding agents on Jacob's machine. `numen sync` projec
 this into `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`; edit here, never in synced
 blocks. HTML comments `numen:tool=claude` or `numen:tool=codex`, closed by
 `/numen:tool`, restrict content to that tool; the rest renders into both.
-Host-specific instructions go in `~/.config/numen/doctrine.local.md`, appended
-after this file with the same tool blocks; it never ships with the harness.
+Put host-specific instructions in `harness/canonical/doctrine.local.md`. Sync
+appends this gitignored file with the same per-tool rules.
 
 ## Toolchain
 - Bun for runtime + packages (`bun install/test`, `bun run lint|typecheck`);

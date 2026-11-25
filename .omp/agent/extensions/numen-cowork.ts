@@ -76,7 +76,11 @@ function responseField(value: unknown, operation: string): string {
 
 /** OMP owns goals and continuation. The helper owns only cooperative task state and JJ operations. */
 export default function cowork(pi: ExtensionAPI) {
- const z = pi.zod;
+ const parameters = pi.arktype({
+  op: "'status' | 'checkpoint' | 'claim' | 'join' | 'resume' | 'prepare' | 'land' | 'release' | 'finish' | 'retire'",
+  "task?": "string", "outcome?": "string", "workspace?": "string",
+  "base?": "string", "tip?": "string",
+ });
  let active: Binding | undefined;
  const restored = (ctx: ExtensionContext, operation = "status"): Binding | undefined => {
   const entry = ctx.sessionManager.getEntries().findLast(e => e.type === "custom" && e.customType === KEY);
@@ -110,14 +114,10 @@ export default function cowork(pi: ExtensionAPI) {
   if (binding && !binding.complete && !Object.entries(board.tasks).some(([id,t]) => id === binding.task && t.generation === binding.generation) && !board.completed[`${binding.task}@${binding.generation}`] && !board.retired?.[`${binding.task}@${binding.generation}`]) throw new Error("bound task journal is missing or generation changed; recover before completion");
   return tasks;
  };
- pi.registerTool({
+ pi.registerTool<typeof parameters>({
   name: "cowork", label: "Cowork",
   description: "List taken outcomes and claim one existing JJ task workspace on the repository's filesystem. Keep this OMP controller in a retained checkout; pass workspace cwd explicitly to ordinary edit/check tools. Prepare rebases directly there; land needs exact checked/reviewed tip and observed main. Release only after task users stop accessing it; finish retains the workspace and clears its advertisement. Retire drops an unlanded claim and leaves its workspace and commits in place. No security boundary or session-termination veto.",
-  parameters: z.object({
-   op: z.enum(["status", "checkpoint", "claim", "join", "resume", "prepare", "land", "release", "finish", "retire"]),
-   task: z.string().optional(), outcome: z.string().optional(), workspace: z.string().optional(),
-   base: z.string().optional(), tip: z.string().optional(),
-  }),
+  parameters,
   async execute(_id, args, _signal, _update, ctx) {
    const who = ctx.sessionManager.getSessionId();
    if (args.op === "status") return { content: [{ type: "text", text: JSON.stringify(await invoke(ctx, ["status"])) }] };

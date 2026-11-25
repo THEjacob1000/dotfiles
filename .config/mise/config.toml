@@ -20,8 +20,6 @@ uv = "latest"
 yq = "latest"
 mysql-client = "latest"
 mr-boxington = "latest"
-# standalone, since a global mise rust would set RUSTUP_TOOLCHAIN and override every project's rust-toolchain.toml
-rust-analyzer = "latest"
 taplo = "latest"
 cargo-binstall = "latest"
 "cargo:bacon" = "latest"

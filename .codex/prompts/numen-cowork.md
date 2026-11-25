@@ -36,7 +36,7 @@ workspace, and quarantines its entire directory, including ignored outputs and
 unknown content. It retires only recorded redundant lineage after protecting main,
 named refs, external descendants and other workspaces. Clear the task advertisement
 only after cleanup succeeds. A failure remains unfinished with an exact reason;
-retry `finish` after resolving that blocker. Preserve unique work and `assets/voice/`.
+retry `finish` after resolving that blocker. Preserve unique work.
 
 To abandon an unlanded claim, the claiming session uses `retire` once other known
 users have exited or used `release`, which they may do before landing. It clears the

@@ -95,5 +95,5 @@ Test meaningful variants and context at failure boundaries, conversion/source pr
 
 In the Numen repository, these files show the pattern; elsewhere, find the nearest equivalent boundary in the current workspace:
 
-- `crates/core/numen-config/src/duration.rs`: copy `DurationError`'s exhaustive refusal variants and structured unit context, keeping successful absence separate from invalid present input.
-- `crates/core/numen-modelwire/src/error.rs`: copy `CodecError`'s typed category and location at a redaction boundary, without retaining input-bearing parser errors in `Display`, `Debug` or `source()`.
+- `crates/numen-config/src/duration.rs`: copy `DurationError`'s exhaustive refusal variants and structured unit context, keeping successful absence separate from invalid present input.
+- `crates/numen-modelwire/src/error.rs`: copy `CodecError`'s typed category and location at a redaction boundary, without retaining input-bearing parser errors in `Display`, `Debug` or `source()`.

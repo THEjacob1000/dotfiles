@@ -52,6 +52,7 @@ export function recall(command: CommandConfig, seeds: string[]): Promise<string 
 			try {
 				const message: unknown = JSON.parse(line);
 				if (!message || typeof message !== "object" || !("jsonrpc" in message) || message.jsonrpc !== "2.0") throw new Error("invalid response");
+				if (!("id" in message)) continue;
 				if (message.id === 1 && !initialized) {
 					if (!("result" in message) || !message.result || typeof message.result !== "object" || "error" in message || !("instructions" in message.result) || message.result.instructions !== SPOTLIGHT_INSTRUCTION) throw new Error("initialization failed");
 					initialized = true;
