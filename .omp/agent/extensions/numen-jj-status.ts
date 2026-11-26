@@ -431,59 +431,64 @@ export default function (pi: ExtensionAPI) {
 		stop?.();
 		if (!ctx.hasUI || ctx.mode !== "tui") return;
 		ctx.ui.setStatus(KEY, undefined);
+		// OMP remounts the widget factory whenever the dock rebuilds, so state and the refresh timer
+		// live here; per-mount state would blank the async rows and restart refresh on every remount.
+		let theme: StatusTheme | undefined;
+		let repository: string | undefined;
+		let reports: UsageReport[] = [];
+		let resources: ResourceSample | undefined;
+		let contextUnknown = false;
+		let disposed = false;
+		let refreshing = false;
+		let lastUsage = 0;
+		markCompacted = () => {
+			contextUnknown = true;
+			requestRender?.();
+		};
+		clearCompacted = () => {
+			contextUnknown = false;
+		};
+		const refresh = async () => {
+			if (refreshing || disposed || !theme) return;
+			refreshing = true;
+			try {
+				const refreshUsage = Date.now() - lastUsage >= 30_000;
+				if (refreshUsage) lastUsage = Date.now();
+				const quota = refreshUsage
+					? fetchUsageReports(ctx.modelRegistry, AbortSignal.timeout(5000))
+					: Promise.resolve(null);
+				const [nextRepository, nextReports, nextResources] = await Promise.all([
+					repositoryLine(ctx.cwd, theme),
+					quota,
+					sampleResources(resources),
+				]);
+				if (disposed) return;
+				repository = nextRepository;
+				if (nextReports !== null) reports = nextReports;
+				if (nextResources) resources = nextResources;
+				requestRender?.();
+			} finally {
+				refreshing = false;
+			}
+		};
+		const timer = setInterval(() => void refresh(), 5000);
+		timer.unref();
+		stop = () => {
+			if (disposed) return;
+			disposed = true;
+			clearInterval(timer);
+			requestRender = undefined;
+			markCompacted = undefined;
+			clearCompacted = undefined;
+		};
 		ctx.ui.setWidget(
 			KEY,
-			(tui, theme) => {
-				let repository: string | undefined;
-				let reports: UsageReport[] = [];
-				let resources: ResourceSample | undefined;
-				let contextUnknown = false;
-				let disposed = false;
-				let refreshing = false;
-				let lastUsage = 0;
-				requestRender = () => tui.requestRender();
-				markCompacted = () => {
-					contextUnknown = true;
-					tui.requestRender();
-				};
-				clearCompacted = () => {
-					contextUnknown = false;
-				};
-				const refresh = async () => {
-					if (refreshing || disposed) return;
-					refreshing = true;
-					try {
-						const refreshUsage = Date.now() - lastUsage >= 30_000;
-						if (refreshUsage) lastUsage = Date.now();
-						const quota = refreshUsage
-							? fetchUsageReports(ctx.modelRegistry, AbortSignal.timeout(5000))
-							: Promise.resolve(null);
-						const [nextRepository, nextReports, nextResources] = await Promise.all([
-							repositoryLine(ctx.cwd, theme),
-							quota,
-							sampleResources(resources),
-						]);
-						if (disposed) return;
-						repository = nextRepository;
-						if (nextReports !== null) reports = nextReports;
-						if (nextResources) resources = nextResources;
-						tui.requestRender();
-					} finally {
-						refreshing = false;
-					}
-				};
-				const timer = setInterval(() => void refresh(), 5000);
-				timer.unref();
-				const dispose = () => {
-					if (disposed) return;
-					disposed = true;
-					clearInterval(timer);
-					requestRender = undefined;
-					markCompacted = undefined;
-					clearCompacted = undefined;
-				};
-				stop = dispose;
-				void refresh();
+			(tui, mountTheme) => {
+				const firstMount = theme === undefined;
+				theme = mountTheme;
+				const repaint = () => tui.requestRender();
+				requestRender = repaint;
+				if (firstMount) void refresh();
 				return {
 					render(width) {
 						const model = ctx.models.current();
@@ -508,11 +513,14 @@ export default function (pi: ExtensionAPI) {
 									: [],
 							},
 							width,
-							theme,
+							mountTheme,
 						);
 					},
 					invalidate() {},
-					dispose,
+					dispose() {
+						// A remount may bind the new hook before the old mount is disposed.
+						if (requestRender === repaint) requestRender = undefined;
+					},
 				};
 			},
 			{ placement: "belowEditor" },
