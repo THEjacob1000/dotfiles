@@ -1,0 +1,6 @@
+[
+  "scripts/_bpyx.py",
+  "scripts/kit_check.py",
+  "scripts/scatter.py",
+  "scripts/terrain.py"
+]

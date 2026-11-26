@@ -1,0 +1,5 @@
+[
+  "scripts/_bpyx.py",
+  "scripts/make_lods.py",
+  "scripts/mesh_stats.py"
+]

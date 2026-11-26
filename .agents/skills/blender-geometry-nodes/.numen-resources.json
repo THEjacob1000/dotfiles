@@ -1,0 +1,5 @@
+[
+  "references/recipes.md",
+  "scripts/_bpyx.py",
+  "scripts/gn_builder.py"
+]

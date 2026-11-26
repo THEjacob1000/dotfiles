@@ -1,0 +1,7 @@
+[
+  "references/api-changes-5x.md",
+  "references/bpy-patterns.md",
+  "scripts/_bpyx.py",
+  "scripts/env_report.py",
+  "scripts/run_in_blender.py"
+]

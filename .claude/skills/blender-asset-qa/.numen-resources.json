@@ -1,0 +1,5 @@
+[
+  "scripts/_bpyx.py",
+  "scripts/qa_check.py",
+  "scripts/review_shots.py"
+]

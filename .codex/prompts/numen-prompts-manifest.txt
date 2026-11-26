@@ -1,3 +1,8 @@
+numen-blender-asset-qa.md
+numen-blender-core.md
+numen-blender-environment-kits.md
+numen-blender-game-optimization.md
+numen-blender-geometry-nodes.md
 numen-code-golf.md
 numen-code-refinement.md
 numen-codebase-design.md
@@ -6,6 +11,7 @@ numen-coverage-target.md
 numen-cowork.md
 numen-deep-interview.md
 numen-diagnosing-bugs.md
+numen-dojo-3d-assets.md
 numen-domain-modeling.md
 numen-error-cleanup.md
 numen-find-skills.md
